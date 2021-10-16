@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<style-scheme version="1.0" name="Visual Studio Light">
+  <style name="Text" background="#ffffff"/>                                                   <!--所有文本的背景色-->                    
+  <style name="Link" foreground="#0000ff"/> 
+  <style name="Selection"  background="#99C9EF"/>                                             <!--选中代码的背景色-->
+  <style name="LineNumber" foreground="#9f9d9a" background="#efebe7"/>                        <!--行号:所在的区域的前景色和背景色-->
+  <style name="SearchResult" background="#ffef0b"/>                                           <!--搜索结果:-->
+  <style name="SearchScope" background="#f5fafd"/>
+  <style name="Parentheses" foreground="#ff0000" background="#b4eeb4"/>                       <!--括号:-->
+  <style name="ParenthesesMismatch" background="#ff00ff"/>                                    <!--括号不匹配:-->
+  <style name="AutoComplete" foreground="#000080" background="#c0c0ff"/>                      <!--自动补全:-->
+  <style name="CurrentLine" background="#c1ddee"/>                                            <!--当前行: -->
+  <style name="CurrentLineNumber" foreground="#808080" bold="true"/>                          <!--当前行号:-->
+  <style name="Occurrences" background="#b4b4b4"/>
+  <style name="Occurrences.Unused" underlineColor="#808000" underlineStyle="SingleUnderline"/>
+  <style name="Occurrences.Rename" background="#ff6464"/>                                     
+  <style name="Number" foreground="#000080"/>                                                 <!--代码中数字的颜色-->
+  <style name="String" foreground="#008000"/>                                                 <!--代码中字符串的颜色-->
+  <style name="Type" foreground="#2B91AF"/>                                                   <!--代码中类型的颜色 -->
+  <style name="Local" foreground="#092E64"/>                                                  <!--局部变量-->
+  <style name="Global" foreground="#CE5C00"/>                                                 <!--全局变量-->
+  <style name="Field" foreground="#800000"/>
+  <style name="Static" foreground="#800080"/> 
+  <style name="VirtualMethod" foreground="#74531F" background="#ffffff" italic="true"/>       <!--虚函数：前景色和背景色-->
+  <style name="Function" foreground="#74531F" background="#ffffff"/>                          <!--普通函数：-->
+  <style name="Keyword" foreground="#0000FF"/>                                                <!--关键字-->
+  <style name="PrimitiveType" foreground="#0000FF"/>                                          <!--原始类型-->
+  <style name="Punctuation"/>                                                                 <!--标点符号-->
+  <style name="Operator"/>                                                                    <!--操作符-->
+  <style name="Overloaded Operator" foreground="#008080" background="#ffffff"/>               <!--重载的操作符-->
+  <style name="Preprocessor" foreground="#0000FF"/>                                           <!--预处理指令-->
+  <style name="Label" foreground="#800000"/>                                                  <!--goto的标签颜色-->
+  <style name="Comment" foreground="#008000"/>                                                <!--注释-->
+  <style name="Doxygen.Comment" foreground="#000080"/>                                        <!--Doxygen注释:是一个程序的文档产生工具-->
+  <style name="Doxygen.Tag" foreground="#0000ff"/>                                      
+  <style name="VisualWhitespace" foreground="#c0c0c0"/>                                       <!--隐形的空格和制表符-->      
+  <!--Qml 
+  <style name="QmlLocalId" foreground="#000000" background="#ffffff" italic="true"/>
+  <style name="QmlExternalId" foreground="#000080" background="#ffffff" italic="true"/>
+  <style name="QmlTypeId" foreground="#800080"/>
+  <style name="QmlRootObjectProperty" foreground="#000000" background="#ffffff" italic="true"/>
+  <style name="QmlScopeObjectProperty" foreground="#000000" background="#ffffff" italic="true"/>
+  <style name="QmlExternalObjectProperty" foreground="#000080" background="#ffffff" italic="true"/>
+  <style name="JsScopeVar" foreground="#2985c7" background="#ffffff" italic="true"/>
+  <style name="JsImportVar" foreground="#0055af" background="#ffffff" italic="true"/>
+  <style name="JsGlobalVar" foreground="#0055af" background="#ffffff" italic="true"/>
+  <style name="QmlStateName" foreground="#000000" background="#ffffff" italic="true"/>
+  --> 
+  <style name="Binding" foreground="#800000"/>
+  <style name="DisabledCode" background="#efefef"/>
+  <style name="AddedLine" foreground="#00aa00"/>
+  <style name="RemovedLine" foreground="#ff0000"/>
+  <style name="DiffFile" foreground="#000080"/>
+  <style name="DiffLocation" foreground="#0000ff"/>
+  <style name="DiffFileLine" background="#ffff00"/>
+  <style name="DiffContextLine" background="#afd7e7"/>
+  <style name="DiffSourceLine" background="#ffdfdf"/>
+  <style name="DiffSourceChar" background="#ffafaf"/>
+  <style name="DiffDestLine" background="#dfffdf"/>
+  <style name="DiffDestChar" background="#afffaf"/>
+  <style name="LogChangeLine" foreground="#c00000"/>
+  <style name="Warning" underlineColor="#ffbe00" underlineStyle="SingleUnderline"/>       <!--警告所在的:下划线颜色和样式 -->
+  <style name="WarningContext" underlineColor="#ffbe00" underlineStyle="DotLine"/>        <!--警告文本-->
+  <style name="Error" underlineColor="#ff0000" underlineStyle="SingleUnderline"/>         
+  <style name="ErrorContext" underlineColor="#ff0000" underlineStyle="DotLine"/>
+  <style name="Declaration"/>
+  <style name="OutputArgument"/>
+</style-scheme>

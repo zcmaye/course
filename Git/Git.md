@@ -1,0 +1,18 @@
+## Git error
+
+### errno 10054 
+
+> SSL_read: Connection was reset, errno 10054 
+
+关闭ssl验证即可
+
+```sh
+git config --global http.sslVerify false
+```
+
+## 覆盖远程仓库
+
+```sh
+git push --force --set-upstream origin master
+```
+

@@ -1,0 +1,3 @@
+Qtwindows拓展
+
+QWinTaskbarButton  QWinTaskbarProgress QWinThumbnailToolBar QWinThumbnailToolButton

@@ -142,82 +142,6 @@ QVariant QStandardItem::data(int role = Qt::UserRole + 1) const
 ![不同角色数据的表现形式](assets/2-1Z103161340927.png)
 
 
-## 项目视图组(Item Views)
-
-#### 1，列表视图(ListView)
-
-##### 创建模型
-
-```cpp
-QStandardItemModel* m_model = new QStandardItemModel;	//创建模型
-QListView* listView = new QListView();					//创建视图
-listView->setModel(m_model);							//把模型设置给视图
-```
-
-##### 添加数据项
-
-```cpp
-m_model->appendRow(new QStandardItem("张三"));
-m_model->appendRow(new QStandardItem(style()->standardIcon(QStyle::StandardPixmap::SP_DesktopIcon),"张三"));
-    
-QStringList list = {"加勒比海岱","叶明乐子","时间与城","暴脾气"};
-for (auto& str : list)
-{
-    m_model->appendRow(new QStandardItem(str));
-}
-```
-
-##### 删除数据
-
-```cpp
-bool removeRow(int row, const QModelIndex &parent = QModelIndex())
-virtual bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex())
-```
-
-##### 获取数据
-
-```cpp
-QList<QStandardItem *> findItems(const QString &text, Qt::MatchFlags flags = Qt::MatchExactly, int column = 0) const
-//获取不可见根元素
-QStandardItem *invisibleRootItem() const
-//返回给定行和列的项(如果已设置); 否则返回nullptr。      
-QStandardItem *item(int row, int column = 0) const
-//返回一个指向与给定索引关联的QStandardItem的指针。      
-QStandardItem *itemFromIndex(const QModelIndex &index) const
-//通过元素获取下标    
-QModelIndex indexFromItem(const QStandardItem *item) const
-```
-
-##### 隐藏某行
-
-```cpp
-void setRowHidden(int row, bool hide)
-```
-
-##### 其他
-
-```cpp
-//此属性用于保存当视图调整大小时是否再次布局项。 
-void setResizeMode(QListView::ResizeMode mode)
-//此属性保存项目布局应朝哪个方向流动(流式布局)。
-void setFlow(QListView::Flow flow)
-//此属性保存QListView的视图模式。      
-void setViewMode(QListView::ViewMode mode)
-```
-
-
-
-#### 2，树型视图(TreeView)
-
-#### 3，表格视图(TableView)
-
-#### 4，列视图(columnView)
-
-#### 5，撤销视图(UndoView)
-
-
-
-
 
 ## 项目控件组(Item Widgets)
 
@@ -363,7 +287,7 @@ QList<QStandardItem *> takeRow(int row)
 QStandardItem *takeVerticalHeaderItem(int row)    
 ```
 
-### 获取项
+### 获取项(查找、获取)
 
 ```cpp
 //查找给定列中使用给定标志匹配给定文本的项列表。  
@@ -474,20 +398,24 @@ virtual void QStandardItem::setData(const QVariant &value, int role = Qt::UserRo
 
 
 
-## 视图使用
+## 项目视图组(Item Views)
 
 ### 设置行的颜色交替变换
 
 如果该属性为true，项目背景将使用QPalette::Base和QPalette::AlternateBase绘制; 否则，背景将使用QPalette::Base颜色绘制。  
 
 ```cpp
-QPalette palette;
-palette.setBrush(QPalette::ColorRole::Base, QColor(204, 213, 240));
+QPalette palette;                                                          
+palette.setBrush(QPalette::ColorRole::Base, QColor(204, 213, 240));        
 palette.setBrush(QPalette::ColorRole::AlternateBase, QColor(93, 107, 153));
-m_tableView->setPalette(palette);
-
-m_tableView->setAlternatingRowColors(true);
+tableView->setPalette(palette);                                            
+                                                                           
+tableView->setAlternatingRowColors(true);                                  
+listView->setAlternatingRowColors(true);                                   
+treeView->setAlternatingRowColors(true);                                   
 ```
+
+![image-20211019142659774](assets/image-20211019142659774.png)
 
 ### 拖拽
 
@@ -500,6 +428,8 @@ m_tableView->setDragDropMode(QTableView::DragDropMode::DragDrop);	//设置拖拽
 
 ### 启动编辑操作
 
+什么情况下启动条目编辑的操作  
+
 ```cpp
 m_tableView->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);	//禁止编辑
 ```
@@ -510,15 +440,121 @@ m_tableView->setEditTriggers(QTableView::EditTrigger::NoEditTriggers);	//禁止�
 
 ### 设置选择行为
 
-默认是选中一个项，可以设置选择一行或者一列
++ 默认是选中一个项，可以设置选择一行或者一列
 
 ```cpp
 tableView->setSelectionBehavior(QTableView::SelectionBehavior::SelectRows);
 ```
 
++ 控制用户是否可以选择一个或多个项目，以及在多项目选择中，选择是否必须是连续的项目范围。  
+
+```cpp
+void setSelectionMode(QAbstractItemView::SelectionMode mode)
+SelectionMode::SingleSelection	//单选
+SelectionMode::MultiSelection	//多选
+```
+
+
+
 ### 启用排序
 
 ```cpp
 tableView->setSortingEnabled(true);
+```
+
+### QListView
+
++ 设置视图模式、布局流向以及视图调整大小时是否重新布局。
+
+```cpp
+//设置视图模式 列表模式 QListView::ListMode 图标模式 QListView::IconMode
+void setViewMode(QListView::ViewMode mode)
+//设置流布局方向
+void setFlow(QListView::Flow flow)
+//当视图调整大小时是否再次布局项。 如果此属性为Adjust，项目将重新布局。 如果值是Fixed，项目将不会被布局。      
+void setResizeMode(QListView::ResizeMode mode)
+```
+
+![](assets/listviewflow.gif)
+
++ 显示模型中的某一列
+
+```cpp
+void setModelColumn(int column)
+```
+
+![image-20211019160725944](assets/image-20211019160725944.png)
+
++ 隐藏指定行
+
+```cpp
+void setRowHidden(int row, bool hide)
+```
+
+### QTableView
+
+```cpp
+//设置行高和列宽
+void setRowHeight(int row, int height)
+void setColumnWidth(int column, int width)
+//设置行隐藏和列隐藏   
+void setRowHidden(int row, bool hide)     
+void setColumnHidden(int column, bool hide)    
+//此属性用于保持左上角的按钮是否启用，单击此按钮将选择表格视图中的所有单元格。     
+void setCornerButtonEnabled(bool enable)
+//设置表格边框线样式    
+void setGridStyle(Qt::PenStyle style)
+//设置水平和垂直头    
+void setHorizontalHeader(QHeaderView *header)
+void setVerticalHeader(QHeaderView *header)
+//是否启用对表的排序，并立即使用当前排序部分和顺序触发对sortByColumn()的调用  
+void setSortingEnabled(bool enable)
+//将(row, column)处的表元素的span设置为(rowSpanCount, columnSpanCount)指定的行数和列数。(合并单元格)      
+void setSpan(int row, int column, int rowSpanCount, int columnSpanCount)
+//是否在适当的时候换行文本
+void setWordWrap(bool on)
+    
+//获取头视图
+QHeaderView *horizontalHeader() const
+QHeaderView *verticalHeader() const
+```
+
+### QTreeView
+
+```cpp
+//是否应该使用所有列显示键盘焦点(一行中的所有列都有焦点)  
+void setAllColumnsShowFocus(bool enable)
+//是否启用展开和折叠动画    
+void setAnimated(bool enable)
+//设置行隐藏    
+void setRowHidden(int row, const QModelIndex &parent, bool hide)    
+//设置列隐藏
+void setColumnHidden(int column, bool hide)
+//设置列宽度    
+void setColumnWidth(int column, int width)
+//将索引代表的项设置为折叠项或展开项  
+void setExpanded(const QModelIndex &index, bool expanded)
+//设置用户是否可以通过双击展开或折叠项。(默认为true，但是请先禁用编辑)  
+void setExpandsOnDoubleClick(bool enable)
+//是否显示时项的第一列数据跨越所有列，为true即只显示第一列数据，且占用所有列的位置，为false则显示所有列数据    
+void setFirstColumnSpanned(int row, const QModelIndex &parent, bool span)
+//设置头视图    
+void setHeader(QHeaderView *header)
+//设置头是否隐藏    
+void setHeaderHidden(bool hide)
+//此属性保存以树视图中每个级别的项目的像素为单位的缩进。 对于顶级项，缩进指定从视口边缘到第一列中的项的水平距离; 对于子项，它指定它们从父项的缩进。 调用settinentation()将停止更新，调用resettinentation()将恢复默认行为。      
+void setIndentation(int i)
+//用户是否可以交互展开和折叠项，默认为true
+void setItemsExpandable(bool enable)
+//此属性包含是否显示用于展开和折叠顶级项的控件,这可以使单个层次的树结构看起来像一个简单的项目列表。    
+void setRootIsDecorated(bool show)
+//启用排序，最好在所有项插入之后启用排序
+void setSortingEnabled(bool enable)
+//这指定树结构应该放在逻辑索引索引处。 如果设置为-1，那么树将始终遵循视觉索引0 (展开树的那个箭头的位置)  
+void setTreePosition(int index)
+//该属性用于保存树视图中的所有项是否具有相同的高度，只有确保视图中的所有项具有相同的高度时，该属性才应该设置为true。 这使视图能够进行一些优化。    
+void setUniformRowHeights(bool uniform)
+//如果此属性为true，则项目文本将在需要换行时换行;    
+void setWordWrap(bool on)
 ```
 

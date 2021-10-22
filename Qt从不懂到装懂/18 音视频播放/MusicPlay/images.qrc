@@ -1,0 +1,20 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/mute.png</file>
+        <file>images/mute-hover.png</file>
+        <file>images/next.png</file>
+        <file>images/next-hover.png</file>
+        <file>images/pause.png</file>
+        <file>images/pause-hover.png</file>
+        <file>images/play.png</file>
+        <file>images/play-hover.png</file>
+        <file>images/playlist.png</file>
+        <file>images/playlist-hover.png</file>
+        <file>images/pre.png</file>
+        <file>images/pre-hover.png</file>
+        <file>images/quit.png</file>
+        <file>images/volume.png</file>
+        <file>images/volume-hover.png</file>
+        <file>images/styles.css</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,111 @@
+QWidget
+{
+    background-color: rgba(144, 144, 144,150);
+}
+
+QPushButton
+{
+    border: none;
+    background-color: transparent;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+QPushButton#btnPrevSong
+{
+    image:url(:/images/pre.png);
+}
+QPushButton#btnPrevSong:hover
+{
+    image:url(:/images/pre-hover.png);
+}
+
+QPushButton#btnPlay
+{
+    image:url(:/images/play.png);
+}
+QPushButton#btnPlay:hover
+{
+    image:url(:/images/play-hover.png);
+}
+
+QPushButton#btnNextSong
+{
+    image:url(:/images/next.png);
+}
+QPushButton#btnNextSong:hover
+{
+    image:url(:/images/next-hover.png);
+}
+
+QPushButton#btnVol
+{
+    image:url(:/images/volume.png);
+}
+QPushButton#btnVol:hover
+{
+    image:url(:/images/volume-hover.png);
+}
+
+QPushButton#btnPlaylist
+{
+    image:url(:/images/playlist.png);
+}
+QPushButton#btnPlaylist:hover
+{
+    image:url(:/images/playlist-hover.png);
+}
+
+QPushButton#btnClose
+{
+    image:url(:/images/quit.png);
+    max-width: 16px;
+    max-height: 16px;
+    min-width: 16px;
+    min-height: 16px;
+}
+QPushButton#btnClose:hover
+{
+    background-color: tomato;
+}
+
+
+QListWidget#playlist
+{
+    background-color: rgba(232, 232, 232, 123);
+}
+
+QSlider
+{
+    background-color: transparent;
+}
+
+QSlide::groove:horizontal
+{
+    border: 1px solid skyblue;
+    background-color: skyblue;
+    height: 10px;
+    border-radius: 5px;
+}
+
+QSlider::handle:horizontal
+{
+	background: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0.7 white,stop:0.8 rgb(143,212,255));
+    width: 20px;
+    border-radius: 10px;    
+    margin-top: -5px;
+    margin-bottom: -5px;
+}
+QSlider::sub-page:horizontal 
+{
+    background: #999;
+    margin: 5px;
+    border-radius: 5px;
+}
+ 
+QSlider::add-page:horizontal 
+{
+    background: #666;
+    margin: 5px;
+    border-radius: 5px;
+}

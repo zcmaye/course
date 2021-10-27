@@ -101,7 +101,9 @@ GPL 是什么都要开源，这对商业软件应用是不利的，所以诺基�
 
 # 3.Qt Creator
 
-[安装教程](https://mp.weixin.qq.com/s/n58OskK1ldmelCnRXPgOCg)
+[安装文档教程](https://mp.weixin.qq.com/s/n58OskK1ldmelCnRXPgOCg)
+
+[安装视频教程](https://www.bilibili.com/video/BV1r54y1G7m4/)
 
 Qt Creator是跨平台的 Qt IDE， Qt Creator 是 Qt 被 Nokia收购后推出的一款新的轻量级集成开发环境（IDE）。此 IDE 能够跨平台运行，支持的系统包括 Linux（32 位及 64 位）、Mac OS X 以及 Windows。
 

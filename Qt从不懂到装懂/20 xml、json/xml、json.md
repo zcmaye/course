@@ -51,3 +51,5 @@ XML声明是XML文档的第一句，其格式如下：
 + 6、所有的空标记也必须被关闭
 
 空标记是指标记对之间没有内容的标记，比如“”等标记。在XML中，规定所有的标记必须有结束标记。 
+
+[xml&json](https://www.cnblogs.com/SanMaoSpace/p/3139186.html)

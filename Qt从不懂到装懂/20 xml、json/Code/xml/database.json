@@ -1,0 +1,8 @@
+{
+    "HostName": "localhost",
+    "Port": 3306,
+    "test": {"name":"顽石"},
+    "Username": "root",
+    "Password": "123456789",
+    "DatabaseName": "Maye"
+}

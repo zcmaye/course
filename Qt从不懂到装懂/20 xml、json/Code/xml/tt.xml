@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui effect="描述界面">
+    <widget class="QWidget" name="MainWindow">
+        <!--helo-->
+        <property name="property">
+            <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>640</width>
+                <height>480</height>
+            </rect>
+        </property>
+    </widget>
+</ui>

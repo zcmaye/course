@@ -304,4 +304,48 @@
   }
   ```
 
-  
+
+![image-20211029211110029](assets/image-20211029211110029.png)
+
+```cpp
+int main()
+{
+	int num = 0;
+	printf("inputNum:");
+	scanf("%d", &num);
+	int res = 0;
+	for (size_t i = 0; i < num; i++)
+	{
+		for (size_t k = 0; k < num; k++)
+		{
+			if (i == 0 || i == num-1 || k == 0 || k == num-1)
+			{
+				if (k == 0 && i != 0)
+				{
+					res = num * 4 - 3 - i;
+				}
+				else if (k == num-1)
+				{
+					res = num + i;
+				}
+				else if (i == num-1)
+				{
+					res = num * 3 - 2 - k;
+				}
+				else
+				{
+					res++;
+				}
+				printf("%3d ", res);
+			}
+			else
+			{
+				printf("    ");
+			}
+		}
+		printf("\n");
+	}
+	return 0;
+}
+```
+

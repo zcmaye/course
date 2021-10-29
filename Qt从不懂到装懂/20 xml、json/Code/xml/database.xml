@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <HostName>localhost</HostName>
+    <Port>
+        <a>3388</a>
+        <fuck>3306</fuck>
+    </Port>
+    <UserName>root</UserName>
+    <PassWord>123456789</PassWord>
+    <DatabaseName>Maye</DatabaseName>
+</root>

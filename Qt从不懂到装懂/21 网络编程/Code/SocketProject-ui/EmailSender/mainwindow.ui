@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QWidget" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>473</width>
+    <height>577</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget
+{
+	
+	background-color: rgb(255, 255, 255);
+}
+
+QWidget#titleWidget
+{	
+	border-top-left-radius:5px;
+	border-top-right-radius:5px;
+	background-color: rgb(64,64,64);
+}
+QWidget#titleWidget QPushButton,QWidget#titleWidget QLabel
+{	
+	background-color:transparent;
+	color:white;
+	font:normal 13px &quot;微软雅黑&quot;;
+}
+
+QPushButton#btnMin
+{
+	image: url(:/images/min.png);
+}
+
+QPushButton#btnClose
+{
+	image: url(:/images/quit.png);
+}
+
+QPushButton#btnMax
+{
+	image: url(:/images/max.png);
+}
+
+QPushButton#btnMin:hover,QPushButton#btnMax:hover,QPushButton#btnClose:hover
+{
+	background-color: rgba(208, 210, 213,200);
+}
+
+
+QLineEdit
+{
+	border:none;
+	border-bottom:1px solid rgb(236,239,241);
+	min-height:30px;
+	color:rgb(30,30,30);
+	font:normal 15px &quot;楷体&quot;;
+}
+QTextEdit
+{
+	border:none;
+	color:rgb(30,30,30);
+	font:normal 15px &quot;楷体&quot;;
+}
+
+QPushButton
+{
+	border:none;
+	border-radius:5px;
+	min-width:25px;
+	min-height:25px;
+	max-width:25px;
+	max-height:25px;
+}
+QPushButton:hover
+{
+	background-color: rgb(242,242,242);
+}
+
+QPushButton#btnSend
+{
+	min-width:100px;
+	min-height:35px;
+	max-width:100px;
+	max-height:35px;
+	
+	background-color: rgb(26,115,232);
+	color:white;
+	font:bold 15px &quot;宋体&quot;;
+}
+QPushButton#btnSend:hover
+{
+	background-color: rgb(41,123,230);
+}
+
+QPushButton#btnAddatt
+{
+	image: url(:/images/att.png);
+}
+
+QPushButton#btnAddatt:hover
+{
+	image: url(:/images/att-hover.png);
+}
+
+QPushButton#btnAddImage
+{
+	image: url(:/images/image.png);
+}
+
+QPushButton#btnAddImage:hover
+{
+	image: url(:/images/image-hover.png);
+}
+
+
+
+
+</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QWidget" name="titleWidget" native="true">
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>发送新邮件</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Expanding</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>270</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnMin">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnMax">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnClose">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="lineEdit">
+     <property name="placeholderText">
+      <string>收件人</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="lineEdit_2">
+     <property name="placeholderText">
+      <string>主题</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTextEdit" name="textEdit">
+     <property name="placeholderText">
+      <string>正文</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QWidget" name="widget_2" native="true">
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QPushButton" name="btnSend">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>35</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>35</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>发送</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnAddatt">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnAddImage">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>266</width>
+          <height>32</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

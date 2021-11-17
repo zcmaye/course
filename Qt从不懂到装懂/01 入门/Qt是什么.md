@@ -105,6 +105,20 @@ GPL 是什么都要开源，这对商业软件应用是不利的，所以诺基�
 
 [安装视频教程](https://www.bilibili.com/video/BV1r54y1G7m4/)
 
+## 安装之后添加组件
+
+1，找到Qt安装目录中的维护工具MaintenanceTool.exe
+
+![image-20211118005956922](assets/image-20211118005956922.png)
+
+2，添加国内源
+
+手动添加储存库要定位一个储存有***\*QT在线安装镜像的地址\****，这可难坏我了，但是经过不懈努力还是被我找到了（网址：http://download.qt.io/static/mirrorlist/）这个网站，显示了各国的qt镜像站点，中国有四个，我用的是中科大的站，点击HTTP会进入一个网络文件夹。
+
+![image-20211118010214312](assets/image-20211118010214312.png)
+
+然后依次进入/online/qtsdkrepository/windows_x86/root/qt/ 最终的文件夹显示如下，在这个界面**复制一下当前地址框地址**
+
 Qt Creator是跨平台的 Qt IDE， Qt Creator 是 Qt 被 Nokia收购后推出的一款新的轻量级集成开发环境（IDE）。此 IDE 能够跨平台运行，支持的系统包括 Linux（32 位及 64 位）、Mac OS X 以及 Windows。
 
 + <font color="red">使用QtCreator创建的项目目录中不能包含中文和空格</font>

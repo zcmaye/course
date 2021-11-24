@@ -37,6 +37,8 @@ JSON是一个序列化的**对象**或**数组**。
   {"city":["长沙","南京","北京"]}
   ```
 
+[json在线解析和格式化](https://www.json.cn/)
+
 # cJson下载、配置
 
 cJSON是C语言中的一个JSON编解码器，非常轻量级，代码只有千把行，代码的可读性也很好，很适合作为C语言项目进行学习。
@@ -72,6 +74,48 @@ output: cjson version:1.7.15
 ```
 
 # cJson使用
+
+有如下json数据，我们学习如何解析它：
+
+```json
+{
+    "id":100,
+    "username":"maye",
+    "password":"123456",
+    "online":false
+}
+```
+
+首先我们从文件中获取json数据：
+
+```cpp
+const char* jsonFromFile(const char* filename)
+{
+	FILE* fp = fopen(filename, "r");
+	if (!fp)
+	{
+		return NULL;
+	}
+	fseek(fp, 0, SEEK_END);
+	long len = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	char* buf = calloc(len+1, sizeof(char));
+	fread(buf, sizeof(char), len, fp);
+
+	fclose(fp);
+	return buf;
+}
+int main()
+{
+    const char* jsondata = jsonFromFile("test.json");
+	printf("%s\n", jsondata);
+    cJSON* root = cJSON_Parse(jsondata);	//解析json数据
+	free(jsondata);							//释放内存
+}
+```
+
+
 
 
 

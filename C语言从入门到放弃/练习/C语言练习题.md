@@ -349,3 +349,105 @@ int main()
 }
 ```
 
+猴子选大王:有N只猴子选大王，先从头到尾1~3开始报数，报到3的猴子退出﹐报至尾后﹐再从头接着报﹐同样是1~3报数﹐报到3的猴子退出，…，最后剩下的一只猴子即为大王。输入N﹐求猴子大王的编号。
+
+```cpp
+int main()
+{
+    int n = 0;
+    printf("输入猴子数量>");
+    if (!scanf_s("%d", &n))
+        return -1;
+    int* arr = calloc(n, sizeof(int));
+    for (int i = 0; i < n; i++)
+    {
+        arr[i] = rand()%100;
+    }
+    //开始报数
+    int num = 1;    //当前报数
+    int cnt = 0;    //有几个猴子退出了
+    //循环遍历数组，直到只剩一个猴子
+    for (int i = 0; cnt != n-1; i = (i+1)%n)
+    {
+        if (arr[i] != -1)   //剩下的猴子报数
+        {
+            if (num == 3)
+            {
+                arr[i] = -1;
+                num = 0;    //下面会自增一次，所以从0开始
+                cnt++;
+            }
+            ++num;          
+        }
+    }
+    for (size_t i = 0; i < n; i++)
+    {
+        if (arr[i] != -1)
+        {
+            printf("最终%d号为猴子王\n", arr[i]);
+            break;
+        }
+    }
+    free(arr);
+    return 0;
+}
+```
+
+对数组进行调整，规则是把偶数放在数组的左边，把奇数放到数组的右边。
+
+如：调整之前的数组：12 31 17 45 68 40 57 43 25 78
+
+​       调整之后的数组：12 78 40 68 45 17 57 43 25 31
+
+```cpp
+#include<stdio.h>
+void adjust(int arr[], int len)
+{
+    int left = 0;
+    int right = len-1;
+    while (left <= right)
+    {
+        if (arr[left] % 2 == 0)
+        {
+            left++;
+        }
+        else
+        {
+            while (arr[right] % 2 != 0)
+            {
+                right--;
+            }
+            if (right <= left)
+                break;
+            int temp = arr[left];
+            arr[left] = arr[right];
+            arr[right] = temp;
+            right--;
+        }
+        if (arr[right] % 2 != 0)
+        {
+            right--;
+        }
+    }
+}
+void print(int arr[], int len)
+{
+    for (int i = 0; i < len; i++)
+    {
+        printf("%d ", arr[i]);
+    }
+    printf("\n");
+}
+int main()
+{
+    int arr[] = { 12,31,17,45,68,40,57,43,25,78 };
+    printf("调整之前的数组> ");
+    print(arr, 10);
+    adjust(arr, 10);
+    printf("调整之后的数组> ");
+    print(arr, 10);
+
+    return 0;
+}
+```
+

@@ -86,6 +86,8 @@ output: cjson version:1.7.15
 }
 ```
 
+## 从文件读取json数据
+
 首先我们从文件中获取json数据：
 
 ```cpp
@@ -112,10 +114,110 @@ int main()
 	printf("%s\n", jsondata);
     cJSON* root = cJSON_Parse(jsondata);	//解析json数据
 	free(jsondata);							//释放内存
+    //TODO
+    cJSON_free(root);
+    return 0;
 }
 ```
 
 
+
+## 获取cJSON文本
+
+在解析或者生成json数据之后，如果需要从cJSON实体中获得文本，可以使用以下四种方式。
+
+#### cJSON_Print
+
+函数原型：`char * cJSON_Print(const cJSON *item);`
+
+该函数将一个cJSON实体渲染为字符串(有格式)，**注意：返回的字符串需要手动释放内存**
+
+```cpp
+char* cjson = cJSON_Print(root);
+printf("%s\n", cjson);
+cJSON_free(cjson);	//释放
+```
+
+![image-20211208221422199](assets/image-20211208221422199.png)
+
+#### cJSON_PrintUnformatted
+
+函数原型：`char * cJSON_PrintUnformatted(const cJSON *item);`
+
+该函数将一个cJSON实体渲染为字符串(无格式，所占内存更小，便于传输)，**注意：返回的字符串需要手动释放内存**
+
+```cpp
+cjson = cJSON_PrintUnformatted(root);
+printf("%s\n", cjson);
+cJSON_free(cjson);  //释放
+```
+
+![image-20211208221531920](assets/image-20211208221531920.png)
+
+#### cJSON_PrintBuffered
+
+函数原型：`char * cJSON_PrintBuffered(const cJSON *item, int prebuffer, cJSON_bool fmt)`
+
+使用缓冲策略将一个cJSON实体呈现为文本。 Prebuffer是对最终大小的猜测。 “猜得好”减少了再分配，提升了效率。 Fmt  指定是否格式化json数据。**注意：返回的字符串需要手动释放内存**
+
+```cpp
+cjson = cJSON_PrintBuffered(root, strlen(jsondata) + 5, cJSON_True);
+printf("%s\n", cjson);
+cJSON_free(cjson);  //释放
+```
+
+
+
+#### cJSON_PrintPreallocated
+
+使用已经在内存中分配的具有给定长度的缓冲区将一个cJSON实体渲染为文本。 成功时返回1，失败时返回0。  **注意：返回值为是否渲染成功，使用缓冲区之前先进行判断**
+
+```cpp
+char buf[1024] = { 0 };		//预先准备缓冲区
+cJSON_bool ret = cJSON_PrintPreallocated(root, buf, sizeof(buf), cJSON_True);
+if (ret)
+{
+	printf("%s\n", buf);
+}
+//这里就不需要释放了
+```
+
+## json数据写入文件
+
+获得json文本之后，我们就可把它保存起来了，同样使用文件操纵，非常滴简单！
+
+```cpp
+//把json数据写入文件，返回写入成功的字节数
+int jsonSaveFile(const char* filename,const char* cjson)
+{
+	FILE* fp = fopen(filename, "w");
+	if (!fp)
+	{
+		return NULL;
+	}
+	size_t len = fwrite(cjson, sizeof(char), strlen(cjson), fp);
+	fclose(fp);
+	return len;
+}
+int main()
+{
+	const char* jsondata = jsonFromFile("test.json");
+	cJSON* root = cJSON_Parse(jsondata);	//解析json数据
+	free(jsondata);							//释放内存
+
+	//将一个cJSON实体渲染为字符串(无格式，所占内存更小，便于传输)，注意：同上
+	cjson = cJSON_PrintUnformatted(root);
+	printf("%s\n", cjson);
+	jsonSaveFile("format.json", cjson);
+	cJSON_free(cjson);
+
+	cJSON_free(root);
+	
+	return 0;
+}
+```
+
+结果：![image-20211208222520914](assets/image-20211208222520914.png)
 
 
 

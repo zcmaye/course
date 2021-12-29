@@ -221,6 +221,251 @@ int main()
 
 
 
+# cJson数据解析
+
+### 1, cJson核心结构体
+
+ cJSON的核心结构体就是一个cJSON，理解了这个结构体，基本上对cJSON的使用就有了个基本概念了。该结构体具体定义如下：
+
+```c
+typedef struct cJSON
+{
+    struct cJSON *next;		//双向链表的前后向指针
+    struct cJSON *prev;
+    
+    struct cJSON *child;	//指向数组或对象的子链
+
+    int type;				//元素类型
+
+    char *valuestring;		//如果元素是字符串类型，则直接代表值
+
+    int valueint;			//已经弃用
+
+    double valuedouble;		//数值(包含小数和整数)
+
+    char *string;			//key的名称
+} cJSON;
+```
+
+#### 说明：
+
+1、cJSON是使用链表来存储数据的，其访问方式很像一颗树。每一个节点可以有兄弟节点，通过next/prev指针来查找，它类似双向链表；每个节点也可以有孩子节点，通过child指针来访问，进入下一层。只有节点是对象或数组时才可以有孩子节点。
+
+2、type是键（key）的类型，一共有7种取值，分别是：False，Ture，NULL，Number，String，Array，Object。
+
+​	 若是Number类型，则valuedouble中存储着值。访问valuedouble，可以得到值。
+
+​	 若是String类型的，则valuestring中存储着值，可以访问valuestring得到值。
+
+3、string中存放的是这个节点的名字，可理解为key的名称。
+
+### 2，解析key/value
+
+首先是一个简单的键值对字符串，要解析的目标如下：
+
+```json
+{
+    "name":"maye"
+}
+```
+
+要进行解析，也就是要分别获取到键与值的内容。我们很容易就能看出键为name，值为maye，可是，使用cJSON怎么解析呢？ 
+
+对于这个简单的例子，只需要调用cJSON的三个接口函数就可以实现解析了，这四个函数的原型如下：
+
+```c
+cJSON * cJSON_Parse(const char *value);
+cJSON * cJSON_GetObjectItem(const cJSON * const object, const char * const string);
+char * cJSON_GetStringValue(const cJSON * const item);
+void cJSON_Delete(cJSON *item)
+```
+
+**面按解析过程来描述一次：**
+
+1. 首先调用cJSON_Parse()函数，解析JSON数据包，并按照cJSON结构体的结构序列化整个数据包。使用该函数会通过malloc()函数在内存中开辟一个空间，使用完成需要手动释放。
+   + json_string表示json数据，可以从文件中读取，也可以直接用数组存储。
+
+```c 
+cJSON* root=cJSON_Parse(json_string); 
+```
+
+
+
+2. 调用cJSON_GetObjectItem()函数，可从cJSON结构体中查找某个子节点名称（键名称），如果查找成功可把该子节点序列化到cJSON结构体中。
+
+```c
+cJSON* item=cJSON_GetObjectItem(root,"name"); 
+```
+
+
+
+3. 如果需要使用cJSON结构体中的内容，可通过cJSON结构体中的valuedouble和valuestring取出有价值的内容（即键的值）。
+   + 本例子中，我们直接访问 item->valuestring 就获取到 "maye" 的内容了。
+   + 同时cJson给我们提供了函数用来获取字符串和数值(`cJSON_GetStringValue `,`cJSON_GetNumberValue`)
+
+```c
+	cJSON* item = cJSON_GetObjectItem(root, "name");
+	if (item)
+	{
+		puts(cJSON_GetStringValue(item));
+        //或
+        item->valuestring;
+	}
+```
+
+
+
+（4）       通过cJSON_Delete()，释放cJSON_Parse()分配出来的内存空间。
+
+```c 
+cJSON_Delete(root);
+```
+
+这样就完成了一次cJSON接口调用，实现了解析工作。使用起来其实也很简单的啊。
+
+### 3，解析对象
+
+接下来，我们来个复杂一点的，解析一个对象，要解析的目标如下：
+
+```cpp
+{
+    "student":
+    {
+        "name":"maye",
+        "age":18,
+        "email":"zcmaye@gmail.com",
+        "isMarried":false               
+    }
+}
+```
+
+看起来比一个键值对复杂多了，我们又需要学习新的接口函数了吗？为了更严谨，我们对key的类型进行判断即可，其他的一样。
+
+```c
+void parserObject(const char* json)
+{
+	//1，将json数据解析成为cjson对象
+	cJSON*root = cJSON_Parse(json);
+	//2，调用cJSON_GetObjectItem()函数，获取到对象student
+	cJSON* objItem = cJSON_GetObjectItem(root,"student");
+	if (cJSON_IsObject(objItem))	//如果查找到的确实是个对象，不是其他(比如字符串，值...)
+	{
+		//对我们刚取出来的对象student，多次调用cJSON_GetObjectItem()函数，来获取对象的成员。此时要注意，不同的成员，访问的方法不一样：
+		cJSON* item = NULL;
+		item = cJSON_GetObjectItem(objItem, "name");
+		printf("name:%s\n", cJSON_GetStringValue(item));
+
+		item = cJSON_GetObjectItem(objItem, "age");
+		printf("age:%d\n",(int)cJSON_GetNumberValue(item));
+
+		item = cJSON_GetObjectItem(objItem, "email");
+		printf("name:%s\n", item->valuestring/*cJSON_GetStringValue(item)*/);
+
+		item = cJSON_GetObjectItem(objItem, "isMarried");
+		//下面if中两种方法都可判断bool类型的值
+		if (cJSON_IsTrue(item) || item->type == cJSON_True)
+		{
+			printf("isMarried:%s\n","true");
+		}
+		else
+		{
+			printf("isMarried:%s\n", "false");
+		}	
+	}
+    cJSON_Delete(root);
+}
+```
+
+
+
+### 4，解析数组
+
+最后，我们来个更复杂一些的，来解析一个数组，数组的成员是对象！要解析的JSON串如下：
+
+```c
+{
+	"students":
+	[
+		{
+			"name":"maye",
+			"age" : 18,
+			"email" : "zcmaye@gmail.com",
+			"isMarried" : false
+		},
+		{
+			"name":"顽石",
+			"age" : 20,
+			"email" : "xxxx@gmail.com",
+			"isMarried" : false
+		},
+		{
+			"name":"jack",
+			"age" : 26,
+			"email" : "jack@qq.com",
+			"isMarried" : true
+		}
+	]
+}
+```
+
+ 此时，我们又需要学习新的接口了，一个是获取数组长度，一个是取数组成员，函数原型如下：
+
+```c
+int    cJSON_GetArraySize(cJSON *array);
+cJSON*cJSON_GetArrayItem(cJSON *array,int item); 
+```
+
+
+
+```c
+//解析student对象
+void parserStudent(cJSON* item)
+{
+	if (!cJSON_IsObject(item))
+		return;
+	cJSON* subitem = NULL;
+	subitem = cJSON_GetObjectItem(item, "name");
+	printf("name:%s\n", cJSON_GetStringValue(subitem));
+
+	subitem = cJSON_GetObjectItem(item, "age");
+	printf("age:%d\n", (int)cJSON_GetNumberValue(subitem));
+
+	subitem = cJSON_GetObjectItem(item, "email");
+	printf("name:%s\n", subitem->valuestring/*cJSON_GetStringValue(subitem)*/);
+
+	subitem = cJSON_GetObjectItem(item, "isMarried");
+	//下面if中两种方法都可判断bool类型的值
+	if (cJSON_IsTrue(subitem) || subitem->type == cJSON_True)
+	{
+		printf("isMarried:%s\n", "true");
+	}
+	else
+	{
+		printf("isMarried:%s\n", "false");
+	}
+}
+//解析数组
+void parserArray(const char* json)
+{
+	cJSON* root = cJSON_Parse(json);
+	cJSON* arrayitem = cJSON_GetObjectItem(root, "students");
+	if (cJSON_IsArray(arrayitem))
+	{
+		//获取数组大小
+		int len = cJSON_GetArraySize(arrayitem);
+		//遍历数组的每个元素
+		for (int i = 0; i < len; i++)
+		{
+			cJSON* item = cJSON_GetArrayItem(arrayitem, i);
+			//解析数组的每个元素
+			printf("\n%d student obj\n",i);
+			parserStudent(item);
+		}
+	}
+	cJSON_Delete(root);
+}
+```
+
 
 
 

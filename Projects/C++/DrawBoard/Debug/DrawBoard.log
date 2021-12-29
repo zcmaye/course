@@ -1,0 +1,4 @@
+﻿  ShapeGraffiti.cpp
+E:\GitHub\course-master\Projects\C++\DrawBoard\ShapeGraffiti.cpp(16,20): warning C4018: “<”: 有符号/无符号不匹配
+E:\GitHub\course-master\Projects\C++\DrawBoard\ShapeGraffiti.cpp(54,23): warning C4018: “<”: 有符号/无符号不匹配
+  DrawBoard.vcxproj -> E:\GitHub\course-master\Projects\C++\DrawBoard\Debug\DrawBoard.exe

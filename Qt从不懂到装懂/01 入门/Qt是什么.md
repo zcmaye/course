@@ -119,6 +119,8 @@ GPL 是什么都要开源，这对商业软件应用是不利的，所以诺基�
 
 然后依次进入/online/qtsdkrepository/windows_x86/root/qt/ 最终的文件夹显示如下，在这个界面**复制一下当前地址框地址**
 
+## 编码问题
+
 Qt Creator是跨平台的 Qt IDE， Qt Creator 是 Qt 被 Nokia收购后推出的一款新的轻量级集成开发环境（IDE）。此 IDE 能够跨平台运行，支持的系统包括 Linux（32 位及 64 位）、Mac OS X 以及 Windows。
 
 + <font color="red">使用QtCreator创建的项目目录中不能包含中文和空格</font>
@@ -278,7 +280,7 @@ pro是Qt的工程文件，这个文件是给qmake用来生成Makefile用的。
 | .pro中变量     | 含义                                               | 示例                                      |
 | :------------- | :------------------------------------------------- | :---------------------------------------- |
 | TEMPLATE       | 模板变量指定生成makefile(app:应用程序/lib:库)      | TEMPLATE = app                            |
-| QT             | 使用到的Qt定义的类(core/gui/widgets...)            | QT += widgtes                             |
+| QT             | 指定加载的Qt模块(core/gui/widgets...)              | QT += widgtes                             |
 | DESTDIR        | 指定生成的应用程序放置的目录                       | DESTDIR += ../bin                         |
 | TARGET         | 指定生成的应用程序名                               | TARGET = hello                            |
 | HEADERS        | 工程中包含的头文件                                 | HEADERS += hello.h                        |
@@ -687,7 +689,7 @@ public:
 ## 9.虚函数和纯虚函数
 
 虚函数：有实际定义的，允许派生类对他进行覆盖式的替换，virtual修饰。
-		纯虚函数：没有实际定义的虚函数就是纯虚函数,子类必须自己实现。
+纯虚函数：没有实际定义的虚函数就是纯虚函数,子类必须自己实现。
 
 虚函数的优点是可以预留接口(API)。
 

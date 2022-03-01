@@ -468,11 +468,103 @@ void parserArray(const char* json)
 
 
 
+# cJson数据生成
+
+### 1，生成数据流程
+
+如果要生成如下的Json串：
+
+```c
+{
+	"name":"maye",
+	 "age" : 18,
+	 "email" : "zcmaye@gmail.com",
+	 "isMarried" : false,
+     "family":["爸爸","妈妈","爷爷","奶奶"]
+},
+```
+
++ 首先调用cJSON_ CreateObject ()函数，创建一个JSON对象，之后便可向这个对象中添加string或int等内容的数据项了。使用该函数会通过malloc()函数在内存中开辟一个空间，使用完成需要手动释放。
+
+```c
+//创建一个cjson对象
+cJSON* root = cJSON_CreateObject();
+```
+
++ 添加数据
+
+  + 调用cJSON_CreateString ()函数，由一个字符串生成一个cJSON的数据项，并将生成的数据项与其键值（"name"）一起添加到root对象中。
+
+  ```c
+  cJSON* item = cJSON_CreateString("Maye");
+  cJSON_AddItemToObject(root,"name",item);
+  ```
+
+  
+
+  + 调用cJSON_AddStringToObject()函数，直接把键值对添加到root对象中。
+
+  ```c
+  cJSON_AddStringToObject(root, "name", "maye");
+  ```
 
 
-# Cjson类型和函数
 
-| 函数                                                   | 描述                        |
-| ------------------------------------------------------ | --------------------------- |
-| <font color='green'>const char* cJSON_Version()</font> | 以字符串形式返回cJSON的版本 |
++ 其实到这一步，我们在内存中的cJSON对象就已经构建完成了，后面是展示结果了。
+
+  + 将cJSON对象的内容解析为字符串，并展示出来。
+
+  ```c
+  char * json =cJSON_Print(root);
+  puts(json);
+  ```
+
+  + 通过cJSON_Delete()，释放cJSON_CreateObject ()分配出来的内存空间。
+
+  ```c
+  cJSON_Delete(root);
+  ```
+
+  +  释放cJSON_Print ()分配出来的内存空间。
+
+  ```c
+  cJSON_free(json);
+  ```
+
+这样就完成了一次cJSON接口调用，实现了字符串的创建工作。
+
+### 2，创建结构体数组的JSON串
+
+创建数组的json传稍微复杂一点，比如要生成如下数组json串。
+
+```c
+{
+     "family":["爸爸","妈妈","爷爷","奶奶"]
+}
+```
+
++ 先添加一个数组到指定的json对象中，然后向数组添加项
+
+```c
+cJSON * arrItem = cJSON_AddArrayToObject(root, "family");
+cJSON_AddItemToArray(arrItem, cJSON_CreateString("爸爸"));
+```
+
++ 或者使用已经存在的C语言数组快捷创建一个json 数组对象。
+
+```c
+const char* fam[] = { "爸爸","妈妈","爷爷","奶奶" };
+cJSON* item = cJSON_CreateStringArray(fam, 4);
+cJSON_AddItemToObject(root, "fam", item);
+```
+
+
+
+# 其他
+
+一般的json文件是有格式的，这样才方便我们阅读，但是在网络上传输时，数据越小越好，就需要压缩了(即无格式json数据)。
+
+```c
+void cJSON_Minify(char *json);
+```
 

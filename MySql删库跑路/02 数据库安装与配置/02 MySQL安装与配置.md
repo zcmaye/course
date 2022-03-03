@@ -134,3 +134,7 @@ alter user root@localhost identified by '123456';
 
 OK!连接成功~
 
+# Navicat 15 for MySQL
+
+**Navicat 15 for MySQL **是一款针对MySQL数据库而开发的第三方MySQL管理工具，该软件可以用于 MySQL 数据库服务器版本 3.21 或以上的和 MariaDB 5.1 或以上。能够同时连接 MySQL 和 MariaDB 数据库，并与 Amazon RDS、Amazon Aurora、Oracle Cloud、Microsoft Azure、阿里云、腾讯云和华为云等云数据库兼容，支持无缝数据迁移、简单的SQL编辑、智能数据库设计、高级安全连接等功能，为数据库管理、开发和维护提供了一款直观而强大的图形界面，是管理和开发 MySQL 或 MariaDB 的理想解决方案。
+

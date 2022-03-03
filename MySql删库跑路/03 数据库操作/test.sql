@@ -25,18 +25,18 @@ CREATE TABLE IF NOT EXISTS emp (
 	job			VARCHAR(9),
 	mgr			SMALLINT,
 	hiredate	DATE,
-	sal			DECIMAL(7,2),
+	sal			SMALLINT,
 	comm		SMALLINT,
 	deptno		SMALLINT  REFERENCES DEPT );
 CREATE TABLE IF NOT EXISTS bonus (
 	enamE		VARCHAR(10),
-	job			VARCHAR(9) ,
-	sal			DECIMAL(7,2),
+	job			VARCHAR(9)  ,
+	sal			MEDIUMINT,
 	comm		SMALLINT ) ;
 CREATE TABLE IF NOT EXISTS salgrade ( 
-	grade		SMALLINT,
-	losal		SMALLINT,
-	hisal		SMALLINT );
+	grade		INT,
+	losal		INT,
+	hisal		INT );
 
 -- 插入测试数据 —— dept
 INSERT INTO dept VALUES	(10,'ACCOUNTING','NEW YORK');

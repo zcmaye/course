@@ -1,3 +1,19 @@
+# MySQL简介
+
+MySQL 的历史最早可以追溯到1979年，Monty Widenius用BASIC设计了一个报表工具，过了不久，又将此工具使用C语言重写，移植到UNIX平台，当时只是一个底层的面向报表的存储引擎。
+
+1985年，三个瑞典人 David Axmark、Allan Larsson和 Michael Widenius 成立了一家公司，这就是 MySQLAB 的前身，这个公司最初并不是为了开发数据库产品，而是在实现想法的过程中需要一个数据库并希望能够使用开源的产品。但在当时并没有一个合适的选择。因此自己设计了一个利用索引顺序存取数据的方法，也就是ISAM（Indexed Sequential Access Method）存储引擎核心算法的前身。此软件以创始人之一 Michael Widenius 女儿 My 的名字命名。MySQL的 Logo 为海豚标志，如下图所示，海豚代表了速度、动力、精确等 MySQL所拥有的特性。Logo 中海豚名字叫"sakila"，是由来自非洲斯威士兰的开源软件开发者 Ambrose Twebaze 提供的。根据 Ambrose 所说，Sakila来自一种叫 SiSwati 的斯威士兰方言，也是在 Ambrose 的家乡乌干达附近坦桑尼亚的 Arusha 的一个小镇的名字。
+
+![img](assets/mysql.jpg)
+
+MySQL 是一款免费开源、小型、关系型数据库管理系统。随着该数据库功能的不断完善、性能的不断提高，可靠性不断增强。
+
+2000年4月，MySQL对旧的存储引擎进行了整理，命名为 MyISAM。
+
+2001 年，支持事务处理和行级锁存储引擎 InnoDB 被集成到 MySQL 发行版中，该版本集成了MyISAM与 InnoDB存储引擎，MySQL与InnoDB的正式结合版本是4.0。2004年10月，发布了经典的4.1版本。 2005年10月，发布了里程碑的一个版本，MySQL 5.0，在5.0中加入了游标，存储过程，触发器，视图和事务的支持。在 5.0 之后的版本里，MySQL 明确地表现出迈向高性能数据库的发展步伐。MySOL 公司于2008年1月16号被 SUN公司收购，而在2009 年 SUN 又被 Oracle 收购。MySQL的发展前途一片光明。
+
+MySQL 虽然是免费的，但与其他商业数据库一样，具有数据库系统的通用性，提供了数据的存取、增加、修改、删除或更加复杂的数据操作。同时 MySQL 是关系型的数据库系统，支持标准的结构化查询语言，同时 MySQL 为客户端提供了不同的程序接口和链接库，如C、C++、Java、PHP 等。目前 MySQL 被广泛地应用在 Internet 上的中小型网站中。由于其体积小、速度快、总体拥有成本低，尤其是开放源码这一特点，因此许多中小型网站为了降低网站总体拥有成本而选择了MySQL 作为网站数据库。
+
 # MySQL下载与安装
 
 ## 下载 
@@ -134,40 +150,73 @@ alter user root@localhost identified by '123456';
 
 OK!连接成功~
 
-# Navicat 15 for MySQL
+# 安装Navicat 15 for MySQL
 
 **Navicat 15 for MySQL **是一款针对MySQL数据库而开发的第三方MySQL管理工具，该软件可以用于 MySQL 数据库服务器版本 3.21 或以上的和 MariaDB 5.1 或以上。能够同时连接 MySQL 和 MariaDB 数据库，并与 Amazon RDS、Amazon Aurora、Oracle Cloud、Microsoft Azure、阿里云、腾讯云和华为云等云数据库兼容，支持无缝数据迁移、简单的SQL编辑、智能数据库设计、高级安全连接等功能，为数据库管理、开发和维护提供了一款直观而强大的图形界面，是管理和开发 MySQL 或 MariaDB 的理想解决方案。
 
-1.下载Navicat for MySQL 15
+**1.下载Navicat for MySQL 15**
 
-https://www.navicat.com.cn/download/navicat-for-mysql
+[网盘下载 提取码 4ixt](https://pan.baidu.com/s/1eFDCYwjv4H90y6u9dRC6xA )
 
-2.下载激活工具
 
-https://pan.baidu.com/s/1QxxM72CC51lFuOld_GwQlA 提取码 j649
 
-3.安装Mavicat，按步骤安装即可，安装完毕后先不要打开软件，<font style="color:red">断开网络连接</font>，将激活工具复制到Navicat安装路径下，以管理员身份运行。
+**2.下载激活工具**
 
-![image-20211026175741121](assets/image-20211026175741121.png)
+[网盘下载 提取码 09az](https://pan.baidu.com/s/1j2C3qz3zMQc11YUC04l8BQ)
 
-在弹出界面选择Navicat 15 Products选择MySQL，Languages选择Simplefied Chinese 点击Patch，如下：
 
-![image-20211026180022611](assets/image-20211026180022611.png)
+
+**3.安装Navicat**
+
+按步骤安装即可，安装完毕后先不要打开软件，<font style="color:red">断开网络连接，一定要断开！！！</font>
+
+![img](assets/nimg.ws.126.net&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg)
+
+然后将激活工具复制到Navicat安装路径下，如下图所示。
+
+![image-20220304011251073](assets/image-20220304011251073.png)
+
+![image-20220304013011710](assets/image-20220304013011710.png)
+
+以**管理员身份运行激活工具**，在弹出界面选择Navicat 15版本， Products选择MySQL，Languages选择Simplefied Chinese 点击Patch，如下：
+
+![image-20220304011651760](assets/image-20220304011651760.png)
 
 4.打开Navicat，点击注册
 
-![image-20211026180056523](assets/image-20211026180056523.png)
+![image-20220304011730529](assets/image-20220304011730529.png)
 
 5.返回到激活工具界面，点击Generate会自动填写注册码到软件输入框
 
-<img src="D:/BaiduNetdiskDownload/assets/image-20211026180600583.png" alt="image-20211026180600583" style="zoom:80%;" />
+![image-20220304011813684](assets/image-20220304011813684.png)
 
 6.在点击激活按钮，点击手动激活
 
-![image-20211026180656465](assets/image-20211026180656465.png)
+![image-20220304013221667](assets/image-20220304013221667.png)
 
 7.将请求码复制到激活工具的文本框中，点击Generate激活码会自动填写到Navicat激活码文本框中，点击激活即可。
 
 ![img](assets/805178-20200529135324934-1040400855.png)
 
-![image-20211026182443502](assets/image-20211026182443502.png)
+8. 点击激活，弹出激活成功，over！！！
+
+![image-20220304013551376](assets/image-20220304013551376.png)
+
+
+
+# Navicat连接MySQL
+
+1. 在Navicat中新建MySQL连接。
+
+![image-20220304014514537](assets/image-20220304014514537.png)
+
+2. 默认端口3306，单击测试连接按钮，连接成功！最后点击确定即可。
+
+![image-20220304014632075](assets/image-20220304014632075.png)
+
+3. 双击连接名称，即可看到所有数据库。
+
+![image-20220304014923538](assets/image-20220304014923538.png)
+
+好了可以尽情使用它了！！！
+

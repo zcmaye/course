@@ -1,0 +1,16 @@
+1，查询指定字段 ename，job，sal的数据
+select ename,job,sal from emp;
+
+2，查询所有字段
+select empno,ename,job,mgr,hiredate,sal,comm,deptno from emp;
+select * from emp;			#不直观 影响效率 遵循开发规范最好不要写* 吧所有字段写出了，一目了然
+
+3,查询所有员工的职位，并起别名
+select job as '工作' from emp;
+select job '工作' from emp;		#as可以省略
+
+4，查询员工的的职位有哪些(不要重复)
+SELECT DISTINCT job FROM emp;
+
+5，查询 员工工资乘以10之后的结果
+ SELECT ename,sal,sal*10 FROM emp;

@@ -138,3 +138,40 @@ SELECT job,SUM(sal) FROM emp WHERE job!='salesman'
 GROUP BY job
 HAVING SUM(sal)>5000;
 ```
+
+
+
+### 排序查询
+
+1. 根据姓名对员工进行排序(升序)
+
+```mysql
+SELECT * FROM emp ORDER BY ename;
+```
+
+2. 查询入职时间大于1981年6月6日的员工信息，并按照入职时间降序排列
+
+```mysql
+SELECT * FROM emp WHERE hiredate>'1981-6-6' ORDER BY hiredate DESC;
+```
+
+3. 根据工作职位，进行升序排列，职位相同的情况下，再根据入职时间降序排列
+
+```mysql
+SELECT * FROM emp ORDER BY job ASC,hiredate DESC;
+```
+
+4. 查询工资不在1000到2000之间的员工的姓名和工资，工资按降序排列
+
+```mysql
+SELECT * FROM emp WHERE sal NOT BETWEEN 1000 AND 2000 ORDER BY sal DESC;
+```
+
+5. 按工作职位进行分组，查看每个工作职位的人数，工作职位按升序排列
+
+```mysql
+SELECT job,COUNT(*) FROM emp GROUP BY job ORDER BY job ASC;
+```
+
+
+

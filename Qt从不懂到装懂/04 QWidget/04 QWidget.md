@@ -153,7 +153,7 @@ virtual void setVisible(bool visible)
 
 [iconfont图标下载网站](https://www.iconfont.cn/)
 
-+ 一下代码可以通过点击按钮切换并查看所有鼠标的(内置)形状
++ 以下代码可以通过点击按钮切换并查看所有鼠标的(内置)形状
 
 ```cpp
 QPushButton*btn = new QPushButton("切换鼠标形状",this);
@@ -241,19 +241,9 @@ this->setWindowIcon(QIcon("://images/snowBall.png"));
 RC_ICONS += zay.ico
 ```
 
-## 发布程序
+## QWidget槽函数
 
-Qt 官方开发环境使用的动态链接库方式，在发布生成的exe程序时，需要复制一大堆 dll，如果自己去复制dll，很可能丢三落四，导致exe在别的电脑里无法正常运行。因此 Qt 官方开发环境里自带了一个工具：windeployqt.exe(这个文件在Qt安装目录的bin文件下可以找到)
-
-不同的编译器和版本需要使用不同的windeployqt版本打包
-
-以官方 Qt 5.14.2+MinGW32 开发环境为例：
-
-+ 1，通过Qt命令行运行windeployqt工具，开始菜单->Qt 5.14.2->5.4->MinGW 4.9 (32-bit)->Qt 5.14.2 (MinGW 7.3.0 32-bit)
-+ 把需要打包的Qt可执行程序拷贝到一个单独的文件夹里面，然后再把命令行工作目录切换到该文件夹
-+ 最后执行命令`windeployqt maye.exe`
-
-## show,hide,setVisible,setHidden,close 小结
+**show,hide,setVisible,setHidden,close 小结**
 
 + 0，在Qt中如果一定要自己释放对象，官方推荐使用`[slot] void QObject::deleteLater()`来释放对象
 + 1，`[slot] void setVisible(bool visible)` 设置Widget可见或不可见
@@ -375,7 +365,17 @@ w->setWindowState((w->windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
 | Qt::WA_MouseTracking         | 2          | 指示小部件启用了鼠标跟踪。 参见QWidget:: mouseTracking       |
 | Qt::WA_TranslucentBackground | 120        | 指示小部件应该有一个半透明的背景，也就是说，小部件的任何非透明区域都将是半透明的，因为小部件将有一个alpha通道。 设置此标志将导致设置WA_NoSystemBackground。 在Windows上，小部件还需要设置Qt:: framesswindowhint窗口标志。 该标志由小部件的作者设置或清除。 |
 
+## 发布程序
 
+Qt 官方开发环境使用的动态链接库方式，在发布生成的exe程序时，需要复制一大堆 dll，如果自己去复制dll，很可能丢三落四，导致exe在别的电脑里无法正常运行。因此 Qt 官方开发环境里自带了一个工具：windeployqt.exe(这个文件在Qt安装目录的bin文件下可以找到)
+
+不同的编译器和版本需要使用不同的windeployqt版本打包
+
+以官方 Qt 5.14.2+MinGW32 开发环境为例：
+
++ 1，通过Qt命令行运行windeployqt工具，开始菜单->Qt 5.14.2->5.4->MinGW 4.9 (32-bit)->Qt 5.14.2 (MinGW 7.3.0 32-bit)
++ 把需要打包的Qt可执行程序拷贝到一个单独的文件夹里面，然后再把命令行工作目录切换到该文件夹
++ 最后执行命令`windeployqt maye.exe`
 
 # 2. 资源文件 .qrc
 

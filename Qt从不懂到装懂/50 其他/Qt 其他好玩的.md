@@ -66,3 +66,11 @@ connect(newBtn,&QPushButton::clicked,this,[=](bool check)
 
 设置Qt::Tool窗口可以拉伸也有关闭按钮，但是点击关闭按钮，程序并不退出。
 
+
+
+## 代码编辑器库
+
+[Qscitinlla 官网 ](https://qscintilla.com/#home)           
+
+[CSDN](https://blog.csdn.net/weixin_38326893/article/details/80001548)
+

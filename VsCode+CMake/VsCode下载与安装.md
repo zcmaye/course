@@ -60,7 +60,22 @@ MinGW 的全称是：Minimalist GNU on Windows 。它实际上是将经典的开
 
 ![image-20220410154839538](assets/image-20220410154839538.png)
 
+## 1.3 基本使用
 
+先来一段代码，命名为main.c。
+
+```c
+#include<stdio.h>
+
+int main()
+{
+    printf("hello world");
+    getchar();
+    return 0;
+}
+```
+
+在cmd输入命令：`gcc main.c -o hello`
 
 # 2. VS Code
 
@@ -240,6 +255,32 @@ CMake是一个跨平台的安装（[编译](https://baike.baidu.com/item/编译/
 如上图所示，ok，配置成功！！
 
 [VS Code CMake 插件安装](#2.4.3 CMake插件)
+
+## 3.3 基本使用
+
+还是用前面创建的`main.c`文件，先在同级目录中创建`CMakeLists.txt`并写入如下cmake指令。
+
+```cmake
+cmake_minimum_required(VERSION 3.2)
+
+project(hello)
+
+add_executable(hello main.c)
+```
+
++ 内部构建
+
+打开控制台，输入`cmake -G "MinGw Makefiles"`会生成如下文件：
+
+![image-20220412125847956](assets/image-20220412125847956.png)
+
++ 外部构建
+
+```cmake
+cmake -G "MinGW Makefiles" -B build
+```
+
+最后，输入命令`mingw32-make`生成可执行文件。
 
 
 

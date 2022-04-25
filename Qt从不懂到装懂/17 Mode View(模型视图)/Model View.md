@@ -157,13 +157,9 @@ QVariant QStandardItem::data(int role = Qt::UserRole + 1) const
 
 
 
-
-
-## 如何使用
+## 模型/视图 如何使用
 
 为了直观的看到效果，我们可以把listview、treeview、tableview同时使用，对同一个模型进行显示。
-
-## 模型使用
 
 ### 创建视图
 
@@ -192,7 +188,7 @@ treeView->setModel(model);
 tableView->setModel(model);
 ```
 
-### 添加项(数据)
+#### 添加项(数据)
 
 + 接口
 
@@ -271,7 +267,7 @@ model->setItem(6,1,new QStandardItem("What"));
 
 ![image-20211006192137486](assets/image-20211006192137486.png)
 
-### 删除项
+#### 删除项
 
 ```cpp
 bool removeColumn(int column, const QModelIndex &parent = QModelIndex())
@@ -287,7 +283,7 @@ QList<QStandardItem *> takeRow(int row)
 QStandardItem *takeVerticalHeaderItem(int row)    
 ```
 
-### 获取项(查找、获取)
+#### 获取项(查找、获取)
 
 ```cpp
 //查找给定列中使用给定标志匹配给定文本的项列表。  
@@ -301,7 +297,7 @@ QStandardItem *item(int row, int column = 0) const
 QStandardItem *itemFromIndex(const QModelIndex &index) const       
 ```
 
-### 获取项的下标
+#### 获取项的下标
 
 ```cpp
 //把元素添加进model之后，可以通过这个函数获取所在的下标
@@ -309,7 +305,7 @@ QModelIndex indexFromItem(const QStandardItem *item) const
 virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const override
 ```
 
-### 清空模型
+#### 清空模型
 
 ```cpp
 void clear()

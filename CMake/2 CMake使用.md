@@ -90,7 +90,7 @@ cmake  .\CMakeLists.txt -G "MinGW Makefiles" -B build
 
 
 
-## 2  cmake变量
+## 3  CMake变量
 
 cmake支持变量，内置变量保存了很多信息，当然也可以自定义变量。
 

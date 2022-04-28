@@ -138,13 +138,23 @@ message(STATUS "CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR}")
 
 ## 4  CMake变量
 
-cmake支持变量，内置变量保存了很多信息，当然也可以自定义变量。
+变量是CMake语言的最基本的存储单元。变量的值始终为**字符串类型**，尽管一些命令将会将其理解为其他类型的值。命令`set()`和`unset()`用于显式地设置或重置一个变量。变量名是区分大小写的、命名规范建议和编程语言一致。
 
-一、变量的引用方式是使用`“${}”`，在if中，不需要使用这种方式，直接使用变量名即可
+### 自定义变量
 
-二、自定义变量使用`SET(VAR_NAME xxxx)`，使用时`${VAR_NAME}`
+通过命令`Set`可一个普通、缓存和环境变量的值。语法格式：
 
-三、cmake的常用变量：
+```cmake
+set(<variable> <value>,...)
+```
+
+<value>...这一部分可以是零个以上的值，也就是意味着可以为空。多个参数将以分号分隔的列表形式连接，以形成要设置的实际变量值。如果值为空，那么等价于`unset`
+
+访问一个值，格式`${<variable>}`。使用起来较复杂（美元符号+大括号包裹要使用的变量名）
+
+### 系统变量
+
+cmake常用系统变量：
 
 | 变量                     | 解释                                       |
 | ------------------------ | ------------------------------------------ |
@@ -162,7 +172,7 @@ cmake支持变量，内置变量保存了很多信息，当然也可以自定义
 | CMAKE_LINKER             | 用于链接的程序。                           |
 | CMAKE_CXX_STANDARD       | 指定需要的 C++ 标准（CMake 3.1 后可用）。  |
 
-### 平台相关变量
+#### 平台相关变量
 
 | 变量                 | 解释                                                     |
 | -------------------- | -------------------------------------------------------- |
@@ -172,7 +182,7 @@ cmake支持变量，内置变量保存了很多信息，当然也可以自定义
 | CMAKE_SIZEOF_VOID_P  | void指针的大小。 x64位8个字节，x32位4个字节              |
 | CMAKE_BUILD_TYPE     | 构建类型（Release、Debug、MinSizeRel 或 RelWithDebInfo） |
 
-### 编译器相关变量
+#### 编译器相关变量
 
 查看编译器相关属性，<LANG>是C、CXX、OBJC、OJBCXX
 
@@ -181,8 +191,17 @@ cmake支持变量，内置变量保存了很多信息，当然也可以自定义
 | CMAKE\_<LANG>\_COMPILER_ID      | 编译器标识字符串。如：GUN 、MSVC<br> <font style="font:normal 12px gray">不保证为所有编译器或语言定义此变量</font> |
 | CMAKE\_<LANG>\_COMPILER_VERSION | 编译器版本 如：7.3.0                                         |
 
+#### 编译相关变量
 
-### 输出目录变量
+| 变量               | 解释                                                         |
+| ------------------ | ------------------------------------------------------------ |
+| BUILD_SHARED_LIBS  | 控制默认的库编译方式, 如果未进行设置, 使用ADD_LIBRARY时又没有指定库类型默认编译生成的库都是静态库 |
+| CMAKE_C_FLAGS      | 设置C编译选项  如：-Wall(-Wall选项意思是编译后显示所有警告)  |
+| CMAKE_CXX_FLAGS    | 设置C++编译选项                                              |
+| CMAKE_C_COMPILER   | 指定C编译 器(编译器完整路径)                                 |
+| CMAKE_CXX_COMPILER | 指定C++编译器                                                |
+
+#### 输出目录变量
 
 设置一下变量，可以改变对应的输出目录。如：`SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")`
 
@@ -192,7 +211,7 @@ cmake支持变量，内置变量保存了很多信息，当然也可以自定义
 | CMAKE_ARCHIVE_OUTPUT_DIRECTORY | 动态库文件目录 |
 | CMAKE_LIBRARY_OUTPUT_DIRECTORY | 可执行文件目录 |
 
-### 项目相关变量
+#### 项目相关变量
 
 project命令中指定的参数可以通过以下变量查看。如：`project(var VERSION 0.1.0.1 DESCRIPTION "My First project" HOMEPAGE_URL "www.maye.com")`
 
@@ -210,11 +229,17 @@ project命令中指定的参数可以通过以下变量查看。如：`project(v
 | PROJECT_IS_TOP_LEVEL  | 是否是顶级项目(不是子项目)  ON/OFF |
 | PROJECT_NAME          | 项目名                             |
 
-### 自定义变量
+#### 安装相关变量
 
-set
-
-unset
+CMAKE_INSTALL_DEFAULT_COMPONENT_NAME
+CMAKE_INSTALL_DEFAULT_DIRECTORY_PERMISSIONS
+CMAKE_INSTALL_MESSAGE
+CMAKE_INSTALL_NAME_DIR
+CMAKE_INSTALL_PREFIX
+CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT
+CMAKE_INSTALL_REMOVE_ENVIRONMENT_RPATH
+CMAKE_INSTALL_RPATH
+CMAKE_INSTALL_RPATH_USE_LINK_PATH
 
 ## 5 条件判断
 

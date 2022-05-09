@@ -16,3 +16,5 @@ git config --global http.sslVerify false
 git push --force --set-upstream origin master
 ```
 
+[GIT 10种撤销方式，反悔必备](https://blog.csdn.net/jiahaoangle/article/details/107384856)
+

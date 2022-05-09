@@ -156,21 +156,18 @@ set(<variable> <value>,...)
 
 cmake常用系统变量：
 
-| 变量                     | 解释                                       |
-| ------------------------ | ------------------------------------------ |
-| CMAKE_SOURCE_DIR         | 根源目录。                                 |
-| CMAKE_CURRENT_SOURCE_DIR | 当前所在的源目录（如果使用子项目）。       |
-| CMAKE_BINARY_DIR         | 根构建目录（运行 cmake 命令的目录）。      |
-| CMAKE_CURRENT_BINARY_DIR | 当前所在的构建目录。                       |
-| CMAKE_INSTALL_PREFIX     | 安装路径。                                 |
-| CMAKE_CXX_FLAGS          | C++ Flags。                                |
-| CMAKE_C_FLAGS            | C Flags。                                  |
-| CMAKE_LINKER_FLAGS       | 链接器 Flags。                             |
-| CMAKE_MODULE_PATH        | CMake 查找模块（find_package）的搜索路径。 |
-| CMAKE_C_COMPILER         | 用于编译 C 的程序。                        |
-| CMAKE_CXX_COMPILER       | 用于编译 C++ 的程序。                      |
-| CMAKE_LINKER             | 用于链接的程序。                           |
-| CMAKE_CXX_STANDARD       | 指定需要的 C++ 标准（CMake 3.1 后可用）。  |
+| 变量                     | 解释                                                         |
+| ------------------------ | ------------------------------------------------------------ |
+| CMAKE_SOURCE_DIR         | 根源目录。                                                   |
+| CMAKE_CURRENT_SOURCE_DIR | 当前所在的源目录（如果使用子项目）。                         |
+| CMAKE_BINARY_DIR         | 根构建目录（运行 cmake 命令的目录）。                        |
+| CMAKE_CURRENT_BINARY_DIR | 当前所在的构建目录。                                         |
+| CMAKE_CURRENT _LIST_DIR  | 当前正在处理的列表文件的完整目录。当 CMake 处理项目中的列表文件时，此变量将始终设置为当前正在处理的列表文件所在的目录。 |
+| CMAKE_CURRENT_LIST_FILE  | 当前正在处理的列表文件的完整路径                             |
+| CMAKE_CURRENT_LIST_LINE  | 当前正在处理的文件的行号                                     |
+|                          |                                                              |
+
+
 
 #### 平台相关变量
 
@@ -200,6 +197,8 @@ cmake常用系统变量：
 | CMAKE_CXX_FLAGS    | 设置C++编译选项                                              |
 | CMAKE_C_COMPILER   | 指定C编译 器(编译器完整路径)                                 |
 | CMAKE_CXX_COMPILER | 指定C++编译器                                                |
+| CMAKE_C_STANDARD   | 指定C标准 如： C11                                           |
+| CMAKE_CXX_STANDARD | 指定C++标准 如：C++11 C++17 C++20                            |
 
 #### 输出目录变量
 
@@ -293,7 +292,24 @@ else()
 endif()
 ```
 
-## 6 定义宏
+## 6 循环
+
+[list](https://cmake.org/cmake/help/latest/command/list.html?highlight=list)
+
+## 7 函数
+
+### 相关变量
+
+| 变量                             | 描述                                                   |
+| -------------------------------- | ------------------------------------------------------ |
+| CMAKE_CURRENT _FUNCTION          | 此变量包含当前函数的名称。它对于诊断或调试消息很有用。 |
+| CMAKE_CURRENT_FUNCTION_LIST_DIR  | 此变量包含定义当前函数的CMakeLists文件的完整目录       |
+| CMAKE_CURRENT_FUNCTION_LIST_FILE | 此变量包含定义当前函数的CMakeLists文件的完整路径       |
+| CMAKE_CURRENT_FUNCTION_LIST_LINE | 此变量包含定义当前函数的列表文件中的行号。             |
+
+
+
+## 8 定义宏
 
 我们可以再cmake中定义宏，以便再C/C++代码中使用。
 
@@ -309,9 +325,13 @@ add_compile_definitions(<definition> ...)
 target_compile_definitions(<target>）
 ```
 
-## 7 生成库和使用库
+## 9 生成库和使用库
 
+## 10 模块
 
+[find_package()函数](https://blog.csdn.net/fb_941219/article/details/88526157)
+
+[如何将CMAKE_MODULE_PATH设置为在CMake中进行常规构建和源代码外构建？](https://cloud.tencent.com/developer/ask/sof/193478)
 
 # 附录
 
@@ -331,5 +351,58 @@ command(<target> [E] <A|B|C>)
 
 
 
-[find_package()函数](https://blog.csdn.net/fb_941219/article/details/88526157)
 
+
+
+
+# 案例
+
++ **CMAKE_SOURCE_DIR和PROJECT_SOURCE_DIR以及CMAKE_CURRENT_SOURCE_DIR是否相同？**
+
+CMAKE_SOURCE_DIR是顶级CMakeLists.txt所在的的目录；
+
+PROJECT_SOURCE_DIR是在当前目录范围或其父目录之一中最后一次调用 project() 命令的源目录。请注意，它不受子目录范围内对 project() 的调用的影响（即从当前范围内对 add_subdirectory() 的调用）。
+
+CMAKE_CURRENT_SOURCE_DIR是当前目录，不受project()命令的影响。
+
+```css
+hello-cmake
+│ CMakeLists.txt
+│ main.cpp
+│
+└─sub
+     CMakeLists.txt
+```
+
+hello-cmake/CMakeLists.txt
+
+```cmake
+project(hello-cmake)
+message(STATUS "CMAKE_SOURCE_DIR " ${CMAKE_SOURCE_DIR})
+message(STATUS "PROJECT_SOURCE_DIR " ${PROJECT_SOURCE_DIR})
+message(STATUS "CMAKE_CURRENT_SOURCE_DIR " ${CMAKE_CURRENT_SOURCE_DIR})
+```
+
+sub/CMakeLists.txt
+
+```cmake
+project(sub)	#通过注释这行命令来测试
+message(STATUS "sub CMAKE_SOURCE_DIR " ${CMAKE_SOURCE_DIR})
+message(STATUS "sub PROJECT_SOURCE_DIR " ${PROJECT_SOURCE_DIR})
+message(STATUS "CMAKE_CURRENT_SOURCE_DIR " ${CMAKE_CURRENT_SOURCE_DIR})
+```
+
+output
+
+```text
+[cmake] -- sub CMAKE_SOURCE_DI  F:/MyCode/CmakeCode/hello-cmake
+[cmake] -- sub PROJECT_SOURCE_DIR F:/MyCode/CmakeCode/hello-cmake
+[cmake] -- sub CMAKE_CURRENT_SOURCE_DIR F:/MyCode/CmakeCode/hello-cmake/sub
+[cmake] -- CMAKE_SOURCE_DIR F:/MyCode/CmakeCode/hello-cmake
+[cmake] -- PROJECT_SOURCE_DIR F:/MyCode/CmakeCode/hello-cmake
+[cmake] -- CMAKE_CURRENT_SOURCE_DIR F:/MyCode/CmakeCode/hello-cmake
+```
+
+# 参考
+
+[CMake实践应用专题](https://www.zhihu.com/column/c_1369781372333240320)

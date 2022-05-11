@@ -406,3 +406,5 @@ output
 # 参考
 
 [CMake实践应用专题](https://www.zhihu.com/column/c_1369781372333240320)
+
+[指定头文件路径](https://blog.csdn.net/weixin_39623271/article/details/110604071)

@@ -54,7 +54,7 @@ XML声明是XML文档的第一句，其格式如下：
 
 + 6、所有的空标记也必须被关闭
 
-空标记是指标记对之间没有内容的标记，比如“”等标记。在XML中，规定所有的标记必须有结束标记。 
+空标记是指标记对之间没有内容的标记， 由于空标记不含任何内容，所以空标记不需要开始标签和结束标签，空标记“<”标识开始，以“/>”标识结束，如：比如<door color="red"/> 
 
 [xml&json](https://www.cnblogs.com/SanMaoSpace/p/3139186.html)
 
@@ -192,7 +192,7 @@ QString readElementText(QXmlStreamReader::ReadElementTextBehaviour behaviour = E
 QXmlStreamAttributes attributes() const    
 	//例：QXmlStreamAttributes attrs = xmlReader.attributes();
 	//例：qDebug()<<attrs.value("class").toString()<<attrs.value("name").toString();  
-//读取当前元素之后的起始元素。 当到达start元素时返回true。 当到达end元素时，或者发生错误时，返回false。  
+//读取当前元素之后的起始元素。 当到达start元素时返回true。 (读取当前元素的子标签)  
 bool readNextStartElement()    
 //获取当前元素的属性列表
 QXmlStreamAttributes attributes() const    

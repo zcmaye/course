@@ -26,9 +26,10 @@
 
   这是 MySQL 字段列表中偏移量的类型安全表示。 （由 mysql_field_seek() 使用。）偏移量是一行中的字段编号，从零开始。
 
-## 1.2 C API基本接口概述
+## 1.2 C API基本流程
 
 ```c
+#include<stdio.h>
 #include<mysql.h>
 ```
 
@@ -117,3 +118,6 @@ mysql_real_connect() 尝试建立与在主机上运行的 MySQL 服务器的连�
 }
 ```
 
+最后必须释放结果集，并管理mysql连接。
+
+## 1.3 获取字段信息

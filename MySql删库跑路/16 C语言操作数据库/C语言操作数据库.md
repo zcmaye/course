@@ -92,6 +92,9 @@ mysql_real_connect() 尝试建立与在主机上运行的 MySQL 服务器的连�
 
 调用 mysql_real_query() 或 mysql_query() 后，必须为每个成功生成结果集的语句（SELECT、SHOW、DESCRIBE、EXPLAIN、CHECK TABLE 等）调用 mysql_store_result() 。 完成结果集后，还必须调用 mysql_free_result()。
 
++ mysql_num_rows获取查询到的数据行数(只对SELECT语句有效)，如果是非查询语句可以使用`mysql_affected_rows`获取受影响的行数
++ `mysql_field_count`和`mysql_num_fields`都可以获取查询到的列数，但是参数不一样
+
 ```c
 	if(row_num>0)
     {
@@ -121,3 +124,86 @@ mysql_real_connect() 尝试建立与在主机上运行的 MySQL 服务器的连�
 最后必须释放结果集，并管理mysql连接。
 
 ## 1.3 获取字段信息
+
+### 1.3.1 获取字段名
+
+如果需要获取字段名，则需要在获取结果集之后获取。而且有多种获取字段名的方式。
+
+```c
+MYSQL_FIELD *field = NULL;
+```
+
++ 方式一：从结果集中一个字段一个字段的抓取字段信息
+
+```c
+while (field = mysql_fetch_field(result))
+{
+    printf("%-15s", field->name);
+}
+```
+
++ 方式二：先把结果集中的所有字段都抓取到（返回存储所有字段的数组指针），然后通过字段总数去遍历数组
+
+```c
+field = mysql_fetch_fields(result);
+for (int i = 0; i < col_num; i++)
+{
+    printf("%-15s", field[i].name);
+}
+```
+
++ 方式三：根据字段编号，从结果集中获取指定字段
+
+```cpp
+for (int i = 0; i < col_num; i++)
+{
+    field = mysql_fetch_field_direct(result, i);
+    printf("%-15s", field->name);
+}
+```
+
+### 1.3.2 获取字段/数据长度
+
+所谓字段长度是指，字段能够存储数据的长度。所有数据都是以字符串的方式存储的，这个其实就是能够存储的字符串的长度。
+
+| 类型        | 字节 | 长度 | 描述                                                         |
+| ----------- | ---- | ---- | ------------------------------------------------------------ |
+| SMALLINT    | 2    | 6    | 存储范围是[-32768,32767]，加上符号总共六个字符，所有长度为6  |
+| VARCHAR(10) | 4*10 | 40   | 不同的字符集可能不一样，总长度= 字符集规定的每个字符的字节数*指定的大小 |
+
+```c
+while (field = mysql_fetch_field(result))
+{
+    printf("%-15s", field->name,
+           field->name_length
+           field->length,
+           field->max_length);
+}
+```
+
++ field->length为字段创建时指定的最大长度(如上表所示)
++ field->max_length为查询到该列数据中，最长的数据的长度
++ field->name_length为字段名的长度
+
+如果想要获取每一行每个数据的长度，可以通过`mysql_fetch_lengths`函数来获取。
+
+```c
+MYSQL_ROW row;
+//获取每一行记录
+while (row = mysql_fetch_row(result))
+{
+    //获取每行记录的每个数据的长度
+    unsigned long* lens = mysql_fetch_lengths(result);
+    for (int i = 0; i < col_num; i++)
+    {
+        printf("%-15ld", lens[i]);
+    }
+	//获取每个数据
+    for (int i = 0; i < col_num; i++)
+    {
+        printf("%-15s", row[i]);
+    }
+    printf("\n");
+}
+```
+

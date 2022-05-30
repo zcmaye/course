@@ -116,7 +116,7 @@ message(STATUS "Hello cmake")
 
 构建时会输出如下信息：
 
-![image-20220411010514586](/assets/image-20220411010514586.png)
+![image-20220411010514586](assets/image-20220411010514586.png)
 
 + 输出变量
 
@@ -165,7 +165,6 @@ cmake常用系统变量：
 | CMAKE_CURRENT _LIST_DIR  | 当前正在处理的列表文件的完整目录。当 CMake 处理项目中的列表文件时，此变量将始终设置为当前正在处理的列表文件所在的目录。 |
 | CMAKE_CURRENT_LIST_FILE  | 当前正在处理的列表文件的完整路径                             |
 | CMAKE_CURRENT_LIST_LINE  | 当前正在处理的文件的行号                                     |
-|                          |                                                              |
 
 
 
@@ -254,9 +253,117 @@ else()
 endif()
 ```
 
-if、endif必须要有，其他的可有可无
+if、endif必须要有，其他的可有可无。
 
-### 具体使用
+### 条件语法
+
+所有的条件都可以用在`if`,`elseif`和`while()`中。
+
+复合条件优先顺序：
+
++ 括号。
+
++ 一元测试，例如EXISTS、COMMAND和DEFINED。
+
++ 二进制测试，例如EQUAL、LESS、LESS_EQUAL、GREATER、 GREATER_EQUAL、STREQUAL、STRLESS、STRLESS_EQUAL、 STRGREATER、STRGREATER_EQUAL、VERSION_EQUAL、VERSION_LESS、 VERSION_LESS_EQUAL、VERSION_GREATER、VERSION_GREATER_EQUAL和MATCHES。
+
++ 一元逻辑运算符NOT。
+
++ 二元逻辑运算符AND和OR，从左到右，没有任何短路。
+
+### 基本表达式
+
+```cmake
+if(<constant>)
+```
+
+如果常数是`1`, `ON`, `YES`, `TRUE`,`Y`或非零数（包括浮点数），则为真。False 如果常量是`0`, `OFF`, `NO`, `FALSE`, `N`, `IGNORE`, `NOTFOUND`, 空字符串，或者以`-NOTFOUND`后缀结尾。命名布尔常量不区分大小写。如果参数不是这些特定常量之一，则将其视为变量或字符串（请参阅下面的[变量扩展](https://cmake.org/cmake/help/latest/command/if.html?highlight=#variable-expansion) ），并适用以下两种形式之一。
+
+```cmake
+if(<variable>)
+```
+
+如果给定一个定义为非假常量的值的变量，则为真。否则为 False，包括变量未定义时。
+
+```cmake
+if(<string>)
+```
+
+带引号的字符串始终计算为 false，除非字符串的值是真正的常量之一。
+
++ “maye” 为false  maye不一定是常量，也可能是变量
++ “123”  为true     123为常量
++ "YES" 为true      YES为常量
+
+### 逻辑运算
+
+| 运算符 | 案例           | 描述                                     |
+| ------ | -------------- | ---------------------------------------- |
+| NOT    | if(NOT YES)    | 如果条件不为真，则为真。                 |
+| AND    | if(YES AND NO) | 如果两个条件都被单独认为是真的，则为真。 |
+| OR     | if(YES OR NO)  | 如果任一条件单独被认为是真的，则为真。   |
+
++ 复杂的逻辑表达式：`if((condition) AND (condition OR (condition)))`
+
+### 存在性检查
+
+| 运算符  | 案例                        | 描述                                                         |
+| ------- | --------------------------- | ------------------------------------------------------------ |
+| COMMAND | if(COMMAND message)         | 如果给定名称是可以调用的命令、宏或函数，则为真。             |
+| TARGET  | if(TARGET hello_camke)      | 如果给定名称是由调用创建的现有逻辑目标名称，则为真[`add_executable()`](https://cmake.org/cmake/help/latest/command/add_executable.html#command:add_executable),[`add_library()`](https://cmake.org/cmake/help/latest/command/add_library.html#command:add_library)， 或者[`add_custom_target()`](https://cmake.org/cmake/help/latest/command/add_custom_target.html#command:add_custom_target)已经调用的命令（在任何目录中）。 |
+| IN_LIST | if(hello IN_LIST TEST_LIST) | *3.3 新版功能：*如果给定元素包含在命名列表变量中，则为真。   |
+
+### 比较
+
+| 运算符           | 案例 | 描述                                                         |
+| ---------------- | ---- | ------------------------------------------------------------ |
+| MATCHES          |      | 如果给定的字符串或变量的值与给定的正则表达式匹配，则为真     |
+| LESS             |      | 如果给定字符串或变量的值是有效数字且小于右侧的数字，则为真   |
+| GREATER          |      | 如果给定的字符串或变量的值是有效数字并且大于右边的数字，则为真 |
+| EQUAL            |      | 如果给定字符串或变量的值是有效数字并且等于右侧的数字，则为真 |
+| LESS_EQUAL       |      | *3.7 版新功能：*如果给定字符串或变量的值是有效数字且小于或等于右侧的数字，则为真。 |
+| GREATER_EQUAL    |      | *3.7 新版功能：*如果给定字符串或变量的值是有效数字并且大于或等于右侧的数字，则为真。 |
+| STRLESS          |      | 如果给定字符串或变量的值按字典顺序小于右侧的字符串或变量，则为真 |
+| STRGREATER       |      | 如果给定字符串或变量的值按字典顺序大于右侧的字符串或变量，则为真。 |
+| STREQUAL         |      | 如果给定字符串或变量的值在字典上等于右侧的字符串或变量，则为真。 |
+| STRLESS_EQUAL    |      | *3.7 版中的新功能：*如果给定字符串或变量的值按字典顺序小于或等于右侧的字符串或变量，则为真。 |
+| STRGREATER_EQUAL |      | *3.7 新版功能：*如果给定字符串或变量的值在字典上大于或等于右侧的字符串或变量，则为真。 |
+
+### 版本比较
+
+| 运算符                | 案例 | 描述                                                         |
+| --------------------- | ---- | ------------------------------------------------------------ |
+| VERSION_LESS          |      | 组件级整数版本号比较(省略的组件被视为零)。 任何非整数版本组件或版本组件末尾的非整数部分都将在此时有效地截断字符串。 |
+| VERSION_GREATER       |      | 同上                                                         |
+| VERSION_EQUAL         |      | 同上                                                         |
+| VERSION_LESS_EQUAL    |      | *3.7 版中的新功能：*同上                                     |
+| VERSION_GREATER_EQUAL |      | *3.7 版中的新功能：*同上                                     |
+
+### 变量扩展
+
+if 命令是在 CMake 历史的早期编写的，早于 ${} 变量评估语法，并且为方便起见，评估由其参数命名的变量，如上述签名所示。 请注意，使用 ${} 的正常变量评估在 if 命令甚至接收参数之前应用。 因此像这样的代码
+
+```cmake
+set(var1 OFF)
+set(var2 "var1")
+if(${var2})
+```
+
+if命令显示为
+
+```cmake
+if(var1)
+```
+
+和根据上面记录的if(<variable>)情况进行计算。 结果是OFF，即false。 但是，如果我们从示例中删除${}，命令就会看到
+
+```cmake
+if(var2)
+```
+
+这是true，因为var2被定义为var1，而var1不是false常数。  
+
+### 案例
 
 + 判断构建平台
 
@@ -272,9 +379,11 @@ else()
 endif()
 ```
 
+```
+
 + 是否定义了变量
 
-```cmake
+​```cmake
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     message(STATUS "CMAKE_SIZEOF_VOID_P 4")
     set(x86 TRUE)
@@ -283,12 +392,10 @@ else()
     set(x64 TRUE)
 endif()
 #判断是否定义了变量
-if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    message(STATUS "CMAKE_SIZEOF_VOID_P 4")
-    set(x86 TRUE)
-else()
-    message(STATUS "CMAKE_SIZEOF_VOID_P  8")
-    set(x64 TRUE)
+if(x86)
+    message(STATUS "x86")
+else(x64)
+    message(STATUS "x64")
 endif()
 ```
 

@@ -229,15 +229,17 @@ project命令中指定的参数可以通过以下变量查看。如：`project(v
 
 #### 安装相关变量
 
-CMAKE_INSTALL_DEFAULT_COMPONENT_NAME
-CMAKE_INSTALL_DEFAULT_DIRECTORY_PERMISSIONS
-CMAKE_INSTALL_MESSAGE
-CMAKE_INSTALL_NAME_DIR
-CMAKE_INSTALL_PREFIX
-CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT
-CMAKE_INSTALL_REMOVE_ENVIRONMENT_RPATH
-CMAKE_INSTALL_RPATH
-CMAKE_INSTALL_RPATH_USE_LINK_PATH
+| 变量 | 解释 |
+| ---- | ---- |
+|CMAKE_INSTALL_DEFAULT_COMPONENT_NAME||
+|CMAKE_INSTALL_DEFAULT_DIRECTORY_PERMISSIONS||
+|CMAKE_INSTALL_MESSAGE||
+|CMAKE_INSTALL_NAME_DIR||
+|CMAKE_INSTALL_PREFIX||
+|CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT||
+|CMAKE_INSTALL_REMOVE_ENVIRONMENT_RPATH||
+|CMAKE_INSTALL_RPATH||
+|CMAKE_INSTALL_RPATH_USE_LINK_PATH||
 
 ## 5 条件判断
 
@@ -379,11 +381,9 @@ else()
 endif()
 ```
 
-```
-
 + 是否定义了变量
 
-​```cmake
+```cmake
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     message(STATUS "CMAKE_SIZEOF_VOID_P 4")
     set(x86 TRUE)
@@ -399,9 +399,104 @@ else(x64)
 endif()
 ```
 
+
+
 ## 6 循环
 
 [list](https://cmake.org/cmake/help/latest/command/list.html?highlight=list)
+
+CMake中有两种循环(`foreach`和`while`)可以使用，支持`break`和`continue`流程控制语句。
+
+### 6.1 foreach循环
+
+```cmake
+foreach(<loop_var> <items>)
+  	<commands>
+endforeach()
+```
+
+<items>是由分号或空格分隔的item列表；在每次迭代开始时，变量<loop_var>将被设置为当前项的值。  
+
++ 遍历列表
+
+```cmake
+foreach(num 1 2 3 4)
+    message(STATUS ${num})
+endforeach()
+#或
+set(num_list 1 2 3 4)
+foreach(num ${num_list})
+    message(STATUS ${num})
+endforeach()
+```
+
++ `foreach(<loop_var> RANGE <stop>)`，从0遍历到stop(包含stop)
+
+```cmake
+foreach(num RANGE 10)
+    message(STATUS ${num})
+endforeach()
+```
+
++ `foreach(<loop_var> RANGE <start> <stop> [<step>])`，从start遍历到stop，步长为step，如果不指定step则为1
+
+```cmake
+foreach(num RANGE 0 100 10)
+    message(STATUS ${num})
+endforeach()
+```
+
++ `foreach(<loop_var> IN [LISTS [<lists>]] [ITEMS [<items>]])`
+
+```CMAKE
+#遍历lists列表中的项
+set(my_list "hello" "world" "maye")
+foreach(num IN LISTS my_list)
+    message(STATUS ${num})
+endforeach()
+#直接指定项items
+foreach(num IN ITEMS "顽石" "九夏" "莫影")
+    message(STATUS ${num})
+endforeach()
+```
+
++ `foreach(<loop_var> ... IN ZIP_LISTS <lists>)`，3.17版本引入，组合多个列表一起遍历，如果指定的2多个列表项目数量不相等，项数少的，在loop_var中的值为空值。
+
+```cmake
+set(A 1 2 3 4)
+set(B 'hello' 'world')
+#方式一
+foreach(a b IN ZIP_LISTS A B)
+    message(STATUS "${a}   ${b}")
+endforeach()
+#方式二
+foreach(pair IN ZIP_LISTS A B)
+     message(STATUS "${pair_0}  ${pair_1}")
+     if(pair_1)	#判断是不是空值
+     	message(STATUS "paie_1 is NULL");
+     endif()
+endforeach()
+```
+
+### 6.2 while循环
+
+```cmake
+while(<condition>)
+	<commands>
+endwhile()
+```
+
+<condition>为true时，就执行命令列表<commands>
+
+```cmake
+set(i 0)
+while(i LESS 10)
+	message(STATUS "i is ${i}")
+	math(EXPR i "${i} + 1")
+endwhile()
+```
+
+
 
 ## 7 函数
 
@@ -413,6 +508,41 @@ endif()
 | CMAKE_CURRENT_FUNCTION_LIST_DIR  | 此变量包含定义当前函数的CMakeLists文件的完整目录       |
 | CMAKE_CURRENT_FUNCTION_LIST_FILE | 此变量包含定义当前函数的CMakeLists文件的完整路径       |
 | CMAKE_CURRENT_FUNCTION_LIST_LINE | 此变量包含定义当前函数的列表文件中的行号。             |
+
+## 8 文件操作
+
+文件操作命令`file`，这个命令专用于需要访问文件系统的文件和路径操作。  
+
+### 8.1 读文件
+
++ 读取二进制/文本文件
+
+```cmake
+file(READ <filename> <variable> [OFFSET <offset>] [LIMIT <max-in>] [HEX])
+```
+
+从名为<filename>的文件中读取内容，并将其存储在<variable>中。 可选地从给定的<offset>开始，最多读取<max-in>字节。 HEX选项将数据转换为十六进制表示(对二进制数据很有用)。 如果指定了HEX选项，输出中的字母(a到f)都是小写的。  
+
++ 读取文本文件
+
+```cmake
+file(STRINGS <filename> <variable> [<options> ...])
+```
+
+解析来自<filename>的ASCII字符串列表，并将其存储在<variable>中。 忽略文件中的二进制数据。 忽略回车(\r, CR)字符。 的选项是:  [详见附录][appendix]
+
+
+
+### 8.2 写文件
+
+```cmake	
+file(WRITE <filename> <content>...)
+file(APPEND <filename> <content>...)
+```
+
+将<content>写入名为<filename>的文件。 如果该文件不存在，则创建该文件。 如果文件已经存在，WRITE模式将覆盖它，APPEND模式将追加到文件的末尾。 <filename>指定的路径中不存在的任何目录将被创建。  
+
+COPY
 
 
 
@@ -433,6 +563,22 @@ target_compile_definitions(<target>）
 ```
 
 ## 9 生成库和使用库
+
+## 10 安装
+
+所谓安装，起就是把我们需要的文件复制到指定位置，方便使用。
+
+### 10.1 安装目标
+
+```cmake
+install(TARGETS targets... [DESTINATION <dir>])
+```
+
+
+
+
+
+
 
 ## 10 模块
 
@@ -458,9 +604,23 @@ command(<target> [E] <A|B|C>)
 
 
 
+## 2，file命令选项表
+
+| 选项                     | 描述                                                         |
+| ------------------------ | ------------------------------------------------------------ |
+| LENGTH_MAXIMUM <max-len> | 读取的最大长度                                               |
+| LENGTH_MINIMUM <min-len> | 读取的最少长度                                               |
+| LIMIT_COUNT <max-num>    | 限制要读取的不同字符串的数量                                 |
+| LIMIT_INPUT <max-in>     | 限制要读取的字节数                                           |
+| LIMIT_OUTPUT <max-out>   | 限制要存储在<variable>中的总字节数                           |
+| NEWLINE_CONSUME          | 将换行符(\n, LF)视为字符串内容的一部分，而不是终止于换行符。 |
+| NO_HEX_CONVERSION        | Intel Hex和Motorola S-record文件在读取时自动转换为二进制，除非给出此选项。 |
+| REGEX <regex>            | 正则匹配内容                                                 |
+| ENCODING <encoding-type> | 选择编码格式                                                 |
 
 
 
+## hello
 
 # 案例
 
@@ -515,3 +675,12 @@ output
 [CMake实践应用专题](https://www.zhihu.com/column/c_1369781372333240320)
 
 [指定头文件路径](https://blog.csdn.net/weixin_39623271/article/details/110604071)
+
+
+
+
+
+<!-- 内链接 -->
+
+[appendix]:#附录	"附录"
+

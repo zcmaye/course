@@ -223,6 +223,9 @@ QPushButton#btnAddImage:hover
       </item>
       <item>
        <widget class="QPushButton" name="btnAddatt">
+        <property name="toolTip">
+         <string>添加附件</string>
+        </property>
         <property name="text">
          <string/>
         </property>
@@ -230,6 +233,9 @@ QPushButton#btnAddImage:hover
       </item>
       <item>
        <widget class="QPushButton" name="btnAddImage">
+        <property name="toolTip">
+         <string>添加图片</string>
+        </property>
         <property name="text">
          <string/>
         </property>

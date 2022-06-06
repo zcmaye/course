@@ -46,7 +46,9 @@ void MainWindow::on_btnSend_released()
 /*添加附件*/
 void MainWindow::on_btnAddatt_released()
 {
-    QStringList names = QFileDialog::getOpenFileNames(this,"选择图片","./","All (*.*);;Images (*.jpg *.png *.jpeg *.gif);;Exe (*.exe);;zip (*.zip *.7z *.tar)");
+    QStringList names = QFileDialog::getOpenFileNames(this,"选择图片","./",
+                                                      "All (*.*);;Images (*.jpg *.png *.jpeg *.gif);;"
+                                                      "Exe (*.exe);;zip (*.zip *.7z *.tar)");
     for(QString filename : names)
     {
 

@@ -191,7 +191,7 @@ QPushButton#btnAddImage:hover
    <item>
     <widget class="QLineEdit" name="editSubject">
      <property name="text">
-      <string/>
+      <string>欢迎大家来嫖...</string>
      </property>
      <property name="placeholderText">
       <string>主题</string>
@@ -199,7 +199,7 @@ QPushButton#btnAddImage:hover
     </widget>
    </item>
    <item>
-    <widget class="QTextEdit" name="editBody">
+    <widget class="QTextEdit" name="textEdit">
      <property name="html">
       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -236,6 +236,9 @@ p, li { white-space: pre-wrap; }
       </item>
       <item>
        <widget class="QPushButton" name="btnAddatt">
+        <property name="toolTip">
+         <string>添加附件</string>
+        </property>
         <property name="text">
          <string/>
         </property>
@@ -243,18 +246,8 @@ p, li { white-space: pre-wrap; }
       </item>
       <item>
        <widget class="QPushButton" name="btnAddImage">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="labelTip">
-        <property name="minimumSize">
-         <size>
-          <width>250</width>
-          <height>0</height>
-         </size>
+        <property name="toolTip">
+         <string>添加图片</string>
         </property>
         <property name="text">
          <string/>
@@ -268,7 +261,7 @@ p, li { white-space: pre-wrap; }
         </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>10</width>
+          <width>266</width>
           <height>32</height>
          </size>
         </property>

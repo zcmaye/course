@@ -11,16 +11,12 @@ MainWindow::MainWindow(QWidget *parent)
     this->setWindowFlag(Qt::WindowType::FramelessWindowHint,true);
     this->setAttribute(Qt::WA_TranslucentBackground);
 
-    emailSender.login("1140412397@qq.com","kgkuqixghafdijid");
-    //emailSender.login("825943234@qq.com","copfxxjdwrwjbfbf");
-    //emailSender.setHostInfo("smtp.163.com",25);
-    //emailSender.login("ydpatjj@163.com","ydp520zy");
-
+    m_emailSender.setHostInfo("smtp.qq.com",25);
+    m_emailSender.login("823861087@qq.com","liyonmsnpzjlbffb");
 }
 
 MainWindow::~MainWindow()
 {
-    emailSender.quit();
     delete ui;
 }
 
@@ -32,7 +28,7 @@ void MainWindow::on_btnMin_released()
 
 void MainWindow::on_btnMax_released()
 {
-    if(windowState() == Qt::WindowState::WindowMaximized)
+    if(windowState() & Qt::WindowState::WindowMaximized)
         this->showNormal();
     else
         this->showMaximized();
@@ -46,24 +42,18 @@ void MainWindow::on_btnClose_released()
 /*发送邮件*/
 void MainWindow::on_btnSend_released()
 {
-    //获取接收人
-    auto tolist = ui->editRecv->text().split(";");
+    auto recv = ui->editRecv->text();
     auto subject = ui->editSubject->text();
-    auto body = ui->editBody->toHtml();
 
-    emailSender.setHeader(tolist,subject);
-    emailSender.setBody(body);
-    emailSender.sendEmail();
+    m_emailSender.setHeader(recv,subject);
+    m_emailSender.setBody(ui->textEdit->toHtml());
+    m_emailSender.sendEmail();
 }
 /*添加附件*/
 void MainWindow::on_btnAddatt_released()
 {
     QStringList names = QFileDialog::getOpenFileNames(this,"选择图片","./","All (*.*);;Images (*.jpg *.png *.jpeg *.gif);;Exe (*.exe);;zip (*.zip *.7z *.tar)");
-    for(QString filename : names)
-    {
-        emailSender.addAttachment(filename);
-    }
-
+    m_emailSender.addAttr(names);
 }
 /*添加图片*/
 void MainWindow::on_btnAddImage_released()
@@ -74,14 +64,12 @@ void MainWindow::on_btnAddImage_released()
         QFile file(filename);
         if(file.open(QIODevice::ReadOnly))
         {
-            if(file.size()>1024*1024)
+            if(file.size() > 1*1024*1024)
             {
-                //qWarning("文件超过1M,请用附件方式传送");
-                ui->labelTip->setText("<font style='color:red;'>文件超过1M,请用附件方式传送</font>");
+                qWarning("图片超过1M,请使用附件的形式发送");
                 continue;
             }
-            qDebug()<<file.fileName()<<file.size();
-            ui->editBody->insertHtml("<img src='data:image/png;base64," + file.readAll().toBase64() +"' width:'100px' height:'100px'/>");
+             ui->textEdit->insertHtml("<img src='data:image/png;base64," + file.readAll().toBase64() +" width='100' height='100''/>");
         }
     }
 }

@@ -71,21 +71,57 @@ Qt 最早是 1991 年由挪威的 Eirik Chambe-Eng 和 Haavard Nord 开发的，
 
 [安装文档教程](https://mp.weixin.qq.com/s/n58OskK1ldmelCnRXPgOCg)
 
-[安装视频教程](https://www.bilibili.com/video/BV1r54y1G7m4/)
+[安装视频教程](https://www.bilibili.com/video/BV1r54y1G7m4/) 
 
-## 安装之后添加组件
+## 安装
 
-1，找到Qt安装目录中的维护工具MaintenanceTool.exe
+Qt从5.15开始，不再提供离线安装包，必须在线安装，so，先下载[在线安装程序](https://download.qt.io/archive/online_installers/4.3/)
 
-![image-20211118005956922](assets/image-20211118005956922.png)
+根据不同的平台下载不同的版本，这里下载windows版本。
 
-2，添加国内源
+![image-20220610025357605](assets/image-20220610025357605.png)
 
-手动添加储存库要定位一个储存有***\*QT在线安装镜像的地址\****，这可难坏我了，但是经过不懈努力还是被我找到了（网址：http://download.qt.io/static/mirrorlist/）这个网站，显示了各国的qt镜像站点，中国有四个，我用的是中科大的站，点击HTTP会进入一个网络文件夹。
+双击安装，然后登录Qt账户，没有的去官网注册一个
 
-![image-20211118010214312](assets/image-20211118010214312.png)
+![image-20220610025536876](assets/image-20220610025536876.png)
 
-然后依次进入/online/qtsdkrepository/windows_x86/root/qt/ 最终的文件夹显示如下，在这个界面**复制一下当前地址框地址**
+下一步之后，下面两个选择框勾上
+
+![image-20220610025745744](assets/image-20220610025745744.png)
+
+下一步之后，等待元信息下载完成。(时间稍长可以泡个茶)
+
+![image-20220610025837073](assets/image-20220610025837073.png)
+
+下载完成之后，点击下一步，直到选择安装文件夹为止，目录可以自己指定
+
+![image-20220610030121873](assets/image-20220610030121873.png)
+
+然后选择组件，如下图所示
+
+![image-20220610031259419](assets/image-20220610031259419.png)
+
+然后一直下一步，然后耐心等待安装完成即可。。
+
+![image-20220610031329779](assets/image-20220610031329779.png)
+
+## 卸载
+
+1，再开始菜单栏找到Qt 维护工具，并打开
+
+![image-20220610024019793](assets/image-20220610024019793.png)
+
+2，选上下方的仅卸载，点击下一步
+
+![image-20220610024145182](assets/image-20220610024145182.png)
+
+3，最后点击卸载，等待完成即可
+
+![image-20220610024222866](assets/image-20220610024222866.png)
+
+
+
+
 
 ## 编码问题
 

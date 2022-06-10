@@ -201,40 +201,36 @@ www.luffycity.com	是服务器；
 
 ### 常用响应头信息
 
-**Last-Modified：**
++ **Content-Type：**WEB服务器告诉浏览器自己响应的对象的类型和字符集
 
-作用： 用于指示资源的最后修改日期和时间。（实例请看上节的If-Modified-Since的实例）
+如：
 
-例如: Last-Modified: Wed, 21 Dec 2011 09:09:10 GMT
+```txt
+Content-Type:text/html;charset=utf-8
+Content-Type:text/html;charset=GB2312
+Content-Type:image/jpeg
+```
 
-**Content-Type：**
++ **Content-Length：**指明实体正文的长度，以字节方式存储的十进制数字来表示。
 
-作用：WEB服务器告诉浏览器自己响应的对象的类型和字符集,
+　　如：`Content-Length: 19847`
 
-例如:
++ **Content-Encoding：**告诉浏览器，服务端发送的资源是采用某种编码(如:gzip)的，客户端看到这个信息后，应该采用gzip对资源进行解码。
 
-​    Content-Type: text/html; charset=utf-8
+  如：`Content-Encoding:gzip`
 
-　　Content-Type:text/html;charset=GB2312
++ **Content-Language：**服务器告诉浏览器自己响应的对象的语言者
 
-　　Content-Type: image/jpeg
+  如：`Content-Language:zh-CN`
 
-**Content-Length：**
++ **Date：**服务端发送资源时的服务器时间
 
-指明实体正文的长度，以字节方式存储的十进制数字来表示。在数据下行的过程中，Content-Length的方式要预先在服务器中缓存所有数据，然后所有数据再一股脑儿地发给客户端。
+  如：`Tue, 03 Apr 2020 03:52:28 GMT`
 
-　　例如: Content-Length: 19847
++ **Server:**告诉客户端服务器的信息
 
-**Content-Encoding：**
+  如：`Server:tengine/1.4.6`
 
-作用：文档的编码（Encode）方法。一般是压缩方式。
++ **Last-Modified：**用于指示资源的最后修改日期和时间。
 
-WEB服务器表明自己使用了什么压缩方法（gzip，deflate）压缩响应中的对象。利用gzip压缩文档能够显著地减少HTML文档的下载时间。
-
-例如：Content-Encoding：gzip
-
-**Content-Language：**
-
-作用： WEB服务器告诉浏览器自己响应的对象的语言者
-
-例如： Content-Language:da
+  如: `Last-Modified: Wed, 21 Dec 2011 09:09:10 GMT`

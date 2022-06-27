@@ -148,23 +148,23 @@ Qt Creator是跨平台的 Qt IDE， Qt Creator 是 Qt 被 Nokia收购后推出�
 
 + 选择项目模板
 
-![image-20210401025945615](assets/image-20210401025945615.png)
+![image-20220625131711960](assets/image-20220625131711960.png)
 
 + 填写项目名称和选择路径(<font color="red">不能包含中文和空格~不能包含中文和空格~不能包含中文和空格~</font>)
 
-![image-20210401030344525](assets/image-20210401030344525.png)
+![image-20220625131912398](assets/image-20220625131912398.png)
 
-+ 定义编译系统(qmake即可)
++ 定义编译系统(CMake即可)
 
-  ![image-20210401031012239](assets/image-20210401031012239.png)
+  ![image-20220625131955125](assets/image-20220625131955125.png)
 
 + 选择窗口类信息
 
-![image-20210401031350429](assets/image-20210401031350429.png)
+![image-20220625132148304](assets/image-20220625132148304.png)
 
 + 选择编译套件(用Qt Creator开发请选择MinGW `Minimalist GNU for Windows`)
 
-  ![image-20210401031609578](assets/image-20210401031609578.png)
+  ![image-20220625132348423](assets/image-20220625132348423.png)
 
 
 
@@ -236,91 +236,97 @@ Widget::~Widget()
 
 
 
-### HelloQt.pro
+### CMakeLists.txt
 
 > Qt项目文件，注释需要用#号
 
-```properties
-#项目编译时需要加载哪些模块
-QT       += core gui
+```cmake
+#CMake的最低版本，低于指定版本，无法生成
+cmake_minimum_required(VERSION 3.5)
+#指定项目名、项目版本、编程语言
+project(HelloQt VERSION 0.1 LANGUAGES CXX)
+#自动将当前源目录和构建目录添加到包含路径。
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+#自动UIC、MOC、RCC
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+#启用C++17标准
+set(CMAKE_CXX_STANDARD 17)
+#设置指定的C++标准是必须的(如果不支持C++17则无法生成)，如果不设置，或者为OFF，则指定版本不可用时，会使用上一版本。
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#查找Qt库版本
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
+#查找当前Qt版本的Widgets模块
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
-# 如果当前Qt版本大于4, 要添加一个额外的模块: widgets
-# Qt 5中对gui模块进行了拆分, 将 widgets 独立出来了
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+#项目中的源文件、头文件、资源文件
+set(PROJECT_SOURCES
+        main.cpp
+        mainwindow.cpp
+        mainwindow.h
+)
+#如果是Qt6及以上版本
+if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+    qt_add_executable(HelloQt
+        MANUAL_FINALIZATION	#指示要手动终止可执行程序的生成
+        ${PROJECT_SOURCES}
+    )
+#安卓开发    
+# Define target properties for Android with Qt 6 as:
+#    set_property(TARGET HelloQt APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
+#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
+# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
+else()
+    if(ANDROID)
+        add_library(HelloQt SHARED
+            ${PROJECT_SOURCES}
+        )
+# Define properties for Android with Qt 5 after find_package() calls as:
+#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
+#其他Qt6以下版本使用这个
+    else()
+        add_executable(HelloQt
+            ${PROJECT_SOURCES}
+        )
+    endif()
+endif()
+#把Qt::Widgets模块的库连接到HelloQt
+target_link_libraries(HelloQt PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
-# 让Qt支持c++11标准
-CONFIG += c++11
+set_target_properties(HelloQt PROPERTIES
+    MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
+    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    MACOSX_BUNDLE TRUE		#在 macOS 或 iOS 上将可执行文件构建为应用程序包。
+    WIN32_EXECUTABLE TRUE	#在 Windows 上构建一个带有 WinMain 入口点的可执行文件。
+)
+#如果大于Qt6 则手动终止可执行程序的生成
+if(QT_VERSION_MAJOR EQUAL 6)
+    qt_finalize_executable(HelloQt)
+endif()
 
-#如果您使用任何已标记为不推荐使用的Qt功能，则以下定义使您的编译器发出警告（确切的警告取决于您的编译器）。 
-#请参考不推荐使用的API的文档，以了解如何将您的代码移植远离它。
-DEFINES += QT_DEPRECATED_WARNINGS
-
-#如果使用过时的API，您还可以使代码无法编译。
-#为此，请取消注释以下行。
-#您也可以选择仅在特定版本的Qt之前禁用已弃用的API。
-#DEFINES + = QT_DISABLE_DEPRECATED_BEFORE = 0x060000    ＃禁用所有在Qt 6.0.0之前弃用的API
-
-# 项目中的源文件	删除后，项目里不会显示所有的源文件
-SOURCES += \
-    main.cpp \
-    widget.cpp
-
-# 项目中的头文件
-HEADERS += \
-    widget.h
-
-#部署的默认规则
-qnx: target.path = /tmp/$${TARGET}/bin					#嵌入式
-else: unix:!android: target.path = /opt/$${TARGET}/bin	#unix
-!isEmpty(target.path): INSTALLS += target
 ```
 
-pro是Qt的工程文件，这个文件是给qmake用来生成Makefile用的。
+CMakeLists.txt是Qt的工程文件，这个文件是给CMake用来生成Makefile用的。
 
 如果了解makefile的人应该知道，Makefile的三个关键点就是`目标`，`依赖`，`命令`。这里也很类似。pro文件中可以指明这个Qt项目的`头文件`，`源文件`，`链接的外部库`，`目标文件名`，`模板(生成什么样的Makefile)`，`版本配置(debug/release)`等。
 
-### 常用qmake变量
 
-| .pro中变量     | 含义                                               | 示例                                      |
-| :------------- | :------------------------------------------------- | :---------------------------------------- |
-| TEMPLATE       | 模板变量指定生成makefile(app:应用程序/lib:库)      | TEMPLATE = app                            |
-| QT             | 指定加载的Qt模块(core/gui/widgets...)              | QT += widgtes                             |
-| DESTDIR        | 指定生成的应用程序放置的目录                       | DESTDIR += ../bin                         |
-| TARGET         | 指定生成的应用程序名                               | TARGET = hello                            |
-| HEADERS        | 工程中包含的头文件                                 | HEADERS += hello.h                        |
-| FORMS          | 工程中包含的.ui设计文件                            | FORMS += hello.ui                         |
-| SOURCES        | 工程中包含的源文件                                 | SOURCES += main.cpp hello.cpp             |
-| RESOURCES      | 工程中包含的资源文件                               | RESOURCES += qrc/hello.qrc                |
-| LIBS           | 引入的lib文件的路径 -L：引入路径                   | LIBS += -L.                               |
-| CONFIG         | 用来告诉qmake关于应用程序的配置信息                | CONFIG+= qt warn_on release               |
-| UI_DIR         | 指定.ui文件转化成`ui_*.h`文件的存放目录            | UI_DIR += forms                           |
-| RCC_DIR        | 指定将.qrc文件转换成`qrc_*.h`文件的存放目录        | RCC_DIR += ../tmp                         |
-| MOC_DIR        | 指定将含Q_OBJECT的头文件转换成标准.h文件的存放目录 | MOC_DIR += ../tmp                         |
-| OBJECTS_DIR    | 指定目标文件(obj)的存放目录                        | OBJECTS_DIR += ../tmp                     |
-| DEPENDPATH     | 程序编译时依赖的相关路径                           | DEPENDPATH += . forms include qrc sources |
-| INCLUDEPATH    | 头文件包含路径                                     | INCLUDEPATH += .                          |
-| DEFINES        | 增加预处理器宏（gcc的-D选项）。                    | DEFINES += USE_MY_STUFF                   |
-| QMAKE_CFLAGS   | 设置c编译器flag参数                                | QMAKE_CFLAGS += -g                        |
-| QMAKE_CXXFLAGS | 设置c++编译器flag参数                              | QMAKE_CXXFLAGS += -g                      |
-| QMAKE_LFLAGS   | 设置链接器flag参数                                 | QMAKE_LFLAGS += -rdynamic                 |
 
 ## 项目操作
 
 ### 添加新文件
 
-![image-20210402035458903](assets/image-20210402035458903.png)
+![image-20220625153045372](assets/image-20220625153045372.png)
 
 
 
 ### 打开Qt项目
 
-![image-20210402040640720](assets/image-20210402040640720.png)
+![image-20220625153823656](assets/image-20220625153823656.png)
 
-
-
-### 其他
-
-![image-20210402041310929](assets/image-20210402041310929.png)
+**注意：**如果出现无法打开explorer.exe，则需要把路径`C:\Windows`配置到PATH系统环境变量。
 
 
 
@@ -349,9 +355,11 @@ pro是Qt的工程文件，这个文件是给qmake用来生成Makefile用的。
 
   + 按Ctrl + .     查找并移动到下一个标签
 
-## 主题配置
+## 文本编辑器样式、界面颜色配置
 
-萝卜白菜各有所爱，如何修改QtCreator的主题呢？
+**文本编辑器**
+
+萝卜白菜各有所爱，如何修改QtCreator的文本编辑器样式呢？
 
 `菜单栏->工具->选项->文本编辑器`
 
@@ -361,200 +369,14 @@ pro是Qt的工程文件，这个文件是给qmake用来生成Makefile用的。
 
 + xml文件 `Visual studio white(Qt creator代码样式).xml`
 
-+ 把该文件复制到Qt的安装目录下的->Qt\Qt5.14.2\Tools\QtCreator\share\qtcreator\styles目录中
++ 把该文件复制到Qt的安装目录下的->`E:\MySoftware\Qt\Tools\QtCreator\share\qtcreator\styles`目录中
 + 最后进入文本编辑器选择
 
+**界面颜色**
 
+选择你最喜欢的颜色和主题即可！
 
-# 3.Qt+VS2019
-
-为什么用VS写Qt程序？
-
-很多人在Qt上写代码时，感觉不是很舒服，所以想在Vs上写Qt程序，而且Vs具有强大的调试能力，所以咱们可以通过一些配置实现此目的。
-
-![图片](assets/640.png)
-
-### 1.打开VS
-
-选择菜单栏->扩展->管理扩展
-
-![图片](assets/1_1.png)
-
-### 2.VS安装Qt插件
-
-选择菜单栏的 扩展->管理扩展，输入Qt搜索，然后下载Qt Visual Studio Tools（下载灰常的银杏，慢的死~还不一定能下载）
-
-![图片](assets/2_1.png)
-
-**如果实在不能忍受这龟速，咱们来别的办法**
-
-先到Qt官网下载对于版本的插件，我这里是Vs2019：
-
-[Qt官网插件下载](https://download.qt.io/official_releases/vsaddin/)
-
-[微软拓展商店下载](https://marketplace.visualstudio.com/items)
-
-![图片](assets/2_2.png)
-
-如果跳到如下页面，选择清华大学镜像源下载即可。
-
-![img](assets/tinghua.png)
-
-### 3.安装VSIX(即上面下载的那个插件)
-
-如果是通过Vs下载的，会自动安装。
-
-如果是手动下载的，需要双击自己安装。
-
-打开安装包之后，点击Install等待安装完成即可。
-
-![图片](assets/vsix1.png)
-
-安装之前，请先关掉Vs`没有关掉会出现如下界面，点击end tasks即可`
-
-![图片](assets/vsix2.png)
-
-关闭Vs之后，一秒安装完成
-
-![图片](assets/vsix3.png)
-
-安装完成，关掉程序
-
-### 4.设置插件
-
-再次打开Vs，扩展->Qt VS Tools->Qt Options
-
-![图片](assets/4_1.png)
-
-点击Qt Options之后会弹出如下界面
-
-![图片](assets/qt%20options.png)
-
-如果在弹出上述界面的同时，还弹出如下这个错误界面，不要担心，这是由于安装插件的时候，会自动配置，但是自动配置的路径和实际的Qt安装路径不一致，我们自己再配置一下就ok了
-
-![图片](assets/selfconfig.png)
-
-首先删掉自动配置好的路径，然后点击Add自己添加一个，如下是具体的路径选项，选择msvc2017_64文件夹，点击确定即可
-
-![图片](assets/4_4.png)
-
-然后点击OK(Name是自己取的)
-
-![图片](assets/selfconfig2.png)
-
-### 5.VS创建Qt项目
-
-在Vs中点击新建项目，搜索Qt找到Qt Widgets Application然后点击下一步。
-
-![图片](assets/vs+qt1.png)
-
-下一步之后，给项目取名称
-
-![图片](assets/vs+qt2.png)
-
-点击创建，然后点击Next
-
-![图片](assets/vs+qt3.png)
-
-然后从Debug和Release模式里选择一个即可(默认即可)
-
-![图片](assets/vs+qt4.png)
-
-然后点击完成
-
-![图片](assets/vs+qt5.png)
-
-最后，Ctrl+F5，大功告成
-
-![图片](assets/vs+qt6.png)
-
-
-
-### 6，中文乱码
-
-由于windows默认的编码方式为GB2312，而Qt使用的是Unicode，两种编码方式不一样导致了乱码产生。
-
-我们需要把代码文件改为utf-8保存，可以手动修改，也可以借助插件自动修改。
-
-#### 1，手动修改
-
-VS隐藏了高级保存功能，导致没办法直接去设置代码编码。那么我们直接把高级保存功能调用出来即可：
-
-1. 单击“工具”|“自定义”命令，弹出“自定义”对话框。
-
-   ![image-20210504163414133](assets/image-20210504163414133.png)
-
-2. 单击“命令”标签，进入“命令”选项卡；在“菜单栏”下拉列表中，选择“文件”选项；单击“添加命令”按钮，弹出“添加命令”对话框。
-
-   <img src="assets/image-20210504164213477.png" alt="image-20210504164213477" style="zoom:67%;" />
-
-3. 在“类别”列表中，选择“文件”选项；在“命令”列表中，选择“高级保存选项”选项。 单击“确定”。
-
-   <img src="assets/image-20210504163713084.png" alt="image-20210504163713084" style="zoom:67%;" />
-
-...这个操作还是比较麻烦，使用下面的自动修改是最方便的
-
-#### 2，自动修改
-
-打开 VS2017，依次点击 工具 -> 扩展和更新，搜索插件 “ForceUTF8”，安装后源码文件会强制保存为带 BOM 的 UTF-8。
-
-![image-20210504162322942](assets/image-20210504162322942.png)
-
-
-
-**注意：**<font color=red>修改之后，写C/C++代码会出现乱码，此时再进到插件->已安装吧Force UTF-8禁用掉，然后重启Vs即可</font>
-
-![image-20210504162639221](assets/image-20210504162639221.png)
-
-### 7，Vs中修改应用程序图标
-
-+ 1，备好一个.ico图标文件
-
-+ 2，创建一个.rc文件(创建txt修改后缀即可)，然后加入以下代码
-
-  ```css
-  IDI_ICON1 ICON DISCARDABLE "zay.ico"
-  ```
-
-+ 3，将.rc文件和.ico文件都放在项目的文件夹中
-
-+ 在VS中右击Source File筛选器选择**添加**||**现有项**，将**logo.rc**和**zay.ico**文件添加到项目中，重新生成即可
-
-# 4.Qt Creator + MSVC
-
-先安装好Qt Creator和visual studio，前者做编辑器，用后者的编译器，最后安装一个调试器。
-
-通过[windows SDK](https://developer.microsoft.com/zh-cn/windows/downloads/windows-sdk/)工具安装调试器(CDB)。
-
-下载之后安装即可
-
-![img](assets/1012444-20191112201542980-1398920592.png)
-
-![img](assets/1012444-20191112201557729-1351064516.png)
-
-安装完成之后重新打开Qt Creator，会自动检测调试工具的路径。
-
-![image-20211015032759727](assets/image-20211015032759727.png)
-
-安装Vs之后，编译器也会自动检测到(我这是安装了2019与2021，所以有很多)
-
-![image-20211015032904988](assets/image-20211015032904988.png)
-
-最后需要自己选择一下，对应版本的编译器和调试器x64和x86都可以配置一下
-
-![image-20211015033016164](assets/image-20211015033016164.png)
-
-## 中文乱码
-
-如果出现乱码可以在.pro文件中加入以下代码
-
-```css
-msvc
-{
-	QMAKE_CFLAGS += /utf-8	#C语言编译器选项
-	QMAKE_CXXFLAGS+=/utf-8	#C++编译器选项
-}
-```
+![image-20220625154853569](assets/image-20220625154853569.png)
 
 
 

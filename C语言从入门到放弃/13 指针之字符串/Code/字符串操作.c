@@ -101,6 +101,15 @@ void removeChar(char* str, char ch)
 	str[j] = '\0';
 }
 
+void memset4(void* dst, int val, size_t size)
+{
+	int* pd = (int*)dst;
+	for (size_t i = 0; i < size/4; i++)
+	{
+		pd[i] = val;
+	}
+}
+
 int main()
 {
 	char str[] = "aabbcc";

@@ -207,3 +207,9 @@ while (row = mysql_fetch_row(result))
 }
 ```
 
+# 2.C API 参考
+
+## 2.1 基本功能
+
+### mysql_init()
+

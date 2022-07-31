@@ -287,10 +287,10 @@ int main(int argc,char*argv[])
 
 ```c
 //启动SDL并创建窗口
-bool init(const char*title,int width,int height)
+bool init(const char*title,int width,int height);
 
 //释放媒体并关闭SDL
-void clean()
+void clean();
 ```
 
 在第一个教程中，我们将所有内容都放在 main 函数中。由于它是一个小程序，我们可以这样，但在实际程序中，代码尽可能模块化。这意味着你的代码是整齐的块，每个块都易于调试和重用。
@@ -402,7 +402,7 @@ int main(int argc, char* argv[])
     }
 
     //释放资源和关闭SDL
-    closeSDL();
+    clean();
 
     return 0;
 }
@@ -416,16 +416,57 @@ int main(int argc, char* argv[])
 
 #### Surface直接修改像素
 
-#### Surface缩放
-
-#### Surface设置透明色
-
 ```c
-int SDL_SetColorKey(SDL_Surface * surface,int flag, Uint32 key);
+//输出像素格式
+SDL_Log("%d\n", sfc->format->format);
+//输出人看得懂的像素格式
+SDL_Log("%s\n", SDL_GetPixelFormatName(sfc->format->format));
 ```
 
-设置表面的颜色键(透明像素)。color key定义一个像素值，该像素值在中被视为透明的一位块传输。例如，可以使用它来指定青色像素
-被认为是透明的，因此不呈现。
+先输出sfc的像素格式，像素格式是由枚举`SDL_PixelFormatEnum`定义的，如果输出的是318769153，即对应的枚举是SDL_PIXELFORMAT_INDEX8，说明一个像素由八位表示(也就是图片是一张黑白图)。
+
+如果要修改图片，让他能够呈现彩色，必须先对图片的格式进行转换。
+
+```c
+sfc = SDL_ConvertSurface(sfc, gWinSfc->format, 0);
+```
+
+通过SDL_ConvertSurface可以把sfc的像素格式转为指定的像素格式(这里是窗口的)，然后进行修改像素
+
+```c
+//修改图片的像素
+Uint32* pixels = sfc->pixels;
+for (int i = 0; i < 100; i++)
+{
+	   pixels[i] = 0xff00ff;//SDL_MapRGBA(sfc->format,255,0,0,255);
+}
+```
+
+上面的代码在图片上画了一条品红色的线条。
+
+![image-20220731234023404](assets/image-20220731234023404.png)
+
+
+
+#### **指定输出坐标**
+
+```c
+SDL_Rect  rect = { 50,50,0,0 };
+//把图片显示到窗口上
+SDL_BlitSurface(sfc, NULL, gWinSfc, &rect);
+```
+
+SDL_BlitSurface可以将sfc输出到gWinSfc，那么如何指定输出坐标呢，这个可以通过最后一个参数指定，这个参数需要一个SDL_Rect结构，而且只有x，y有效，w，h将被忽略，所以置为0即可！
+
+#### **输出部分图片**
+
+```c
+SDL_Rect scaleRect = { 10,156,50,50 };
+//把图片显示到窗口上
+SDL_BlitSurface(sfc, &scaleRect, gWinSfc, NULL);
+```
+
+如果不想把整张图片都输出，则可以指定输出的图片中的某个矩形区域。
 
 ### 3.事件处理
 
@@ -492,38 +533,30 @@ SDL_PollEvent 将不断从队列中取出事件，直到队列为空。当队列
 
 #### 键盘事件
 
-退出事件只是 SDL 能够处理的事件之一。在游戏中大量使用的另一种输入是键盘。在本教程中，我们将根据您按下的键对图像进行移动。
-
-
+退出事件只是 SDL 能够处理的事件之一。在游戏中大量使用的另一种输入是键盘。在本教程中，我们将根据您按下的键对图像进行移动
 
 在源代码的顶部，我们声明了不同表面的枚举。  
 
 ```c
-//图片数组
-SDL_Surface* gSurfaces[SFC_Total];
-
-//启动SDL并创建窗口
-bool initSDL();
-
-//加载媒体
-bool loadMedia();
-
-//释放媒体并关闭SDL
-void closeSDL();
-
-const SCREEN_WIDTH = 640;
-const SCREEN_HEIGHT = 480;
-
 //要渲染的窗口指针
 SDL_Window* gWindow = NULL;
 
 //窗口包含的表面
-SDL_Surface* gScreenSurface = NULL;
+SDL_Surface* gWinSfc = NULL;
+
+//启动SDL并创建窗口
+bool init(const char* title, int width, int height);
+
+//释放媒体并关闭SDL
+void clean();
+
+//加载图片
+SDL_Surface* loadSurface(const char* filename)
 ```
 
  除了常用的函数原型之外，我们还有一个名为loadSurface的新函数。 专门用来加载图片，以及在出错时能快速定位。  
 
-对于这个程序来说，我们有一个指向SDL表面的指针数组，叫做gSrufaces，它包含了我们将要使用的所有图像。 根据用户按下的按键，我们将把curSurface(将被写入屏幕的图像)设置为这些表面中的一个。  
+对于这个程序来说，我们有一个指向SDL表面的指针，叫做gSfc，它指向了我们将要使用的图像。 根据用户按下的按键，我们将把gSfc进行移动。  
 
 ```c
 SDL_Surface* loadSurface(const char* filename)
@@ -540,60 +573,28 @@ SDL_Surface* loadSurface(const char* filename)
 
 上面是loadSurface函数，它加载图像并在出现错误时报告错误。 它与以前的方法基本相同，但是将图像加载和错误报告包含在一个函数中可以很容易地添加和调试图像加载。  
 
-要记得最后要在closeSDL函数中释放加载的表面哦~  
+要记得最后要在clean函数中释放加载的表面哦~  
+
+
 
 ```c
-bool loadMedia()
-{
     //加载图片
-    gSurfaces[SFC_Default] = loadSurface("assets/images/default.bmp");
-    if (gSurfaces[SFC_Default] == NULL)
-    {
-        return false;
-    }
+   gSfc = loadSurface("./assets/lesson02/hello_world.bmp");
+	//定义坐标点
+	int x = 0;
+	int y = 0;
 
-    gSurfaces[SFC_Up] = loadSurface("assets/images/up.bmp");
-    if (gSurfaces[SFC_Up] == NULL)
-    {
-        return false;
-    }
 
-    gSurfaces[SFC_Down] = loadSurface("assets/images/down.bmp");
-    if (gSurfaces[SFC_Down] == NULL)
-    {
-        return false;
-    }
-
-    gSurfaces[SFC_Left] = loadSurface("assets/images/left.bmp");
-    if (gSurfaces[SFC_Left] == NULL)
-    {
-        return false;
-    }
-
-    gSurfaces[SFC_Right] = loadSurface("assets/images/right.bmp");
-    if (gSurfaces[SFC_Right] == NULL)
-    {
-        return false;
-    }
-    return true;
-}
-```
-
-在loadMedia函数中，我们载入所有要渲染到屏幕上的图像。  
-
-```c
-  	//主循环标志
+	//主循环标志
     bool quit = false;
-    //当前图片指针
-    SDL_Surface* curSurface = gSurfaces[SFC_Default];
     while (!quit)
     {
 ```
 
-在main函数中，在进入主循环之前，我们将默认表面(SFC_Default)设置为显示。  
+在main函数中，在进入主循环之前，我们先将图片进行加载，并且定义坐标点x和y。  
 
 ```c
- static SDL_Event ev;
+   static SDL_Event ev;
         //处理队列中的事件
         while (SDL_PollEvent(&ev))
         {
@@ -607,26 +608,31 @@ bool loadMedia()
                 switch (ev.key.keysym.sym)
                 {
                 case SDLK_UP:
-                    curSurface = gSurfaces[SFC_Up];
+                    y--;
                     break;
                 case SDLK_DOWN:
-                    curSurface = gSurfaces[SFC_Down];
+                    y++;
                     break;
                 case SDLK_LEFT:
-                    curSurface = gSurfaces[SFC_Left];
+                    x--;
                     break;
                 case SDLK_RIGHT:
-                    curSurface = gSurfaces[SFC_Right];
+                    x++;
                     break;
                 default:
-                    curSurface = gSurfaces[SFC_Default];
+                    x = 0;
+                    y = 0;
                     break;
                 }
             }
         }
 
+		//清屏
+        SDL_FillRect(gWinSfc, NULL, 0xffff);
+
+        SDL_Rect posRect = { x,y,0,0 };
         //在窗口上显示图片
-        SDL_BlitSurface(curSurface, NULL, gScreenSurface, NULL);
+        SDL_BlitSurface(gSfc, NULL, gWinSfc, &posRect);
         SDL_UpdateWindowSurface(gWindow);
     }
 ```
@@ -639,3 +645,8 @@ bool loadMedia()
 
 
 
+### 4.输出文字
+
+
+
+### 5.播放音乐

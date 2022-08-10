@@ -4,17 +4,19 @@ C系统提供了丰富的系统文件，称为库文件。在".h"文件中包含
 
 这些头文件为我们提供了大量的功能，并通过函数提供给我们，我们无需自己重复写代码时间，包含头文件，调用函数即可。
 
-| assert.h | 头文件提供了一个名为 assert 的宏，它可用于验证程序做出的假设，并在假设为假时输出诊断消息。 |
-| -------- | ------------------------------------------------------------ |
-| ctype.h  | 提供了一些函数，可用于测试和映射字符。                       |
-| math.h   | 定义了各种数学函数。在这个库中所有可用的功能都带有一个 double 类型的参数，且都返回 double 类型的结果。 |
-| stdio.h  | 定义了三个变量类型、一些宏和各种函数来执行输入和输出。       |
-| stdlib.h | 定义了四个变量类型、一些宏和各种通用工具函数。               |
-| string.h | 定义了一个变量类型、一个宏和各种操作字符数组的函数。         |
-| time.h   | 定义了四个变量类型、两个宏和各种操作日期和时间的函数。       |
-|          |                                                              |
-|          |                                                              |
-|          |                                                              |
+| 头文件    | 描述                                                         |
+| --------- | :----------------------------------------------------------- |
+| assert.h  | 头文件提供了一个名为 assert 的宏，它可用于验证程序做出的假设，并在假设为假时输出诊断消息。 |
+| stdarg.h  | 提供了一些函数，可用于测试和映射字符。                       |
+| ctype.h   | 定义了一批C语言字符分类函数（C character classification functions），用于测试字符是否属于特定的字符类别，如字母字符、控制字符等等 |
+| limits.h  | 用于检测整型数据数据类型的表达值范围。                       |
+| stdint.h  | 定义了几种扩展的整数类型和宏                                 |
+| setjump.h | 提供了一种不同于通常的函数调用和返回顺序的方式，特别是，它允许立即从一个深层嵌套的函数调用中返回。 |
+| stdio.h   | 定义了四个变量类型、两个宏和各种操作日期和时间的函数。       |
+| stdlib.h  | 即standard library标准库头文件。stdlib.h里面定义了五种类型、一些宏和通用工具函数。 <br>**类型：**例如size_t、wchar_t、div_t、ldiv_t和lldiv_t； <br>**宏：**例如EXIT_FAILURE、EXIT_SUCCESS、RAND_MAX和MB_CUR_MAX等等；<br>**常用的函数：**如malloc()、calloc()、realloc()、free()、system()、atoi()、atol()、rand()、srand()、exit()等等。 |
+| string.h  | 定义了一个变量类型、一个宏和各种操作字符数组的函数。         |
+| time.h    | 是C语言中的日期和时间头文件。用于需要时间方面的函数。        |
+| math.h    | 定义了各种数学函数。在这个库中所有可用的功能都带有一个 double 类型的参数，且都返回 double 类型的结果。 |
 
 ### assert.h
 
@@ -314,7 +316,7 @@ typedef int jmp_buf[16];
 |  34  | <span style = "font-size:18px;color:rgb(0,102,0)" >int getc(FILE *stream)</span><br />从指定的流 stream 获取下一个字符（一个无符号字符），并把位置标识符往前移动。 |
 |  35  | <span style = "font-size:18px;color:rgb(0,102,0)" >int getchar(void)</span><br />从标准输入 stdin 获取一个字符（一个无符号字符）。 |
 |  36  | <span style = "font-size:18px;color:rgb(0,102,0)" >char *gets(char *str)</span><br />从标准输入 stdin 读取一行，并把它存储在 str 所指向的字符串中。当读取到换行符时，或者到达文件末尾时，它会停止，具体视情况而定。 |
-|  37  | <span style = "font-size:18px;color:rgb(0,102,0)" >int putc(int char, FILE *stream)</span><br />把参数 char 指定的字符（一个无符号字符）写入到指定的流 stream 中，并把位置标识符往前移动。 |
+|  37  | <span style = "font-size:18px;color:rgb(0,102,0)" >int fputc(int char, FILE *stream)</span><br />把参数 char 指定的字符（一个无符号字符）写入到指定的流 stream 中，并把位置标识符往前移动。 |
 |  38  | <span style = "font-size:18px;color:rgb(0,102,0)" >int putchar(int char)</span><br />把参数 char 指定的字符（一个无符号字符）写入到标准输出 stdout 中。 |
 |  39  | <span style = "font-size:18px;color:rgb(0,102,0)" >int puts(const char *str)</span><br />把一个字符串写入到标准输出 stdout，直到空字符，但不包括空字符。换行符会被追加到输出中。 |
 |  40  | <span style = "font-size:18px;color:rgb(0,102,0)" >int ungetc(int char, FILE *stream)</span><br />把字符 char（一个无符号字符）推入到指定的流 stream 中，以便它是下一个被读取到的字符。 |
@@ -433,6 +435,15 @@ typedef int jmp_buf[16];
 |  20  | <span style = "font-size:18px;color:rgb(0,102,0)" >char *strstr(const char *haystack, const char *needle)</span><br />在字符串 haystack 中查找第一次出现字符串 needle（不包含空结束字符）的位置。 |
 |  21  | <span style = "font-size:18px;color:rgb(0,102,0)" >char *strtok(char *str, const char *delim)</span><br />分解字符串 str 为一组字符串，delim 为分隔符。 |
 |  22  | <span style = "font-size:18px;color:rgb(0,102,0)" >size_t strxfrm(char *dest, const char *src, size_t n)</span><br />根据程序当前的区域选项中的 LC_COLLATE 来转换字符串 src 的前 n 个字符，并把它们放置在字符串 dest 中。 等同strncpy |
+|      | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strdup(char const* _String        );</span><br />根据程 |
+|      | <span style = "font-size:18px;color:rgb(0,102,0)" >int  strcmpi(char const* _String1,char const* _String2);</span><br />根据程 |
+|      | <span style = "font-size:18px;color:rgb(0,102,0)" >int  stricmp(char const* _String1,char const* _String2); </span><br />根据程 |
+|      | <span style = "font-size:18px;color:rgb(0,102,0)" >int  strnicmp(char const* _String1,char const* _String2,size_t      _MaxCount);</span><br />根据程 |
+|      | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strlwr(char* _String);</span><br />根据程 |
+|      | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strnset(char* _String,int    _Value,size_t _MaxCount);</span><br />根据程 |
+|      | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strrev(char* _String); </span><br />根据程 |
+|      | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strset(char* _String,int   _Value);</span><br />根据程 |
+|      | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strupr(char* _String);</span><br />根据程 |
 
 
 

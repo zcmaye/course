@@ -88,8 +88,6 @@ void setMaximumWidth(int maxw);
 void setMinimumWidth(int minw);
 ```
 
-
-
 ## 窗口可见性/状态
 
 ```cpp
@@ -173,16 +171,6 @@ Qt有许多标准的游标形状，但您也可以基于QBitmap、掩码和热�
 ```
 
 ### 设置光标样式
-
-> cursor : QCursor
-
-Access functions:
-
-```cpp
- QCursor cursor() const
- void setCursor(const QCursor &)
- void unsetCursor()
-```
 
 通过QWidget的`setCursor`函数设置光标，Qt给我们内置了常见的光标，如果需要还可以自定义光标样式~
 
@@ -404,6 +392,39 @@ this->setWindowFlag(Qt::WindowContextHelpButtonHint,false);
 | Qt::WA_MouseTracking         | 2          | 指示小部件启用了鼠标跟踪。 参见QWidget:: mouseTracking       |
 | Qt::WA_TranslucentBackground | 120        | 指示小部件应该有一个半透明的背景，也就是说，小部件的任何非透明区域都将是半透明的，因为小部件将有一个alpha通道。 设置此标志将导致设置WA_NoSystemBackground。 在Windows上，小部件还需要设置Qt:: framesswindowhint窗口标志。 该标志由小部件的作者设置或清除。 |
 
+## 右键菜单
+
+在桌面右击鼠标会出现菜单，这个我们一般叫做右键菜单，那么在Qt中我们如何使用右键菜单呢？
+
+首先需要给控件设置上下文菜单策略 setContextMenuPolicy(Qt::CustomContextMenu) ；设置该策略后当我们右键点击控件时qt会发送一个信号 customContextMenuRequested(const QPoint &pos) ，其中参数pos用来传递右键点击时的鼠标的坐标，这个坐标一般是相对于控件左上角而言的；最后给这个信号设置相应的槽函数，在槽函数中将菜单展示出来就行了。
+
++ 设置上下文菜单策略
+
+```css
+setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
+```
+
++ 连接上下文菜单触发的信号
+
+```cpp
+connect(btn,&QPushButton::customContextMenuRequested,this,[=](const QPoint&pos)
+{
+    //在指定位置弹出菜单
+    //contextMenu->exec(btn->mapToParent(this->mapToParent(pos)));
+    contextMenu->exec(QCursor::pos());
+});
+```
+
++ 创建的菜单
+
+```cpp
+QMenu contextMenu = new QMenu;
+QAction* copyAct = contextMenu->addAction("复制");
+QAction* pasteAct= contextMenu->addAction("粘贴");
+```
+
+
+
 ## Qt部署应用程序发布包
 
 windeployqt.exe是Qt自带的工具，用于创建应用程序发布包。 简单来说，这个工具可以自动地将某程序依赖的库、资源拷贝到其所在目录，防止程序在其他电脑上运行报找不到库的错误。
@@ -421,14 +442,6 @@ windeployqt.exe工作原理很简单，它会到当前的环境变量PATH配置�
 + 然后再命令行中输入`windeployqt AppName` ，AppName表示应用程序完整路径；
 
   我们知道，Qt项目路径不能包含中文，所以为了保险起见，应用程序路径中不要包含中文。另外，如果应用程序路径中包含空格，需要用双引号将整个路径字符串包裹起来。
-
-不同的编译器和版本需要使用不同的windeployqt版本打包
-
-以官方 Qt 5.14.2+MinGW32 开发环境为例：
-
-+ 1，通过Qt命令行运行windeployqt工具，开始菜单->Qt 5.14.2->5.4->MinGW 4.9 (32-bit)->Qt 5.14.2 (MinGW 7.3.0 32-bit)
-+ 把需要打包的Qt可执行程序拷贝到一个单独的文件夹里面，然后再把命令行工作目录切换到该文件夹
-+ 最后执行命令`windeployqt maye.exe`
 
 ### 注意坑
 
@@ -466,17 +479,13 @@ maye>windeployqt F:\MyCode\QtTest.exe
 
 ![image-20220903205052744](assets/image-20220903205052744.png)
 
+
+
 # 2. 资源文件 .qrc
 
 > 需要我们给窗口设置图标
 
 ```c++
-// 创建图标对象
-QIcon::QIcon(const QString &fileName)
-// QWidget类的 公共成员函数
-void setWindowIcon(const QIcon &icon)
-
-// 给窗口设置图标
 // 弊端: 发布的exe 必须要加载 d:\\pic\\1.ico 如果对应的目录中么有图片, 图标就无法被加载
 //			发布exe 需要额外发布图片, 将其部署到某个目录中
 setWindowIcon(QIcon("d:\\pic\\1.ico"));
@@ -489,6 +498,56 @@ setWindowIcon(QIcon("d:\\pic\\1.ico"));
 > 1. 将图片资源放到资源文件
 > 2. 当程序编译的时候, 资源文件中的图片会被转换为二进制, 打包到exe中
 > 3. 直接发布exe就可以, 不需要额外提供图片资源了
+
+在VS中使用资源文件，需要安装Vs的Qt插件，具体操作如下。
+
+**2.1.打开VS**
+
+选择菜单栏->扩展->管理扩展
+
+![图片](assets/1_1.png)
+
+**2.VS安装Qt插件**
+
+选择菜单栏的 扩展->管理扩展，输入Qt搜索，然后下载Qt Visual Studio Tools（下载灰常的银杏，慢的死~还不一定能下载）
+
+![image-20220904050738551](assets/image-20220904050738551.png)
+
+**如果实在不能忍受这龟速，咱们来别的办法**
+
+先到Qt官网下载对于版本的插件，我这里是VS2022：
+
+[Qt官网插件下载](https://download.qt.io/official_releases/vsaddin/2.8.1/)
+
+![image-20220904050849327](assets/image-20220904050849327.png)
+
+如果跳到如下页面，选择清华大学镜像源下载即可。
+
+![image-20220904050946945](assets/image-20220904050946945.png)
+
+3.安装VSIX(即上面下载的那个插件)
+
+如果是通过Vs下载的，会自动安装。
+
+如果是手动下载的，需要双击自己安装。
+
+打开安装包之后，点击Install等待安装完成即可。
+
+![图片](assets/vsix1.png)
+
+安装之前，请先关掉Vs`没有关掉会出现如下界面，点击end tasks即可`
+
+![图片](assets/vsix2.png)
+
+关闭Vs之后，一秒安装完成
+
+![图片](assets/vsix3.png)
+
+安装完成，关掉程序
+
+
+
+
 
 资源文件的创建
 

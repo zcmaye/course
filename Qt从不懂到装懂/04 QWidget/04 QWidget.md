@@ -88,26 +88,7 @@ void setMaximumWidth(int maxw);
 void setMinimumWidth(int minw);
 ```
 
-## 窗口标题和图标
 
-```c++
-//------------- 窗口图标 -------------
-// 得到当前窗口的图标
-QIcon windowIcon() const;
-// 构造图标对象, 参数为图片的路径
-QIcon::QIcon(const QString &fileName);
-// 设置当前窗口的图标
-void setWindowIcon(const QIcon &icon);
-
-/*--Slots--*/
-//------------- 窗口标题 -------------
-// 得到当前窗口的标题
-QString windowTitle() const;
-// 设置当前窗口的标题
-void setWindowTitle(const QString &);
-
-void setWindowModified(bool)
-```
 
 ## 窗口可见性/状态
 
@@ -135,17 +116,6 @@ virtual void setVisible(bool visible)
 [slot] void QWidget::showMinimized();
 // 将窗口回复为最大化/最小化之前的状态, 只对windows有效
 [slot] void QWidget::showNormal();
-```
-
-```cpp
-//------------- 信号 -------------
-// QWidget::setContextMenuPolicy(Qt::ContextMenuPolicy policy);
-// 窗口的右键菜单策略 contextMenuPolicy() 参数设置为 Qt::CustomContextMenu, 按下鼠标右键发射该信号
-[signal] void QWidget::customContextMenuRequested(const QPoint &pos);
-// 窗口图标发生变化, 发射此信号
-[signal] void QWidget::windowIconChanged(const QIcon &icon);
-// 窗口标题发生变化, 发射此信号
-[signal] void QWidget::windowTitleChanged(const QString &title);
 ```
 
 
@@ -203,6 +173,16 @@ Qt有许多标准的游标形状，但您也可以基于QBitmap、掩码和热�
 ```
 
 ### 设置光标样式
+
+> cursor : QCursor
+
+Access functions:
+
+```cpp
+ QCursor cursor() const
+ void setCursor(const QCursor &)
+ void unsetCursor()
+```
 
 通过QWidget的`setCursor`函数设置光标，Qt给我们内置了常见的光标，如果需要还可以自定义光标样式~
 

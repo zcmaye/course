@@ -75,3 +75,8 @@ connect(newBtn,&QPushButton::clicked,this,[=](bool check)
 [CSDN](https://blog.csdn.net/weixin_38326893/article/details/80001548)
 
 [PyQt5](https://blog.csdn.net/caojianhua2018/article/details/102454748)
+
+
+
+## QScreen
+

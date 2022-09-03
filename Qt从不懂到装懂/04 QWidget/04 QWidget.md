@@ -4,7 +4,9 @@
 
 ![image-20201009170432819](assets/image-20201009170432819.png)
 
-```c++
+## 父对象
+
+```cpp
 // 构造函数
 QWidget::QWidget(QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
 
@@ -14,7 +16,13 @@ void QWidget::setParent(QWidget *parent);
 void QWidget::setParent(QWidget *parent, Qt::WindowFlags f);
 // 获取当前窗口的父对象, 没有父对象返回 nullptr
 QWidget *QWidget::parentWidget() const;
+```
 
+
+
+## 位置和尺寸
+
+```cpp
 //------------- 窗口位置 -------------
 // 得到相对于当前窗口父窗口的几何信息, 边框也被计算在内
 QRect QWidget::frameGeometry() const;
@@ -78,8 +86,11 @@ void QWidget::setFixedWidth(int w);
 void setMaximumWidth(int maxw);
 // 给窗口设置最小宽度
 void setMinimumWidth(int minw);
+```
 
+## 窗口标题和图标
 
+```c++
 //------------- 窗口图标 -------------
 // 得到当前窗口的图标
 QIcon windowIcon() const;
@@ -96,8 +107,11 @@ QString windowTitle() const;
 void setWindowTitle(const QString &);
 
 void setWindowModified(bool)
+```
 
+## 窗口可见性/状态
 
+```cpp
 // 判断窗口是否可用
 bool isEnabled() const;
 // 设置窗口是否可用, 不可用窗口无法接收和处理窗口事件
@@ -121,8 +135,9 @@ virtual void setVisible(bool visible)
 [slot] void QWidget::showMinimized();
 // 将窗口回复为最大化/最小化之前的状态, 只对windows有效
 [slot] void QWidget::showNormal();
+```
 
-
+```cpp
 //------------- 信号 -------------
 // QWidget::setContextMenuPolicy(Qt::ContextMenuPolicy policy);
 // 窗口的右键菜单策略 contextMenuPolicy() 参数设置为 Qt::CustomContextMenu, 按下鼠标右键发射该信号
@@ -133,9 +148,47 @@ virtual void setVisible(bool visible)
 [signal] void QWidget::windowTitleChanged(const QString &title);
 ```
 
-## 设置鼠标样式
 
-### Qcursor
+
+## 光标
+
+### QCursor
+
+这个类主要用于创建与特定小部件关联的鼠标光标，以及获取和设置鼠标光标的位置。
+
+Qt有许多标准的游标形状，但您也可以基于QBitmap、掩码和热点定制游标形状。
+
+要将游标与小部件关联，请使用QWidget::setCursor()。要将游标与所有小部件关联(通常是短时间内)，请使用QGuiApplication::setOverrideCursor()。
+
+要设置游标形状，可以使用QCursor::setShape()或使用QCursor构造函数，它以游标的形状作为参数，或者您可以使用Qt::CursorShape枚举中定义的预定义游标之一。
+
+如果你想用你自己的位图创建一个游标，使用QCursor构造函数，它接受一个位图和一个掩码，或者使用一个像素图作为参数的构造函数。
+
+要设置或获取鼠标光标的位置，请使用静态方法QCursor::pos()和QCursor::setPos()。
+
+#### Public Functions
+
+```cpp
+ QCursor(QCursor &&other)
+ QCursor(const QCursor &c)
+ QCursor(const QPixmap &pixmap, int hotX = -1, int hotY = -1)
+ QCursor(const QBitmap &bitmap, const QBitmap &mask, int hotX = -1, int hotY = -1)
+ QCursor(Qt::CursorShape shape)
+ QCursor()
+ QCursor &operator=(QCursor &&other)
+ QCursor &operator=(const QCursor &c)
+ ~QCursor()
+ QBitmap bitmap() const
+ QPoint hotSpot() const
+ QBitmap mask() const
+ QPixmap pixmap() const
+ void setShape(Qt::CursorShape shape)
+ Qt::CursorShape shape() const
+ void swap(QCursor &other)
+ QVariant operator QVariant() const
+```
+
+#### Static Public Members
 
 ```cpp
 //获取鼠标的全局坐标
@@ -149,25 +202,25 @@ virtual void setVisible(bool visible)
 //QScreen在多屏幕的时候可用    
 ```
 
+### 设置光标样式
 
+通过QWidget的`setCursor`函数设置光标，Qt给我们内置了常见的光标，如果需要还可以自定义光标样式~
 
-[iconfont图标下载网站](https://www.iconfont.cn/)
-
-+ 以下代码可以通过点击按钮切换并查看所有鼠标的(内置)形状
++ 以下代码可以通过点击按钮切换并查看所有内置光标的形状
 
 ```cpp
 QPushButton*btn = new QPushButton("切换鼠标形状",this);
 connect(btn,&QPushButton::clicked,this,[=]()
-{
-    static int i = 0;
-    this->setCursor(Qt::CursorShape(i));
-    qDebug()<<"切换成功"<<Qt::CursorShape(i);
-    i = (i+1)%25;
+	{
+    	static int i = 0;
+    	this->setCursor(Qt::CursorShape(i));
+    	i = (i+1)%25;
+        qDebug()<<"切换成功"<<Qt::CursorShape(i);
     });
-}
+
 ```
 
-+ 除了内置形状之外，还可以自定义鼠标形状
++ 下面我们将学习如何自定义光标形状，推荐一个下载图标的网站[iconfont图标下载网站](https://www.iconfont.cn/)
 
 ```cpp
 QPixmap* cursorPixmaps[2]={new QPixmap("://images/cursor_one.png"),
@@ -181,9 +234,20 @@ connect(btn,&QPushButton::clicked,this,[=]()
 });
 ```
 
-## setWhatsThis
+## 帮助系统
 
-setToolTip用来设置提示信息，那么setWhatsThis是用来干嘛的呢？顾名思义就是用来说明这是啥玩意的
+在QWidget和子类中可以使用`setToolTip`设置提示信息，使用`toolTip`获取提示信息。
+
+```cpp
+ QString toolTip() const
+ void setToolTip(const QString &)
+```
+
+当鼠标移动到控件上的时候，会显示提示信息！
+
+
+
+除了提示信息之外，还有一个“这是什么”帮助系统，使用setWhatsThis设置"这是什么"信息。
 
 + 先创建三个按钮
 
@@ -215,9 +279,36 @@ setToolTip用来设置提示信息，那么setWhatsThis是用来干嘛的呢？�
 
 
 
+## 设置标题/图标
 
+### 设置窗口标题
 
-## 设置窗口图标
+> windowTitle : QString
+
+这个属性只对顶级小部件有意义，比如窗口和对话框。如果没有设置标题，则标题基于windowFilePath。如果两者都没有设置，则标题为空字符串。
+
+如果您使用windowModified机制，窗口标题必须包含一个“[\*]”占位符，它指示'\*'应该出现在哪里。通常，它应该出现在文件名之后(例如，"document1.txt[*] -文本编辑器")。如果windowModified属性为false(默认值)，占位符就会被删除。
+
+在某些桌面平台上(包括Windows和Unix)，如果设置了，应用程序名称(来自QGuiApplication::applicationDisplayName)会添加在窗口标题的末尾。这是由QPA插件完成的，所以它显示给用户，但不是windowTitle字符串的一部分。
+
+Access functions:
+
+```cpp
+ QString windowTitle() const
+ void setWindowTitle(const QString &)
+```
+
+Notifier signal:
+
+```cpp
+ void windowTitleChanged(const QString &title)
+```
+
+### 设置窗口图标
+
+> windowIcon : QIcon
+
+这个属性只对窗口有意义。如果没有设置图标，windowIcon()返回应用程序图标(QApplication::windowIcon())。
 
 + 修改窗口和任务栏显示的图标
 
@@ -225,75 +316,45 @@ setToolTip用来设置提示信息，那么setWhatsThis是用来干嘛的呢？�
 this->setWindowIcon(QIcon("://images/snowBall.png"));
 ```
 
-## 设置应用程序图标
-
-简单三步，搞定~
-
-+ 1，创建一个图标格式(ico)的文件，`可以将一个普通的图片转成.ico格式的图标文件`
-
-  [图片格式在线转换](https://convertio.co/zh/) 
-
-+ 2，将转换好的ico文件放到源文件所在目录，即和.pro文件同级目录
-
-+ 3，在.pro项目文件中添加如下代码`zay.ico 即图标名`
+Access functions:
 
 ```cpp
-RC_ICONS += zay.ico
+QIcon windowIcon() const
+void setWindowIcon(const QIcon &icon)
 ```
 
-## QWidget槽函数
-
-**show,hide,setVisible,setHidden,close 小结**
-
-+ 0，在Qt中如果一定要自己释放对象，官方推荐使用`[slot] void QObject::deleteLater()`来释放对象
-+ 1，`[slot] void setVisible(bool visible)` 设置Widget可见或不可见
-
-+ 2，`slot] void QWidget::setHidden(bool *hidden*)` 1号的马甲
-+ 3，`[slot] void QWidget::show()` 1号的马甲
-+ 4，`[slot] void QWidget::hide()`  1号的马甲
-+ 5，`[slot] bool QWidget::close()` 看情况调用4号或者0号(该部件是否有父部件)
+Notifier signal:
 
 ```cpp
-呵呵，show()、hide()、setVisible()、setHidden() 这4个函数让人看得眼花缭乱。怎么办？
-看看代码吧：
-virtual void setVisible(bool visible);
-inline void setHidden(bool hidden) { setVisible(!hidden); }
-inline void show() { setVisible(true); }
-inline void hide() { setVisible(false); }
+void windowIconChanged(const QIcon &icon)
 ```
 
-代码很清楚：这四个东西之中，只有 setVisible 是独立的，其他三个都是它的马甲！
-setVisible 的作用是什么呢？顾名思义，使得一个Widget可见或不可见。
-**要点**：不可见，是Widget不在界面上显示，但不代表对象被析构！
+QWidget类的`setWindowIcon`只能设置本窗口的图标，如果想要把所有的窗口图标都设置为同一个，需要使用`qApp->setWindowIcon()`;
 
-```cpp
-//[1]创建关闭自己的按钮
-QPushButton* closeBtn = new QPushButton("closeSelf",this);
-connect(closeBtn,&QPushButton::clicked,this,&Widget::close);
-//点击右上角关闭按钮会销毁窗口
-connect(this,&QObject::destroyed,this,[](){qDebug()<<"this destroyed";});
+### 设置exe图标
 
-//[2]创建子窗口
-QWidget* subWidget = new QWidget;
-subWidget->setWindowTitle("subWidget");
-subWidget->show();
-//subWidget->setAttribute(Qt::WidgetAttribute::WA_DeleteOnClose);   //点击关闭按钮时销毁窗口        
-connect(subWidget,&QWidget::destroyed,this,[=](){qDebug()<<"subWidget destroyed";});
-//[3]创建关闭子窗口的按钮
-QPushButton*closeSubWidgetBtn = new QPushButton("closeSubWidget",this);
-closeSubWidgetBtn->move(100,0);
-connect(closeSubWidgetBtn,&QPushButton::clicked,subWidget,[=](){
-    subWidget->close();
-    subWidget->deleteLater();   //推荐这样销毁对象
-    qDebug()<<subWidget;
-});
-//[4]创建显示子窗口的按钮
-QPushButton*showSubWidgetBtn = new QPushButton("showSubWidget",this);
-showSubWidgetBtn->move(200,0);
-connect(showSubWidgetBtn,&QPushButton::clicked,subWidget,&QWidget::show);             
-```
+设置完窗口图标之后，我们可能需要设置可执行程序exe文件的图标，这个稍微麻烦一点点，但是也是三步搞定，走起！
 
-## 坐标转换
++ 1，创建一个图标格式(ico)的文件，`可以将一个普通的图片转成.ico格式的图标文件`，[图片格式在线转换](https://convertio.co/zh/) 
+
++ 2，将转换好的ico文件放到源文件所在目录，即和CMakeLists.txt文件同级目录，并创建名为`icon.rc`的文件，写入如下内容。
+
+  ```cpp
+  IDI_ICON1 ICON DISCARDABLE "zay.ico"
+  ```
+
++ 3，最后在CMakeLists.txt中添加如下命令
+
+  ```cmake
+  aux_source_directory(. MY_SCOURCES)
+  add_executable(QtTest ${MY_SCOURCES} "icon.rc")
+  ```
+
+最后重新运行程序，找到exe，完成！
+
+​           
+
+## 坐标系统转换
 
 ```cpp
 QPoint mapFrom(const QWidget *parent, const QPoint &pos) const
@@ -312,24 +373,9 @@ QPoint mapToParent(const QPoint &pos) const
 
 + **绝对坐标**：将当前控件的相对位置转换为屏幕绝对位置 QWidget::mapToGlobal()
 
-+ **绝对坐标转为相对坐标**：将绝对位置对应到控件的相对位置 QWidget::mapFromGlobal()
++ **绝对坐标转为相对坐标**：将屏幕绝对位置对应到控件的相对位置 QWidget::mapFromGlobal()
 
   
-
-## 设置窗口标志
-
-+ 用Qt写一个窗口，如果继承QDialog，那窗口就只有关闭按钮，如果继承QWidget，那么就有关闭，最大化，最小化三个按钮，怎样才能让关闭按钮可用，而最大化和最小化按钮不可用呢？
-
-```cpp
-//仅仅显示关闭按钮，添加一个帮助按钮?
-this->setWindowFlags(Qt::WindowType::WindowCloseButtonHint | Qt::WindowContextHelpButtonHint);
-//从窗口标志中移除帮助按钮标志
-this->setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
-//移除标志或单纯添加一个标志，可以用一下简单的函数	true为设置，false为移除
-this->setWindowFlag(Qt::WindowContextHelpButtonHint,false);
-```
-
-+ 更多标志详见[附录一 ](#附录一 )
 
 ## 设置窗口状态
 
@@ -348,9 +394,22 @@ w->setWindowState((w->windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
 
 + 调用这个函数将隐藏小部件。 必须调用show()使小部件再次可见，在某些窗口系统中，Qt::WindowActive不是立即的，在某些情况下可能会被忽略。  
 
+## 设置窗口标志
 
++ 用Qt写一个窗口，如果继承QDialog，那窗口就只有关闭按钮，如果继承QWidget，那么就有关闭，最大化，最小化三个按钮，怎样才能让关闭按钮可用，而最大化和最小化按钮不可用呢？
 
-## 设置属性
+```cpp
+//仅仅显示关闭按钮，添加一个帮助按钮?
+this->setWindowFlags(Qt::WindowType::WindowCloseButtonHint | Qt::WindowContextHelpButtonHint);
+//从窗口标志中移除帮助按钮标志
+this->setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+//移除标志或单纯添加一个标志，可以用一下简单的函数	true为设置，false为移除
+this->setWindowFlag(Qt::WindowContextHelpButtonHint,false);
+```
+
++ 更多标志详见[附录一 ](#附录一 )
+
+## 设置窗口属性
 
 + setAttribute用来设置小部件的属性，testAttribute查看是否设置了某种属性。
 
@@ -365,9 +424,23 @@ w->setWindowState((w->windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
 | Qt::WA_MouseTracking         | 2          | 指示小部件启用了鼠标跟踪。 参见QWidget:: mouseTracking       |
 | Qt::WA_TranslucentBackground | 120        | 指示小部件应该有一个半透明的背景，也就是说，小部件的任何非透明区域都将是半透明的，因为小部件将有一个alpha通道。 设置此标志将导致设置WA_NoSystemBackground。 在Windows上，小部件还需要设置Qt:: framesswindowhint窗口标志。 该标志由小部件的作者设置或清除。 |
 
-## 发布程序
+## Qt部署应用程序发布包
 
-Qt 官方开发环境使用的动态链接库方式，在发布生成的exe程序时，需要复制一大堆 dll，如果自己去复制dll，很可能丢三落四，导致exe在别的电脑里无法正常运行。因此 Qt 官方开发环境里自带了一个工具：windeployqt.exe(这个文件在Qt安装目录的bin文件下可以找到)
+windeployqt.exe是Qt自带的工具，用于创建应用程序发布包。 简单来说，这个工具可以自动地将某程序依赖的库、资源拷贝到其所在目录，防止程序在其他电脑上运行报找不到库的错误。
+
+### 原理
+
+windeployqt.exe工作原理很简单，它会到当前的环境变量PATH配置的搜索路径中，查找应用程序所需要的库和资源，拷贝到应用程序目录中。
+
+### 使用
+
++ 先从开始菜单中打开**「对应版本的Qt」**的命令行终端界面，如下图：
+
+![image-20220903203024558](assets/image-20220903203024558.png)
+
++ 然后再命令行中输入`windeployqt AppName` ，AppName表示应用程序完整路径；
+
+  我们知道，Qt项目路径不能包含中文，所以为了保险起见，应用程序路径中不要包含中文。另外，如果应用程序路径中包含空格，需要用双引号将整个路径字符串包裹起来。
 
 不同的编译器和版本需要使用不同的windeployqt版本打包
 
@@ -376,6 +449,42 @@ Qt 官方开发环境使用的动态链接库方式，在发布生成的exe程�
 + 1，通过Qt命令行运行windeployqt工具，开始菜单->Qt 5.14.2->5.4->MinGW 4.9 (32-bit)->Qt 5.14.2 (MinGW 7.3.0 32-bit)
 + 把需要打包的Qt可执行程序拷贝到一个单独的文件夹里面，然后再把命令行工作目录切换到该文件夹
 + 最后执行命令`windeployqt maye.exe`
+
+### 注意坑
+
+大体上的流程只有这两步。 整个发布过程看似比较简单，但是其中还是存在一些坑的。
+
+**坑点一：未使用Qt的命令行终端执行发布命令，导致库版本拷贝错误**
+
+**坑点二：未使用与Qt版本对应的windeployqt.exe**
+
+**坑点三：发布时，默认文件不会覆盖**
+
+如果已经存在同名的文件，则不会自动覆盖，可以通过添加强制覆盖参数--force强制覆盖已存在的文件。
+
+```sh
+windeployqt --force D:\test\maye.exe
+```
+
+**注意点：**命令行在启动是，会有一行提示,`记得调用vcvarsall.bat来完成环境设置!`
+
+![image-20220903203743480](assets/image-20220903203743480.png)
+
+意思是说，我们还没有运行vcvarsall.bat，所以VS的环境变量没有配置好，因此不会拷贝VS相关的依赖库。
+
+vcvarsall.bat是VS自带的配置环境变量的批处理文件。它的位置取决你的安装位置，我的在`D:\MySoftWare\Microsoft Visual Studio\2022\Professional\VC\Auxiliary\Build`下，接下来就尝试运行vcvarsall.bat来配置一下VS的环境。
+
+```css
+maye> D:\MySoftWare\\"Microsoft Visual Studio\"\2022\Professional\VC\Auxiliary\Build\vcvarsall.bat
+
+maye>windeployqt F:\MyCode\QtTest.exe
+```
+
+![image-20220903205004124](assets/image-20220903205004124.png)
+
+这样发布出来的目录就带上了VS的依赖库，拷贝到没有安装VS的电脑上亦可以运行。
+
+![image-20220903205052744](assets/image-20220903205052744.png)
 
 # 2. 资源文件 .qrc
 

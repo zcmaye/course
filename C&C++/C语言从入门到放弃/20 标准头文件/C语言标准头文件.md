@@ -777,6 +777,8 @@ Windows提供的的 **Windows.h**头文件提供了一些用于操作console窗�
 | 1    | <span style = "font-size:15px;color:rgb(0,102,0)" >void SetConsoleCtrlHandler(PHANDLER_ROUTINE HandlerRoutine，BOOL Add)</span><br />添加控制台处理函数，Add为 TRUE，则添加处理程序 |
 | 更多 | https://docs.microsoft.com/en-us/windows/console/            |
 
+#### 捕获关闭按钮点击消息
+
 ```c
 #include <Windows.h>
 #include <stdio.h>
@@ -821,3 +823,10 @@ int main(void)
     return 0;
 }
 ```
+
+#### 禁用关闭按钮
+
+	DeleteMenu(GetSystemMenu(GetConsoleWindow(),
+		FALSE),
+		SC_CLOSE,
+		MF_BYCOMMAND);

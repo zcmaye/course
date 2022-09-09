@@ -17,9 +17,11 @@ else()
 endif()
 
 aux_source_directory(. MY_SOURCES)
+#list(REMOVE_ITEM MY_SOURCES "main.cpp")
 
 #用指定的源文件生成目标sdl
-add_executable(sdl main.cpp ${MY_SOURCES})
+add_executable(sdl ${MY_SOURCES})
+
 
 #连接库
 target_link_libraries(sdl SDL2 SDL2main SDL2_image SDL2_mixer)

@@ -1,6 +1,7 @@
 ﻿#ifndef _RENDER_H_
 #define _RENDER_H_
 #include<SDL.h>
+class Window;
 class Renderer
 {
 private:
@@ -44,7 +45,7 @@ public:	//shape
 	void drawPentastar(int x, int y, int w, int h);
 
 public: //static
-	static Renderer* createRenderer(SDL_Window* window, int index, int flags);
+	static Renderer* createRenderer(Window* window, int index, int flags);
 };
 
 #endif // !_RENDER_H_

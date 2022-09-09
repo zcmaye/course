@@ -1,5 +1,5 @@
 ﻿#include "Renderer.h"
-
+#include "Window.h"
 Renderer::Renderer()
 	:Renderer(nullptr)
 {
@@ -97,10 +97,10 @@ void Renderer::drawEllipse(SDL_Rect* rect)
 
 	int x, y;
 	//求出圆上每个坐标点
-	for (float angle = 0; angle < 360; angle += 0.1f)
+	for (float radian = 0; radian < 2* M_PI; radian += 0.002f)
 	{
-		x = (rect->x + aHalf) + aHalf * SDL_cos(angle);
-		y = (rect->y + bHalf) + bHalf * SDL_sin(angle);
+		x = (rect->x + aHalf) + aHalf * SDL_cos(radian);
+		y = (rect->y + bHalf) + bHalf * SDL_sin(radian);
 		drawPoint(x, y);
 	}
 }
@@ -172,9 +172,9 @@ void Renderer::drawPentastar(int x, int y, int w, int h)
 }
 
 
-Renderer* Renderer::createRenderer(SDL_Window* window, int index, int flags)
+Renderer* Renderer::createRenderer(Window* window, int index, int flags)
 {
-	SDL_Renderer* ren = SDL_CreateRenderer(window, index, flags);
+	SDL_Renderer* ren = SDL_CreateRenderer(window->sdlWindow(), index, flags);
 	if (ren)
 	{
 		SDL_Log("renderer created!\n");

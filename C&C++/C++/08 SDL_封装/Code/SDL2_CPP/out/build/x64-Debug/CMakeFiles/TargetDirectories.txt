@@ -1,3 +1,0 @@
-E:/GitHub/course/C&C++/C++/08 SDL_封装/Code/SDL2_CPP/out/build/x64-Debug/CMakeFiles/sdl.dir
-E:/GitHub/course/C&C++/C++/08 SDL_封装/Code/SDL2_CPP/out/build/x64-Debug/CMakeFiles/edit_cache.dir
-E:/GitHub/course/C&C++/C++/08 SDL_封装/Code/SDL2_CPP/out/build/x64-Debug/CMakeFiles/rebuild_cache.dir

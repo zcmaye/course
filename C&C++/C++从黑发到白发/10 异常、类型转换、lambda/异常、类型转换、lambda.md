@@ -1,0 +1,631 @@
+# 异常
+
+## 简介
+
+异常是程序在执行期间产生的问题。C++ 异常是指在程序运行时发生的特殊情况，比如尝试除以零的操作。
+
+异常提供了一种转移程序控制权的方式。C++ 异常处理涉及到三个关键字：**try、catch、throw、noexcept **。
+
+- **hrow:** 当问题出现时，程序会抛出一个异常。这是通过使用 **throw** 关键字来完成的。
+- **catch:** 在您想要处理问题的地方，通过异常处理程序捕获异常。**catch** 关键字用于捕获异常。
+- **try:** try 块中的代码标识将被激活的特定异常。它后面通常跟着一个或多个 catch 块。
+- **noexcept ：**用于描述函数不会抛出异常，一旦有异常抛出，会立刻终止程序，它可以阻止异常的传播与扩散。noexcept可以带一个“常量表达式作为参数，常量表达式为true，表示不会抛出异常，否则代表可以抛出异常
+
+如果有一个块抛出一个异常，捕获异常的方法会使用 **try** 和 **catch** 关键字。try 块中放置可能抛出异常的代码，try 块中的代码被称为保护代码。使用 try/catch 语句的语法如下所示：
+
+```cpp
+try
+{
+   // 保护代码
+}catch( ExceptionName e1 )
+{
+   // catch 块
+}catch( ExceptionName e2 )
+{
+   // catch 块
+}catch( ExceptionName eN )
+{
+   // catch 块
+}
+```
+
+如果 **try** 块在不同的情境下会抛出不同的异常，这个时候可以尝试罗列多个 **catch** 语句，用于捕获不同类型的异常。
+
+## 抛出异常
+
+您可以使用 **throw** 语句在代码块中的任何地方抛出异常。throw 语句的操作数可以是任意的表达式，表达式的结果的类型决定了抛出的异常的类型。
+
+以下是尝试除以零时抛出异常的实例:
+
+```cpp
+double division(int a, int b)
+{
+   if( b == 0 )
+   {
+      throw "Division by zero condition!";
+   }
+   return (a/b);
+}
+```
+
+## 捕获异常
+
+**catch** 块跟在 **try** 块后面，用于捕获异常。您可以指定想要捕捉的异常类型，这是由 catch 关键字后的括号内的异常声明决定的。
+
+```cpp
+try
+{
+   // 保护代码
+}catch( ExceptionName e )
+{
+  // 处理 ExceptionName 异常的代码
+}
+```
+
+上面的代码会捕获一个类型为 **ExceptionName** 的异常。如果您想让 catch 块能够处理 try 块抛出的任何类型的异常，则必须在异常声明的括号内使用省略号 ...，如下所示：
+
+```cpp
+try
+{
+   // 保护代码
+}catch(...)
+{
+  // 能处理任何异常的代码
+}
+```
+
+下面是一个实例，抛出一个除以零的异常，并在 catch 块中捕获该异常。
+
+```cpp
+#include <iostream>
+using namespace std;
+ 
+double division(int a, int b)
+{
+   if( b == 0 )
+   {
+      throw "Division by zero condition!";
+   }
+   return (a/b);
+}
+ 
+int main ()
+{
+   int x = 50;
+   int y = 0;
+   double z = 0;
+ 
+   try {
+     z = division(x, y);
+     cout << z << endl;
+   }catch (const char* msg) {
+     cerr << msg << endl;
+   }
+ 
+   return 0;
+}
+```
+
+由于我们抛出了一个类型为 **const char\*** 的异常，因此，当捕获该异常时，我们必须在 catch 块中使用 const char*。当上面的代码被编译和执行时，它会产生下列结果：
+
+```text
+Division by zero condition!
+```
+
+## C++ 标准的异常
+
+C++ 提供了一系列标准的异常，定义在 **<exception>** 中，我们可以在程序中使用这些标准的异常。它们是以父子类层次结构组织起来的，如下所示：
+
+![C++ 异常的层次结构](assets/exceptions_in_cpp.png)
+
+下表是对上面层次结构中出现的每个异常的说明：
+
+| 异常                   | 描述                                                         |
+| :--------------------- | :----------------------------------------------------------- |
+| **std::exception**     | 该异常是所有标准 C++ 异常的父类。                            |
+| std::bad_alloc         | 该异常可以通过 **new** 抛出。                                |
+| std::bad_cast          | 该异常可以通过 **dynamic_cast** 抛出。                       |
+| std::bad_exception     | 这在处理 C++ 程序中无法预期的异常时非常有用。                |
+| std::bad_typeid        | 该异常可以通过 **typeid** 抛出。                             |
+| **std::logic_error**   | 理论上可以通过读取代码来检测到的异常。                       |
+| std::domain_error      | 当使用了一个无效的数学域时，会抛出该异常。                   |
+| std::invalid_argument  | 当使用了无效的参数时，会抛出该异常。                         |
+| std::length_error      | 当创建了太长的 std::string 时，会抛出该异常。                |
+| std::out_of_range      | 该异常可以通过方法抛出，例如 std::vector 和 std::bitset<>::operator[]()。 |
+| **std::runtime_error** | 理论上不可以通过读取代码来检测到的异常。                     |
+| std::overflow_error    | 当发生数学上溢时，会抛出该异常。                             |
+| std::range_error       | 当尝试存储超出范围的值时，会抛出该异常。                     |
+| std::underflow_error   | 当发生数学下溢时，会抛出该异常。                             |
+
+## 定义新的异常
+
+您可以通过继承和重载 **exception** 类来定义新的异常。下面的实例演示了如何使用 std::exception 类来实现自己的异常：
+
+```cpp
+#include <iostream>
+#include <exception>
+using namespace std;
+ 
+struct MyException : public exception
+{
+  const char * what () const throw ()
+  {
+    return "C++ Exception";
+  }
+};
+ 
+int main()
+{
+  try
+  {
+    throw MyException();
+  }
+  catch(MyException& e)
+  {
+    std::cout << "MyException caught" << std::endl;
+    std::cout << e.what() << std::endl;
+  }
+  catch(std::exception& e)
+  {
+    //其他的错误
+  }
+}
+```
+
+这将产生以下结果：
+
+```cpp
+MyException caught
+C++ Exception
+```
+
+
+
+# 类型转换
+
+C++为了规范C中的类型转换，加强类型转换的可视性，引入了四种强制类型转换操作符：
+
++ **static_cast：**
++ **reinterpret_cast：**
++ **const_cast：**
++ **dynamic_cast：** 
+
+## static_cast
+
+> static_cast<type-id>(expression)
+
+该运算符把expression转换为type-id类型，但没有运行时类型检查来保证转换的安全性。 编译器隐式执行任何类型转换都可由static_cast显示完成
+
++ 基本类型转换
+
+  ```cpp
+  double score = 59.5;
+  int nScore = static_cast<int>(score);
+  ```
+
++ void指针和其他类型指针之间的转换(其他类型指针之间不能转换)
+
+  ```cpp
+  void* p = new int(20);
+  int* pi = static_cast<int*>(p);
+  void* pc = static_cast<void*>(pi);		//这里可以隐式转换，可以省略static_cast
+  delete p;
+  ```
+
++ 用于基类派生类之间指针、引用的转换
+
+  ```cpp
+  class Base
+  {
+  public:
+  	virtual void show()
+  	{
+  		std::cout << "Base " << std::endl;
+  	}
+  };
+  
+  class Derive :public Base
+  {
+  	char* name = nullptr;
+  public:
+  	Derive()
+  	{
+  		name = new char[5]{ "玩蛇" };
+  	}
+  	~Derive()
+  	{
+  		delete name;
+  	}
+  	void print()
+  	{
+  		std::cout << "Derive " << name << std::endl;
+  	}
+  };
+  ```
+
+  + **上行转换：**把派生类指针、引用转为基类的指针、引用（可以自动隐式转换）
+
+  ```cpp
+  //指针
+  Derive* derive = new Derive;
+  Base* base = static_cast<Derive*>(derive);
+  //引用
+  Derive& refDerive = *derive;
+  Base& refBase = static_cast<Base&>(refDerive);
+  
+  delete derive;
+  ```
+
+  + **下行转换：**把基类指针、引用转为派生类的指针、引用（必须强制静态转换）
+
+  ```cpp
+  Base* base = new Base;
+  Derive* derive = static_cast<Derive*>(base);
+  derive->print();
+  
+  delete base;
+  ```
+
+  **注意：**下行转换使用`static_cast`不安全，请使用`dynamic_cast`（不安全：因为不知道基类的指针，到底是不是指向的要转换的派生类对象，如果不是，访问数据成员会有错误）
+
+## reinterpret_cast
+
+为操作数的位模式提供较低层的重新解释.
+
+**主要用于以下六种情况：**
+
++ 任意类型指针之间的转换
+
+  ```cpp
+  int* p = nullptr;
+  char* pc = reinterpret_cast<char*>(p);
+  ```
+
++ 指针转整型，整型转指针
+
+  ```cpp
+  int* p = nullptr;
+  uint64_t a = reinterpret_cast<uint64_t>(p);	//x64 指针是8个字节，所以要用uint64_t保存，否则可能会丢失数据
+  double* pd = reinterpret_cast<double*>(a);
+  ```
+
++ 函数指针也可以转换哦~
+
+  ```cpp
+  uint64_t funMax = reinterpret_cast<uint64_t>(_max);
+  cout<<reinterpret_cast<int(*)(int, int)>(funMax)(2, 3);
+  
+  int _max(int a, int b)
+  {
+  	return a > b ? a : b;
+  }
+  ```
+
++ 一个官方案例
+
+  ```cpp
+  int arr[10];
+  for (int i = 0; i < 10; i++)
+  {
+  	cout << arr+i <<"  " <<hex<< ::hash(arr+i) << endl;;
+  }
+  
+  uint32_t _hash(void* p)
+  {
+  	uint64_t val = reinterpret_cast<uint64_t>(p);
+  	return val ^ (val >> 32);
+  }
+  ```
+
+## const_cast
+
+const_cast用来移除类型的const属性。const_cast 中的类型必须是指针、引用或指向对象类型成员的指针
+
++ const指针、引用不能直接赋值给非const的对象，需要去掉const之后再赋值
+
+  ```cpp
+  const char* name = "hello";
+  char* pname = const_cast<char*>(name);
+  
+  const int& refA = 8;
+  int& refB = const_cast<int&>(refA);
+  ```
+
++ 可以在类的const函数里面修改成员变量
+
+  ```cpp
+  class Integer
+  {
+  private:
+  	int number;
+  public:
+  	Integer(int number = 0)
+  		:number(number)
+  	{
+  	}
+  	operator int()const
+  	{
+  		const_cast<int&>(number)++;		//必须去掉const才能修改
+          const_cast<Integer*>(this)->number++;
+  		return number;
+  	}
+  };
+  
+  Integer num = 10;
+  int n = num;		//11
+  ```
+
+  
+
+## dynamic_cast
+
+dynamic_cast用于有继承关系的多态类（基类必须有虚函数）的指针或引用之间的转换。
+
++ 通过dynamic_cast，将派生类指针转换为基类指针（上行转换），这个操作与static_cast的效果是一样的。
+
++ 通过dynamic_cast，将基类指针转换为派生类指针（下行转换），dynamic_cast具有类型检查的功能，比static_cast更安全（如果转换的是指针，失败时会返回空指针；如果转换的是引用，会抛出std::bad_cast异常）
+
+
+
++ 指针转换，转换失败返回nullptr
+
+  ```cpp
+  	Animal* dog = new Dog;
+  	dog->cry();
+  	//转成实际的类型
+  	Dog* d = dynamic_cast<Dog*>(dog);
+  	if (!d)
+  		std::cout << "dog is not Dog" << std::endl;
+  	d->cry();
+  	//尝试转成其他子类,失败返回nullptr
+  	Cat* cat = dynamic_cast<Cat*>(dog);
+  	if (!cat)
+  		std::cout << "dog is not Cat";
+  	else
+  		cat->cry();	
+  ```
+
++ 转换引用，转换失败抛异常std::bad_cast
+
+  ```cpp
+  Animal& refA = *dog;
+  //转成实际的类型
+  Dog& refD = dynamic_cast<Dog&>(refA);
+  refD.cry();
+  //尝试转成其他子类,失败抛异常
+  Cat& refC = dynamic_cast<Cat&>(refA);
+  refC.cry();
+  ```
+
+  
+
+# lambda表达式
+
+Lambda表达式是现代C++在C ++ 11和更高版本中的一个新的语法糖 。 lambda表达式（也称为lambda函数）是在调用或作为函数参数传递的位置处定义匿名函数对象的便捷方法。通常，lambda用于封装传递给算法或异步方法的几行代码 。
+
+Lambda有很多叫法，有Lambda表达式、Lambda函数、匿名函数，为了方便表述统一用Lambda表达式进行叙述。
+
+## Lambda表达式语法
+
+语法如下:
+
+```cpp
+[capture list](parameters)mutable noexcept ->return type
+{
+    statement;
+}
+```
+
++ **捕获列表(capture list)：**捕获列表能够捕捉上下文中的变量以供Lambda函数使用。
+
++ **可变的(mutable)：**可以变的，和const是反义词。默认情况下Lambda函数总是一个`const`函数，`mutable`可以取消其常量性。在使用该修饰符时，参数列表不可省略（即使参数为空）。
+
++ **异常说明(noexcept)：**用于Lamdba表达式内部函数是否可以抛出异常。
++ **返回类型(return type)：**追踪返回类型(也叫尾拖返回类型)形式声明函数的返回类型。我们可以在不需要返回值的时候也可以连同符号”->”一起省略。此外，在返回类型明确的情况下，也可以省略该部分，让编译器对返回类型进行推导。
+
++ **函数体(statement)：**内容与普通函数一样，不过除了可以使用参数之外，还可以使用所有捕获的变量。
+
+### Lambda捕获列表详解
+
+Lambda表达式与普通函数最大的区别是，除了可以使用参数以外，Lambda函数还可以通过捕获列表访问一些上下文中的数据。具体地，捕捉列表描述了上下文中哪些数据可以被Lambda使用，以及使用方式（以值传递的方式或引用传递的方式）。语法上，在“`[]`”包括起来的是捕获列表，捕获列表由多个捕获项组成，并以逗号分隔。捕获列表有以下几种形式：
+
++ [ ]中没有任何捕获，表示不捕获任何外部变量
+
+  ```cpp
+  auto function = ([]{
+  		std::cout << "Hello World!" << std::endl;
+  	}
+  );
+  
+  function();
+  ```
+
++ [var]表示按值捕获指定的的变量var
+
+  ```cpp
+  int num = 100;
+  auto function = ([num]{
+  		std::cout << num << std::endl;
+  	}
+  );
+  
+  function();
+  ```
+
++ [=]表示值传递方式捕获所有父作用域的变量(包括this指针)
+
+  ```cpp
+  int index = 1;
+  int num = 100;
+  auto function = ([=]{
+  			std::cout << "index: "<< index << ", " 
+                  << "num: "<< num << std::endl;
+  	}
+  );
+  
+  function();
+  ```
+
++ [&var]表示按引用捕获指定的变量var
+
+  ```cpp
+  int num = 100;
+  auto function = ([&num]{
+  		num = 1000;
+  		std::cout << "num: " << num << std::endl;
+  	}
+  );
+  
+  function();
+  ```
+
++ [&]表示按引用捕获所有父作用域的变量(包括this)
+
+  ```cpp
+  int index = 1;
+  int num = 100;
+  auto function = ([&]{
+  		num = 1000;
+  		index = 2;
+  		std::cout << "index: "<< index << ", " 
+              << "num: "<< num << std::endl;
+  	}
+  );
+  
+  function();
+  ```
+
++ [this]表示值传递方式捕获当前的this指针
+
+  ```cpp
+  #include <iostream>
+  using namespace std;
+   
+  class Lambda
+  {
+  public:
+      void sayHello() {
+          std::cout << "Hello" << std::endl;
+      };
+  
+      void lambda() {
+          auto function = [this]{ 
+              this->sayHello(); 
+          };
+  
+          function();
+      }
+  };
+   
+  int main()
+  {
+      Lambda demo;
+      demo.lambda();
+  }
+  ```
+
+**=、&混合搭配**
+
++ [=,&a,&b]表示按引用捕获变量a和b，按值捕获其他所有变量
+
+  ```cpp
+  int index = 1;
+  int num = 100;
+  auto function = ([=, &index, &num]{
+  		num = 1000;
+  		index = 2;
+  		std::cout << "index: "<< index << ", " 
+              << "num: "<< num << std::endl;
+  	}
+  );
+  
+  function();
+  ```
+
++ `[=,a]`这里已经以值传递方式捕捉了所有变量，但是重复捕捉`a`了，会报错的；
+
++ `[&,&this]`这里`&`已经以引用传递方式捕捉了所有变量，再捕捉`this`也是一种重复。
+
+  
+
+### Lambda参数列表
+
+除了捕获列表之外，Lambda还可以接受输入参数。参数列表是可选的，并且在大多数方面类似于函数的参数列表。
+
+```cpp
+auto function = [] (int first, int second){
+    return first + second;
+};
+	
+function(100, 200);
+```
+
+### 可变规格mutable
+
+`mutable`修饰符， 默认情况下Lambda函数总是一个`const`函数，`mutable`可以取消其常量性。在使用该修饰符时，参数列表不可省略（即使参数为空）。
+
+```cpp
+#include <iostream>
+using namespace std;
+
+int main()
+{
+   int m = 0;
+   int n = 0;
+   [&, n] (int a) mutable { m = ++n + a; }(4);
+   cout << m << endl << n << endl;
+}
+```
+
+### 异常说明
+
+你可以使用 `throw()` 异常规范来指示 Lambda 表达式不会引发任何异常。与普通函数一样，如果 Lambda 表达式声明 C4297 异常规范且 Lambda 体引发异常，Visual C++ 编译器将生成警告 `throw()` 。
+
+```cpp
+int main() // C4297 expected 
+{ 
+ 	[]() throw() { throw 5; }(); 
+}
+```
+
+### 返回类型
+
+Lambda表达式的**返回类型会自动推导**。除非你指定了返回类型，否则不必使用关键字。返回型类似于通常的方法或函数的返回型部分。但是，返回类型必须在参数列表之后，并且必须在返回类型->之前包含类型关键字。如果Lambda主体仅包含一个`return`语句或该表达式未返回值，则可以省略Lambda表达式的`return-type`部分。如果Lambda主体包含一个`return`语句，则编译器将从`return`表达式的类型中推断出`return`类型。否则，编译器将返回类型推导为`void`。
+
+## Lambda表达式的优缺点
+
+### 优点
+
+1. 可以直接在需要调用函数的位置定义短小精悍的函数，而不需要预先定义好函数
+
+2. 使用Lamdba表达式变得更加紧凑，结构层次更加明显、代码可读性更好
+
+### 缺点
+
+1. Lamdba表达式语法比较灵活，增加了阅读代码的难度
+
+2. 对于函数复用无能为力(在不同的作用域中，无法复用)
+
+## Lambda表达式工作原理
+
+编译器会把一个Lambda表达式生成一个匿名类的**匿名对象**，并在类中**重载函数调用运算符**，实现了一个`operator()`方法。
+
+```cpp
+auto print = []{cout << "Hello World!" << endl; };
+```
+
+编译器会把上面这一句翻译为下面的代码：
+
+```cpp
+class Labmda_1
+{
+public:
+	void operator()(void) const
+	{
+		cout << "Hello World!" << endl;
+	}
+};
+// 用构造的类创建对象，print此时就是一个函数对象
+auto print = print_class();
+```
+

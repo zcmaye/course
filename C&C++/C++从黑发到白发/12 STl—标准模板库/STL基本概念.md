@@ -865,238 +865,358 @@ int main()
 + 同时拥有多种内部状态，比如返回一个值得同时并累加。
 + 作为算法for_each的返回值使用。
 
+## 函数对象
 
+> 头文件<functional>
 
-#### 谓词
+*函数对象*是专门设计用于使用类似于函数的语法的对象。在 C++ 中，这是通过`operator()`在其类中定义成员函数来实现的。
 
-谓词( *predicate* )是指普通函数或重载的operator()返回值是bool类型的函数对象(仿函数)。如果operator()接受一个参数，那么叫做一元谓词,如果接受两个参数，那么叫做二元谓词，谓词可作为一个判断式。
+它们通常用作函数的参数，例如传递给标准算法的谓词或比较函数。
 
-#### 函数对象适配器
+### 函数
 
-函数对象适配器是完成一些配接工作，这些配接包括绑定(bind)，否定(negate),以及对一
-般函数或成员函数的修饰，使其成为函数对象，重点掌握函数对象适配器(红色字体):
+这些函数根据其参数创建包装类的对象
 
-绑定器：
+#### bind
 
-bind1st		 将参数绑定为二元函数对象的第一个参数
+用来绑定函数调用的某些参数，可以将bind函数看作一个通用的函数包装器，它接受一个可调用对象，并返回函数对象。
 
-bind2nd		将参数绑定为二元函数对象的第二个参数
+返回的函数对象参数从前往后，可以依次编号，从1开始；然后可以把传入的参数对原来的参数进行绑定。
 
-<font style="color:red"> bind</font>    		  将参数绑定为n元函数对象的，第n个参数
-
-求反器：
-
-<font style="color:red"> not1</font>				对一元函数对象取反
-
-<font style="color:red"> not2</font>				对二元函数对象取反
-
-成员函数适配器：
-
-mem_fun			把成员函数转成仿函数(容器里存的是对象指针)
-
-mem_fun_ref	修饰成员函数(容器里存的是对象)
-
-##### bind1st
-
-将一个二元函数转换成一个一元函数。（绑定到第一个参数）
-
-``其他同下``
-
-##### bind2nd
+**1. 绑定普通函数**
 
 ```cpp
-template <class Operation, class T>
-  binder2nd<Operation> bind2nd (const Operation& op, const T& x);
+void show(int number, const std::string& str)
+{
+	cout << number << " " << str << endl;
+}
 ```
 
-将一个二元函数转换成一个一元函数。（绑定到第二个参数）
++ 顺序绑定参数
+
+  ```cpp
+  auto bind_show = std::bind(show, placeholders::_1, placeholders::_2);
+  bind_show(2,"world");
+  ```
+
++ 交换参数位置
+
+  ```cpp
+  auto bind_show1 = std::bind(show, placeholders::_2, placeholders::_1);
+  bind_show1("world",1314520);
+  ```
+
++ 绑定固定参数
+
+  ```cpp
+  auto bind_show3 = std::bind(show, 888,placeholders::_1);
+  bind_show3("玩蛇老师");
+  ```
+
+**2. 绑定成员函数**
 
 ```cpp
-struct CTest :public binary_function<int, int, void>
+struct Plus
 {
-	void operator()(int i, int val) const
+	int plus(int a, int b)
 	{
-		cout << i << " + " << val <<" = "<<i+val<< endl;
+		return a * b;
+	}
+};	
+{
+	Plus plus;
+	auto func1 = std::bind(&Plus::plus, &plus, placeholders::_1, placeholders::_2);	//绑定对象指针
+    auto func2 = std::bind(&Plus::plus, plus, placeholders::_1, placeholders::_2);	//绑定对象或引用
+	cout << func1(2, 4) << endl;
+}
+```
+
+**3. 绑定函数对象**
+
+```cpp
+struct Sub
+{
+	int operator()(int a, int b)
+	{
+		return a * b;
+	}
+};
+{
+	auto func2 = std::bind(Sub(), placeholders::_1, placeholders::_2);
+	cout << func2(3, 4) << endl;
+}
+```
+
+**4. 绑定lambda表达式**
+
+```cpp
+{	
+	auto func3 = std::bind([](int a, int b) {return a / b; }, placeholders::_1, placeholders::_2);
+	cout << func3(6 ,2) << endl;
+}
+```
+
+
+
+#### not1
+
+返回一元函数对象的否定，只能对仿函数进行否定，普通函数不行。
+
+> ##### 一元函数又叫一元谓词
+>
+> 谓词( *predicate* )是指普通函数或重载的operator()返回值是bool类型的函数对象(仿函数)。如果operator()接受一个参数，那么叫做一元谓词,如果接受两个参数，那么叫做二元谓词，谓词可作为一个判断式。
+
+```cpp
+struct Greater5 
+	:public unary_function<int, bool>		//必须继承自一元函数类
+{
+	bool operator()(int val) const			//必须加上const
+	{
+		return val > 5;
 	}
 };
 
-void obj3()
+int main()
 {
-	vector<int> v = { 9,8,7,6,5,1,2,3,4 };
-	for_each(v.begin(), v.end(), bind2nd(CTest(), 10));
-	//for_each(v.begin(), v.end(), bind1st(CTest(),10));
+	cout << boolalpha << Greater5()(10) << endl;
+	auto _less5 = not1(Greater5());
+	cout << boolalpha << _less5(10) << endl;
+    return 0;
 }
 ```
 
-##### **bind**
-
-bind是这样一种机制，它可以预先把指定可调用实体的某些参数绑定到已有的变量，产生一个新的可调 用实体，这种机制在回调函数的使用过程中也颇为有用。C++98中，有两个函数bind1st和bind2nd，它们分别可以用来绑定functor的第 一个和第二个参数，它们都是只可以绑定一个参数。各种限制，使得bind1st和bind2nd的可用性大大降低。
-
-std::bind函数有两种函数原型，定义如下：
-
-```cpp
-// FUNCTION TEMPLATE bind (implicit return type)
-template <class _Fx, class... _Types>
-unspecified bind(_Fx&& _Func, _Types&&... _Args);
 
 
-// FUNCTION TEMPLATE bind (explicit return type)
-template <class _Ret, class _Fx, class... _Types>
-unspecified bind(_Fx&& _Func, _Types&&... _Args) ;
 
-```
 
-std::bind返回一个基于Func的函数对象，其参数被绑定到Args上。`f的参数要么被绑定到值，要么被绑定到placeholders（占位符，如_1, _2, ..., _n）。`
+#### not2
 
-**参数：**
-
-+ Func：一个可调用对象（可以是函数对象、函数指针、函数引用、成员函数指针、数据成员指针...），它的参数将被绑定到args上。
-+ Args：绑定参数列表，参数会被值或占位符替换，其长度必须与f接收的参数个数一致。
-
-**调用形式：**
-
-调用std::bind的一般形式为：
+返回二元函数对象的否定，只能对仿函数进行否定，普通函数不行。
 
 ```cpp
-auto newCallable = std::bind(callable, arg_list);
-```
-
-其中，newCallable本身是一个新的可调用对象，arg_list是一个逗号分隔的参数列表，对应给定的callable的参数。即，当我们调用newCallable时，newCallable会调用callable，并传递给它arg_list中的参数。
-**使用方法：**
-
-+ 改变参数个数
-
-```cpp
-int TestFunc(int a, char c, float f)
+struct Greater
+    :public binary_function<int,int,bool>	//必须继承自二元函数类
 {
-    cout << a << " " << c << " " << f << endl;
-    return a;
-}
-auto bindFunc1 = bind(TestFunc, std::placeholders::_1, 'A', 100.1f);
-bindFunc1(10);
-```
-
-
-
-+ 参数顺序
-  参见程序运行结果，参数顺序与std::placeholders中的顺序一致，因此我们可以用bind来重排参数顺序。
-
-```cpp
-auto bindFunc2 = bind(TestFunc, std::placeholders::_3, std::placeholders::_2, std::placeholders::_1);
-bindFunc2(1.1f, 'b', 3);
-```
-
-
-
-##### not1
-
-一元函数取反适配器
-
-```cpp
-struct Mycmp1:public unary_function<int,bool>
-{
-	bool operator()(int v1)const
+	bool operator()(int a, int b) const		//必须加上const
 	{
-		return v1 > 5;
+		return a > b;
 	}
 };
 
-void fun_not1()
+int main()
 {
-	vector<int> v = { 9,8,7,6,5,1,2,3,4 };
-	auto it = find_if(v.begin(), v.end(), not1(Mycmp1()));
-	if (it != v.end())
-	{
-		cout << *it << endl;
-	}
+	cout << boolalpha << Greater()(3, 1) << endl;;
+
+	auto _less = not2(Greater());
+	cout << boolalpha << _less(3,1) << endl;;
+
+	return 0;
 }
 ```
 
 
 
-##### not2
+#### ref、cref
 
-二元函数取反适配器
+构造一个适当的reference_wrapper类型的对象来保存对elem的引用。
+
++ ref 普通引用
+
++ cref 常引用
 
 ```cpp
-struct Mycmp:public binary_function<int,int,bool>
+struct Inc
 {
-	bool operator()(int v1, int v2)const
+	mutable int number = 0;
+	void operator()()const
 	{
-		return v1 > v2;
+		cout << number << endl;
+		number++;
 	}
 };
 
-void func_not2()
+int main()
 {
-	vector<int> v = { 9,8,7,6,5,1,2,3,4 };
-	sort(v.begin(), v.end(), not2(Mycmp()));
-	for (auto i : v)
-	{
-		cout << i << " ";
-	}
+	Inc inc;
+	auto func = bind(std::cref(inc));
+	func();
+	inc();
+    return 0;
 }
 ```
 
+#### mem_fun
 
-
-##### mem_fun
-
-把类的成员函数转成仿函数
+把成员函数转为函数对象，使用对象指针或对象(引用)进行绑定
 
 ```cpp
-class Person
+class Foo
 {
 public:
-	Person(int age,int id):_age(age),_id(id){}
-	void show()
+	int a{ 100 };
+	void print()
 	{
-		cout << "id: " << _id << "age: " << _age << endl;
+		cout << a << endl;
 	}
-private:
-	int _age;
-	int _id;
+	void print2(int val)
+	{
+		cout << a << " val:" << val << endl;
+	}
 };
-void fun_cref()
+
+int main()
 {
-	Person p1(1, 2), p2(3, 4), p3(5, 6);
-	vector< Person*> v = { &p1,&p2,&p3 };
-	for_each(v.begin(), v.end(), mem_fun(&Person::show));
+	Foo f;
+	//把成员函数转为函数对象，使用对象指针或对象(引用)进行绑定
+	auto func = mem_fn(&Foo::print);
+	func(f);		//把对象传进去
+	func(&f);		//对象指针也行
+	func(Foo());	//临时对象也行
+
+	//把成员函数转为函数对象，使用对象指针进行绑定
+	auto func1 = mem_fun(&Foo::print2);
+	func1(&f,666);
+
+	//把成员函数转为函数对象，使用对象(引用)进行绑定
+	auto func2 = mem_fun_ref(&Foo::print);
+	func2(f);
+
+	return 0;
 }
 ```
 
-
-
-##### mem_fun_ref
-
-同上，把类的成员函数转成仿函数
+##### 示例
 
 ```cpp
-class Person
+struct Foo
 {
-public:
-	Person(int age,int id):_age(age),_id(id){}
-	void show()
+	int v;
+	Foo(int val = -1)
+		:v(val) {}
+	void print()
 	{
-		cout << "id: " << _id << "age: " << _age << endl;
+		cout <<v << endl;
 	}
-private:
-	int _age;
-	int _id;
 };
-void fun_cref()
+
+int main()
 {
-	Person p1(1, 2), p2(3, 4), p3(5, 6);
-	vector< Person> v = { p1,p2,p3 };
-	for_each(v.begin(), v.end(), mem_fun_ref(&Person::show));
+	//让每个对象都调用指定的成员函数
+	std::vector<Foo> vec(5);	//存对象
+	for_each(vec.begin(), vec.end(), mem_fn(&Foo::print));
+	
+	cout << endl;
+
+	//让每个对象都调用指定的成员函数
+	std::vector<Foo*> vec_ptr;	//存指针
+	for (int i = 0; i < 5; i++)
+	{
+		vec_ptr.push_back(new Foo(i*3));
+	}	
+	for_each(vec_ptr.begin(), vec_ptr.end(), mem_fn(&Foo::print));
+
+	return 0;
 }
 ```
 
-mem_fun和mem_fun_ref的区别在哪？
 
-当容器中存的是<font style="color:red;">对象</font>时使用mem_fun_ref
 
-存放的是<font style="color:red;">对象的指针</font>时使用mem_fun
+##### 总结
+
+| **函数**      | **作用**                                                 |
+| :------------ | :------------------------------------------------------- |
+| `mem_fun`     | 把成员函数转为函数对象，使用对象指针进行绑定             |
+| `mem_fun_ref` | 把成员函数转为函数对象，使用对象(引用)进行绑定           |
+| `mem_fn`      | 把成员函数转为函数对象，使用对象指针或对象(引用)进行绑定 |
+| `bind`        | 包括但不限于mem_fn的功能，更为通用的解决方案             |
+
+### 包装类
+
+包装类是包含一个对象并具有与该对象类似的接口的类，但添加或更改了它的一些特性：
+
+#### funtion
+
+> 函数包装器
+
+该函数包装器模板能包装任何类型的可调用实体，如普通函数、函数对象(仿函数)、lambda表达式以及bind创建的对象。
+
+通过function类型可以将多个不同类型的可调用对象，整合到一个类型中。
+
+1. 包装普通函数
+
+   ```cpp
+   int add(int a, int b)
+   {
+   	return a + b;
+   }
+   
+   {
+   	std::function<int(int, int)> fun_add(add);
+   	cout<<fun_add(2, 3);
+   }
+   ```
+
+2. 包装成员函数(通过bind绑定)
+
+   ```cpp
+   class Maye
+   {
+   public:
+   	int add(int a, int b)
+   	{
+   		return a + b;
+   	}
+   };
+   
+   {
+   	Maye maye;
+   	std::function<int(int, int)> fun_maye_add(std::bind(&Maye::add, &maye,placeholders::_1,placeholders::_2));
+   	cout << fun_maye_add(3, 5);
+   }
+   ```
+
+3. 包装lambda表达式
+
+   ```cpp
+   {
+       std::function<int(int, int)> fun_lambda_add([](int a, int b)->int 
+                                                       {
+                                                           return a + b; 
+                                                       });
+   	cout << fun_lambda_add(7, 8) << endl;
+   }
+   ```
+
+4. 包装函数对象
+
+   ```cpp
+   class Maye
+   {
+   public:
+   	int operator()(int a, int b)
+   	{
+   		return a * b;
+   	}
+   };
+   
+   {		
+   	Maye obj;
+   	std::function<int(int, int)> fun_functor(obj);
+   	cout << fun_functor(2,4);
+   }
+   ```
+
+#### reference_wrapper
+
+引用包装器，std::ref函数返回的对象。
+
+#### unary_negate
+
+否定一元函数(谓词)对象类，std::not1函数返回的对象
+
+#### binary_negate
+
+否定二元函数(谓词)对象类，std::not2返回的对象
 
 # 序列式容器
 

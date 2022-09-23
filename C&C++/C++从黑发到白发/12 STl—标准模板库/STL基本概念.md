@@ -1490,7 +1490,7 @@ void swap(vector& str);					//交换两个vector的内容
 
 #### Deque概念
 
-deque是“double-ended queue”的缩写，和vector一样都是STL的容器，deque是双端数组，而vector是单端的。
+deque是“double-ended queue”的缩写，和vector一样都是STL的容器，deque是双端队列，而vector是单端的。
 
 deque在接口上和vector非常相似，在许多操作的地方可以直接替换。
 
@@ -1644,12 +1644,16 @@ for (int i = 0; i < 10; i++)
 	ls.push_back(i);
 }
 list<int>::iter it;
-for (it = ls.begin(); it != ls.end(); it++)
+for (it = ls.begin(); it != ls.end(); )
 {
 	if (*it == 5)
 	{
 		it=ls.erase(it);
 	}
+    else
+    {
+        it++;
+    }
 	cout << *it << " ";
 }
 ```
@@ -1900,7 +1904,9 @@ void emplace(_Valty&&... _Val);	//就地构造，提升效率
 
 #### priority_que概念
 
-priority_que(优先级队列)是一种容器适配器，经过专门设计，以使其按照某些*严格的弱排序*标准，其第一个元素始终是其中包含的最大元素。
+priority_que(优先级队列)是一种容器适配器，经过专门设计，以使其按照某些*严格的弱排序（strict weak ordering）*标准，其第一个元素始终是其中包含的最大元素。
+
+> 严格是说在判断的时候会用"<"，而不是"<="，弱排序是因为，一旦"<"成立便认为存在"<"关系，返回ture，而忽略了"="关系和">"区别，把它们归结为false。
 
 此上下文类似于*堆*，可以在任何时候插入元素，并且只能检索*最大堆*元素（*优先级队列*顶部的元素）。
 

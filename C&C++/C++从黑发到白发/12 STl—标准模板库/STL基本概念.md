@@ -2182,7 +2182,17 @@ pair<iterator, iterator> equal_range(const key_type& _Keyval);
 
 ```
 
+## unordered_set
 
+unordered_set无序集合容器，是以无特定顺序存储唯一元素的容器，并且允许根据它们的值快速检索单个元素。
+
+在`unordered_set`中，元素的值同时是它的*key*，它唯一地标识它。`键是不可变的，因此， unordered_set`中的元素不能在容器中修改， 但是可以插入和删除它们。
+
+在内部，`unordered_set`中的元素不是按任何特定顺序排序的，而是根据它们的哈希值组织成*桶，以允许直接通过它们的*值快速访问单个元素（平均具有恒定的平均时间复杂度）。
+
+Unordered_set容器通过键访问单个元素的速度比set容器快。
+
+## unorder_map
 
 # STL容器共性机制
 

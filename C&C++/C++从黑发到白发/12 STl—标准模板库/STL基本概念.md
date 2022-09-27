@@ -2236,6 +2236,337 @@ STL容器所提供的都是值（value）寓意，而非引用（reference）寓
 
 # STL算法
 
+## \<algorithm>
+
+<algorithm>头文件定义了一个专门设计用于元素范围的函数集合。
+
+范围是可以通过迭代器或指针访问的任何对象序列，例如数组或某些STL容器的实例。但是请注意，算法通过迭代器直接对值进行操作，不会以任何方式影响任何可能的容器的结构(它永远不会影响容器的大小或存储分配)。
+
+### 非质变算法
+
+非质变算法：算法不会改变容器的数据。
+
+- [**all_of**](https://cplusplus.com/reference/algorithm/all_of/)
+
+  测试范围内所有元素的状态
+
+  ```cpp
+  void test()
+  {
+  	vector<int>  vec = { 1,3,5,7,9 };
+  	if (all_of(vec.begin(), vec.end(), [](int n)->bool {return n % 2; }))
+  	{
+  		cout << "所有元素都是奇数" << endl;
+  	}	
+  }
+  ```
+
+- [**any_of**](https://cplusplus.com/reference/algorithm/any_of/)
+
+  测试范围内的任何元素是否满足条件
+
+  ```cpp
+  void test()
+  {
+  	vector<int>  vec = { 1,3,-5,7,9 };
+  	if (any_of(vec.begin(), vec.end(), [](int n)->bool {return n<0; }))
+  	{
+  		cout << "范围内有负数" << endl;
+  	}	
+  }
+  ```
+
+- [**none_of**](https://cplusplus.com/reference/algorithm/none_of/)
+
+  测试是否没有元素满足条件
+
+  ```cpp
+  void test()
+  {
+  	vector<int>  vec = { 1,3,5,7,9 };
+  	if (none_of(vec.begin(), vec.end(), [](int n)->bool {return n<0; }))
+  	{
+  		cout << "范围内没有小于0的数" << endl;
+  	}	
+  }
+  ```
+
+  
+
+- [**for_each**](https://cplusplus.com/reference/algorithm/for_each/)
+
+  将函数应用到范围
+
+  ```cpp
+  void test()
+  {
+  	vector<int>  vec = { 1,3,5,7,9 };
+  	for_each(vec.begin(), vec.end(), [](int n) {cout << n << " "; });
+  	
+  }
+  ```
+
+- [**find**](https://cplusplus.com/reference/algorithm/find/)
+
+  在范围内找到值
+
+  ```cpp
+  void test()
+  {
+  	vector<int>  vec = { 1,3,5,7,9 };
+  	auto it = find(vec.begin(), vec.end(), 5);
+  	if (it != vec.end())
+  	{
+  		cout << "found it:" << *it << endl;
+  	}
+  	else
+  	{
+  		cout << "not found" << endl;
+  	}
+  }
+  ```
+
+- [**find_if**](https://cplusplus.com/reference/algorithm/find_if/)
+
+  查找范围内的元素
+
+  ```cpp
+  void test()
+  {
+  	vector<int>  vec = { 1,3,5,7,9 };
+      //查找第一个大于2的元素
+  	auto it = find_if(vec.begin(), vec.end(), [](int n) {return n > 2; });
+  	if (it != vec.end())
+  	{
+  		cout << "found it:" << *it << endl;
+  	}
+  	else
+  	{
+  		cout << "not found" << endl;
+  	}
+  }
+  ```
+
+  
+
+- [**find_if_not**](https://cplusplus.com/reference/algorithm/find_if_not/)
+
+  查找范围内的元素，not表示否定，上面的例子，使用find_if_not就表示查找不大于2的元素(小于或等于2的元素)
+
+  ```cpp
+  void test()
+  {
+  	vector<int>  vec = { 1,3,5,7,9 };
+  	auto it = find_if_not(vec.begin(), vec.end(), [](int n) {return n > 2; });
+  	if (it != vec.end())
+  	{
+  		cout << "found it:" << *it << endl;
+  	}
+  	else
+  	{
+  		cout << "not found" << endl;
+  	}
+  }
+  ```
+
+  
+
+- [**find_end**](https://cplusplus.com/reference/algorithm/find_end/)
+
+  ```cpp
+  template <class _FwdIt1, class _FwdIt2
+  _FwdIt1 find_end(_FwdIt1 const _First1, const _FwdIt1 _Last1, const _FwdIt2 _First2, const _FwdIt2 _Last2)
+  ```
+
+  在[first1,last1)范围内搜索由[first2,last2)定义的序列的最后一次出现，并返回指向其第一个元素的迭代器，如果没有出现，则返回指向last1的迭代器。
+
+  两个范围中的元素都使用操作符==(或在版本(2)中使用pred)进行顺序比较:只有当[first2,last2)的所有元素都为真时，才认为[first1,last1)的子序列是匹配的
+
+  ```cpp
+  void test()
+  {
+  	vector<int>  vec = { 1,2,3,4,5,1,2,3,4,5 };
+  	int sub1[] = { 1,2,3 };
+  
+  	// 使用默认的比较:
+  	auto it = std::find_end(vec.begin(), vec.end(), sub1, sub1 + 3);
+  
+  	if (it != vec.end())
+  		std::cout << "sub1 最后发现的位置 " << (it - vec.begin()) << '\n';
+  
+  	int sub2[] = { 1,2 };
+  
+  	// 使用谓词的比较:查找vec中最比[1,2]大的序列的最后一次出现的位置
+  	it = std::find_end(vec.begin(), vec.end(), sub2, sub2 + 2,
+  		[](int a, int b) {return a > b; });
+  
+  	if (it != vec.end())
+  		std::cout << "sub2 最后发现的位置 " << (it - vec.begin()) << '\n';
+  }
+  ```
+
+- [**find_first_of**](https://cplusplus.com/reference/algorithm/find_first_of/)
+
+  从范围内的集合中查找元素
+
+- [**adjacent_find**](https://cplusplus.com/reference/algorithm/adjacent_find/)
+
+  求范围内相等的相邻元素
+
+- [**count**](https://cplusplus.com/reference/algorithm/count/)
+
+  在范围内计算值的出现次数
+
+- [**count_if**](https://cplusplus.com/reference/algorithm/count_if/)
+
+  Return number of elements in range satisfying condition (function template)
+
+- [**mismatch**](https://cplusplus.com/reference/algorithm/mismatch/)
+
+  返回满足范围条件的元素个数
+
+- [**equal**](https://cplusplus.com/reference/algorithm/equal/)
+
+  测试两个范围内的元素是否相等
+
+- [**is_permutation**](https://cplusplus.com/reference/algorithm/is_permutation/)
+
+  测试范围是否为另一个的排列
+
+- [**search**](https://cplusplus.com/reference/algorithm/search/)
+
+  子序列的搜索范围
+
+- [**search_n**](https://cplusplus.com/reference/algorithm/search_n/)
+
+  元素搜索范围
+
+### 质变算法
+
+质变算法：算法会改变容器的数据
+
+- [**copy**](https://cplusplus.com/reference/algorithm/copy/)
+
+  拷贝范围内的元素
+
+- [**copy_n**](https://cplusplus.com/reference/algorithm/copy_n/)
+
+  拷贝元素
+
+- [**copy_if**](https://cplusplus.com/reference/algorithm/copy_if/)
+
+  拷贝范围内的某些元素
+
+- [**copy_backward**](https://cplusplus.com/reference/algorithm/copy_backward/)
+
+  向后复制范围内额元素(从右往左)
+
+- [**move**](https://cplusplus.com/reference/algorithm/move/)
+
+  移动范围内的元素
+
+- [**move_backward**](https://cplusplus.com/reference/algorithm/move_backward/)
+
+  向后移动范围内的元素
+
+- [**swap**](https://cplusplus.com/reference/algorithm/swap/)
+
+  交换两个对象的值
+
+- [**swap_ranges**](https://cplusplus.com/reference/algorithm/swap_ranges/)
+
+  交换两个范围的值
+
+- [**iter_swap**](https://cplusplus.com/reference/algorithm/iter_swap/)
+
+  交换由两个迭代器指向的对象的值
+
+- [**transform**](https://cplusplus.com/reference/algorithm/transform/)
+
+  变换范围
+
+- [**replace**](https://cplusplus.com/reference/algorithm/replace/)
+
+  替换范围内的值
+
+- [**replace_if**](https://cplusplus.com/reference/algorithm/replace_if/)
+
+  替换范围内的值
+
+- [**replace_copy**](https://cplusplus.com/reference/algorithm/replace_copy/)
+
+  Copy range replacing value (function template)
+
+- [**replace_copy_if**](https://cplusplus.com/reference/algorithm/replace_copy_if/)
+
+  Copy range replacing value (function template)
+
+- [**fill**](https://cplusplus.com/reference/algorithm/fill/)
+
+  Fill range with value (function template)
+
+- [**fill_n**](https://cplusplus.com/reference/algorithm/fill_n/)
+
+  Fill sequence with value (function template)
+
+- [**generate**](https://cplusplus.com/reference/algorithm/generate/)
+
+  Generate values for range with function (function template)
+
+- [**generate_n**](https://cplusplus.com/reference/algorithm/generate_n/)
+
+  Generate values for sequence with function (function template)
+
+- [**remove**](https://cplusplus.com/reference/algorithm/remove/)
+
+  Remove value from range (function template)
+
+- [**remove_if**](https://cplusplus.com/reference/algorithm/remove_if/)
+
+  Remove elements from range (function template)
+
+- [**remove_copy**](https://cplusplus.com/reference/algorithm/remove_copy/)
+
+  Copy range removing value (function template)
+
+- [**remove_copy_if**](https://cplusplus.com/reference/algorithm/remove_copy_if/)
+
+  Copy range removing values (function template)
+
+- [**unique**](https://cplusplus.com/reference/algorithm/unique/)
+
+  Remove consecutive duplicates in range (function template)
+
+- [**unique_copy**](https://cplusplus.com/reference/algorithm/unique_copy/)
+
+  Copy range removing duplicates (function template)
+
+- [**reverse**](https://cplusplus.com/reference/algorithm/reverse/)
+
+  Reverse range (function template)
+
+- [**reverse_copy**](https://cplusplus.com/reference/algorithm/reverse_copy/)
+
+  Copy range reversed (function template)
+
+- [**rotate**](https://cplusplus.com/reference/algorithm/rotate/)
+
+  Rotate left the elements in range (function template)
+
+- [**rotate_copy**](https://cplusplus.com/reference/algorithm/rotate_copy/)
+
+  Copy range rotated left (function template)
+
+- [**random_shuffle**](https://cplusplus.com/reference/algorithm/random_shuffle/)
+
+  Randomly rearrange elements in range (function template)
+
+- [**shuffle**](https://cplusplus.com/reference/algorithm/shuffle/)
+
+  Randomly rearrange elements in range using generator (function template)
+
+
+
 STL中算法大致分为四类：     
 
 1、非可变序列算法：指不直接修改其所操作的容器内容的算法。   

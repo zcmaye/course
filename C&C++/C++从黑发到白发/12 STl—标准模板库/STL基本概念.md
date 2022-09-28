@@ -2242,244 +2242,544 @@ STL容器所提供的都是值（value）寓意，而非引用（reference）寓
 
 范围是可以通过迭代器或指针访问的任何对象序列，例如数组或某些STL容器的实例。但是请注意，算法通过迭代器直接对值进行操作，不会以任何方式影响任何可能的容器的结构(它永远不会影响容器的大小或存储分配)。
 
-### 非质变算法
+### 非质变算法(17个)
 
 非质变算法：算法不会改变容器的数据。
 
-- [**all_of**](https://cplusplus.com/reference/algorithm/all_of/)
+#### [**all_of**](https://cplusplus.com/reference/algorithm/all_of/)
 
-  测试范围内所有元素的状态
+测试范围内所有元素的状态
 
-  ```cpp
-  void test()
-  {
-  	vector<int>  vec = { 1,3,5,7,9 };
-  	if (all_of(vec.begin(), vec.end(), [](int n)->bool {return n % 2; }))
-  	{
-  		cout << "所有元素都是奇数" << endl;
-  	}	
-  }
-  ```
+```cpp
+void test()
+{
+	vector<int>  vec = { 1,3,5,7,9 };
+	if (all_of(vec.begin(), vec.end(), [](int n)->bool {return n % 2; }))
+	{
+		cout << "所有元素都是奇数" << endl;
+	}	
+}
+```
 
-- [**any_of**](https://cplusplus.com/reference/algorithm/any_of/)
+#### [**any_of**](https://cplusplus.com/reference/algorithm/any_of/)
 
-  测试范围内的任何元素是否满足条件
+测试范围内的任何元素是否满足条件
 
-  ```cpp
-  void test()
-  {
-  	vector<int>  vec = { 1,3,-5,7,9 };
-  	if (any_of(vec.begin(), vec.end(), [](int n)->bool {return n<0; }))
-  	{
-  		cout << "范围内有负数" << endl;
-  	}	
-  }
-  ```
+```cpp
+void test()
+{
+	vector<int>  vec = { 1,3,-5,7,9 };
+	if (any_of(vec.begin(), vec.end(), [](int n)->bool {return n<0; }))
+	{
+		cout << "范围内有负数" << endl;
+	}	
+}
+```
 
-- [**none_of**](https://cplusplus.com/reference/algorithm/none_of/)
+#### [**none_of**](https://cplusplus.com/reference/algorithm/none_of/)
 
-  测试是否没有元素满足条件
+测试是否没有元素满足条件
 
-  ```cpp
-  void test()
-  {
-  	vector<int>  vec = { 1,3,5,7,9 };
-  	if (none_of(vec.begin(), vec.end(), [](int n)->bool {return n<0; }))
-  	{
-  		cout << "范围内没有小于0的数" << endl;
-  	}	
-  }
-  ```
+```cpp
+void test()
+{
+	vector<int>  vec = { 1,3,5,7,9 };
+	if (none_of(vec.begin(), vec.end(), [](int n)->bool {return n<0; }))
+	{
+		cout << "范围内没有小于0的数" << endl;
+	}	
+}
+```
 
-  
 
-- [**for_each**](https://cplusplus.com/reference/algorithm/for_each/)
 
-  将函数应用到范围
+#### [**for_each**](https://cplusplus.com/reference/algorithm/for_each/)
 
-  ```cpp
-  void test()
-  {
-  	vector<int>  vec = { 1,3,5,7,9 };
-  	for_each(vec.begin(), vec.end(), [](int n) {cout << n << " "; });
-  	
-  }
-  ```
+将函数应用到范围
 
-- [**find**](https://cplusplus.com/reference/algorithm/find/)
+```cpp
+void test()
+{
+	vector<int>  vec = { 1,3,5,7,9 };
+	for_each(vec.begin(), vec.end(), [](int n) {cout << n << " "; });
+	
+}
+```
 
-  在范围内找到值
+#### [**find**](https://cplusplus.com/reference/algorithm/find/)
 
-  ```cpp
-  void test()
-  {
-  	vector<int>  vec = { 1,3,5,7,9 };
-  	auto it = find(vec.begin(), vec.end(), 5);
-  	if (it != vec.end())
-  	{
-  		cout << "found it:" << *it << endl;
-  	}
-  	else
-  	{
-  		cout << "not found" << endl;
-  	}
-  }
-  ```
+在范围内找到值
 
-- [**find_if**](https://cplusplus.com/reference/algorithm/find_if/)
+```cpp
+void test()
+{
+	vector<int>  vec = { 1,3,5,7,9 };
+	auto it = find(vec.begin(), vec.end(), 5);
+	if (it != vec.end())
+	{
+		cout << "found it:" << *it << endl;
+	}
+	else
+	{
+		cout << "not found" << endl;
+	}
+}
+```
 
-  查找范围内的元素
+#### [**find_if**](https://cplusplus.com/reference/algorithm/find_if/)
 
-  ```cpp
-  void test()
-  {
-  	vector<int>  vec = { 1,3,5,7,9 };
-      //查找第一个大于2的元素
-  	auto it = find_if(vec.begin(), vec.end(), [](int n) {return n > 2; });
-  	if (it != vec.end())
-  	{
-  		cout << "found it:" << *it << endl;
-  	}
-  	else
-  	{
-  		cout << "not found" << endl;
-  	}
-  }
-  ```
+查找范围内的元素
 
-  
+```cpp
+void test()
+{
+	vector<int>  vec = { 1,3,5,7,9 };
+    //查找第一个大于2的元素
+	auto it = find_if(vec.begin(), vec.end(), [](int n) {return n > 2; });
+	if (it != vec.end())
+	{
+		cout << "found it:" << *it << endl;
+	}
+	else
+	{
+		cout << "not found" << endl;
+	}
+}
+```
 
-- [**find_if_not**](https://cplusplus.com/reference/algorithm/find_if_not/)
 
-  查找范围内的元素，not表示否定，上面的例子，使用find_if_not就表示查找不大于2的元素(小于或等于2的元素)
 
-  ```cpp
-  void test()
-  {
-  	vector<int>  vec = { 1,3,5,7,9 };
-  	auto it = find_if_not(vec.begin(), vec.end(), [](int n) {return n > 2; });
-  	if (it != vec.end())
-  	{
-  		cout << "found it:" << *it << endl;
-  	}
-  	else
-  	{
-  		cout << "not found" << endl;
-  	}
-  }
-  ```
+#### [**find_if_not**](https://cplusplus.com/reference/algorithm/find_if_not/)
 
-  
+查找范围内的元素，not表示否定，上面的例子，使用find_if_not就表示查找不大于2的元素(小于或等于2的元素)
 
-- [**find_end**](https://cplusplus.com/reference/algorithm/find_end/)
+```cpp
+void test()
+{
+	vector<int>  vec = { 1,3,5,7,9 };
+	auto it = find_if_not(vec.begin(), vec.end(), [](int n) {return n > 2; });
+	if (it != vec.end())
+	{
+		cout << "found it:" << *it << endl;
+	}
+	else
+	{
+		cout << "not found" << endl;
+	}
+}
+```
 
-  ```cpp
-  template <class _FwdIt1, class _FwdIt2
-  _FwdIt1 find_end(_FwdIt1 const _First1, const _FwdIt1 _Last1, const _FwdIt2 _First2, const _FwdIt2 _Last2)
-  ```
 
-  在[first1,last1)范围内搜索由[first2,last2)定义的序列的最后一次出现，并返回指向其第一个元素的迭代器，如果没有出现，则返回指向last1的迭代器。
 
-  两个范围中的元素都使用操作符==(或在版本(2)中使用pred)进行顺序比较:只有当[first2,last2)的所有元素都为真时，才认为[first1,last1)的子序列是匹配的
+#### [**find_end**](https://cplusplus.com/reference/algorithm/find_end/)
 
-  ```cpp
-  void test()
-  {
-  	vector<int>  vec = { 1,2,3,4,5,1,2,3,4,5 };
-  	int sub1[] = { 1,2,3 };
-  
-  	// 使用默认的比较:
-  	auto it = std::find_end(vec.begin(), vec.end(), sub1, sub1 + 3);
-  
-  	if (it != vec.end())
-  		std::cout << "sub1 最后发现的位置 " << (it - vec.begin()) << '\n';
-  
-  	int sub2[] = { 1,2 };
-  
-  	// 使用谓词的比较:查找vec中最比[1,2]大的序列的最后一次出现的位置
-  	it = std::find_end(vec.begin(), vec.end(), sub2, sub2 + 2,
-  		[](int a, int b) {return a > b; });
-  
-  	if (it != vec.end())
-  		std::cout << "sub2 最后发现的位置 " << (it - vec.begin()) << '\n';
-  }
-  ```
+```cpp
+template <class _FwdIt1, class _FwdIt2
+_FwdIt1 find_end(_FwdIt1 const _First1, const _FwdIt1 _Last1, const _FwdIt2 _First2, const _FwdIt2 _Last2)
+```
 
-- [**find_first_of**](https://cplusplus.com/reference/algorithm/find_first_of/)
+在[first1,last1)范围内搜索由[first2,last2)定义的序列的最后一次出现，并返回指向其第一个元素的迭代器，如果没有出现，则返回指向last1的迭代器。
 
-  从范围内的集合中查找元素
+两个范围中的元素都使用操作符==(或在版本(2)中使用pred)进行顺序比较:只有当[first2,last2)的所有元素都为真时，才认为[first1,last1)的子序列是匹配的
 
-- [**adjacent_find**](https://cplusplus.com/reference/algorithm/adjacent_find/)
+```cpp
+void test()
+{
+	vector<int>  vec = { 1,2,3,4,5,1,2,3,4,5 };
+	int sub1[] = { 1,2,3 };
 
-  求范围内相等的相邻元素
+	// 使用默认的比较:
+	auto it = std::find_end(vec.begin(), vec.end(), sub1, sub1 + 3);
 
-- [**count**](https://cplusplus.com/reference/algorithm/count/)
+	if (it != vec.end())
+		std::cout << "sub1 最后发现的位置 " << (it - vec.begin()) << '\n';
 
-  在范围内计算值的出现次数
+	int sub2[] = { 1,2 };
 
-- [**count_if**](https://cplusplus.com/reference/algorithm/count_if/)
+	// 使用谓词的比较:查找vec中最比[1,2]大的序列的最后一次出现的位置
+	it = std::find_end(vec.begin(), vec.end(), sub2, sub2 + 2,
+		[](int a, int b) {return a > b; });
 
-  Return number of elements in range satisfying condition (function template)
+	if (it != vec.end())
+		std::cout << "sub2 最后发现的位置 " << (it - vec.begin()) << '\n';
+}
+```
 
-- [**mismatch**](https://cplusplus.com/reference/algorithm/mismatch/)
+#### [**find_first_of**](https://cplusplus.com/reference/algorithm/find_first_of/)
 
-  返回满足范围条件的元素个数
+```cpp
+template <class _FwdIt1, class _FwdIt2>
+_FwdIt1 find_first_of(const _FwdIt1 _First1, const _FwdIt1 _Last1, const _FwdIt2 _First2,
+    const _FwdIt2 _Last2)
+```
 
-- [**equal**](https://cplusplus.com/reference/algorithm/equal/)
+返回一个迭代器，指向范围[first1,last1)中与[first2,last2)中的任何元素匹配的第一个元素。如果没有找到这样的元素，函数返回last1。
 
-  测试两个范围内的元素是否相等
+[first1,last1)中的元素使用操作符==(或在版本(2)中使用pred)与[first2,last2)中的每个值进行顺序比较，直到匹配为止。
 
-- [**is_permutation**](https://cplusplus.com/reference/algorithm/is_permutation/)
+```cpp
+void test()
+{
+	int arr[] = { 1,3,1,4,5,2,0 };
+	int sub[] = { 5,3 };
+	auto it = find_first_of(arr, arr + 7,sub,sub+2);
+	if (it != arr + 7)
+	{
+		cout << "在arr中找到与sub中匹配的元素" <<*it<< endl;
+	}
+	else
+	{
+		cout << "not found" << endl;
+	}
+}
+```
 
-  测试范围是否为另一个的排列
 
-- [**search**](https://cplusplus.com/reference/algorithm/search/)
 
-  子序列的搜索范围
+#### [**adjacent_find**](https://cplusplus.com/reference/algorithm/adjacent_find/)
 
-- [**search_n**](https://cplusplus.com/reference/algorithm/search_n/)
+求范围内相等的相邻元素，在[first,last]范围内搜索匹配的两个连续元素的第一次出现，并返回指向这两个元素中的第一个的迭代器，如果没有找到这样的对，则返回指向最后一个的迭代器。
 
-  元素搜索范围
+```cpp
+void test()
+{
+	int arr[] = { 1,3,3,4,5,2,0,6,6 };
+	vector<int> vec(arr, arr + 9);
+	auto it = adjacent_find(vec.begin(), vec.end());
+	if (it != vec.end())
+		cout << "第一对重复的元素是:" << *it << endl;
 
-### 质变算法
+	it = adjacent_find(it + 1, vec.end(), [](int a, int b) {return a == b; });
+	if (it != vec.end())
+		cout << "第二对重复的元素是:" << *it << endl;
+}
+```
+
+#### [**count**](https://cplusplus.com/reference/algorithm/count/)
+
+在范围内计算值的出现次数
+
+```cpp
+void test()
+{
+	int arr[] = { 1,3,3,4,5,2,0,6,6 };
+	vector<int> vec(arr, arr + 9);
+	long long cnt = count(vec.begin(), vec.end(), 3);
+	cout << "3出现次数:" << cnt << endl;
+```
+
+#### [**count_if**](https://cplusplus.com/reference/algorithm/count_if/)
+
+返回满足范围条件的元素个数
+
+```cpp
+void test()
+{
+	int arr[] = { 1,3,3,4,5,2,0,6,6 };
+	vector<int> vec(arr, arr + 9);
+	long long 	//统计大于4的元素个数
+	cnt = count_if(vec.begin(), vec.end(), [](int n) {return n > 4; });
+	cout << "大于4的元素个数:" << cnt << endl;
+}
+```
+
+#### [**mismatch**](https://cplusplus.com/reference/algorithm/mismatch/)
+
+返回满足范围条件的元素个数，比较范围[first1,last1]中的元素与从first2开始的范围中的元素，并返回两个序列中第一个不匹配的元素。
+
+```cpp
+void test()
+{
+	vector<int> vec;
+	for (int i = 1; i < 6; i++)
+	{
+		vec.push_back(i * 10);	//10 20 30 40 50 
+	}
+
+	int nums[] = { 10,20,30,70,88 };
+	auto mpair = mismatch(vec.begin(), vec.end(), nums);
+	if (mpair.first != vec.end())
+	{
+		cout << "第一个不匹配的元素:" << *mpair.first << " and " << *mpair.second << endl;
+	}
+
+	mpair = mismatch(vec.begin(), vec.end(), nums, [](int a, int b) {return a == b; });
+	if (mpair.first != vec.end())
+	{
+		cout << "第一个不匹配的元素:" << *mpair.first << " and " << *mpair.second << endl;
+	}
+}
+```
+
+
+
+#### [**equal**](https://cplusplus.com/reference/algorithm/equal/)
+
+测试两个范围内的元素是否相等，比较元素个数为两个序列中最短的那个序列的元素个数。
+
+```cpp
+void test()
+{
+	vector<int> vec = { 1,2,3,4,5 };
+	vector<int> vec2 = vec;
+	if (equal(vec.begin(), vec.end(), vec2.begin()))
+	{
+		cout << "两个序列的内容相等" << endl;
+	}
+	else
+	{
+		cout << "两个序列的内容不相等" << endl;
+	}
+
+	vec2.push_back(6);
+	vec2.push_back(7);
+	//vec：1 2 3 4 5
+	//vec2:1 2 3 4 5 6 7
+	if (equal(vec.begin(),vec.end(),vec2.begin(),vec2.begin()+vec.size()))
+	{
+		cout << "两个序列的内容相等" << endl;
+	}
+	else
+	{
+		cout << "两个序列的内容不相等" << endl;
+	}
+
+	//使用谓词:
+	if (equal(vec.begin(), vec.end(), vec2.begin(),
+		[](int a, int b)
+		{
+			return a == b;
+		}))
+	{
+		cout << "两个序列的内容相等" << endl;
+	}
+	else
+	{
+		cout << "两个序列的内容不相等" << endl;
+	}
+}
+```
+
+#### [**equal_range**](#)
+
+功能类似equal，返回一对iterator，第一个表示lower_bound，第二个表示upper_bound。
+
+```cpp
+void test()
+{
+	vector<int> vec = { 10,20,30,30,20,10,10,20 };
+
+	//必须先排序:因为equal_range使用了二分查找
+	sort(vec.begin(), vec.end());
+	auto mpair = equal_range(vec.begin(), vec.end(), 20);
+	cout << *mpair.first << " " << *mpair.second << endl;
+}
+```
+
+#### [**is_permutation**](https://cplusplus.com/reference/algorithm/is_permutation/)
+
+比较范围[first1,last1)中的元素与从first2开始的范围中的元素，如果两个范围中的所有元素都匹配，则返回true，即使顺序不同。
+
+```cpp
+void test()
+{
+	vector<int> vec = { 1,2,3,4,5 };
+	vector<int> vec1 = { 5,4,3,2,1 };
+	if (is_permutation(vec.begin(), vec.end(), vec1.begin()))
+	{
+		cout << "vec vec1两个是排列不同的相同序列" << endl;
+	}
+}
+```
+
+#### [**search**](https://cplusplus.com/reference/algorithm/search/)
+
+在[first1,last1)范围内搜索由[first2,last2)定义的序列的第一次出现，并返回指向其第一个元素的迭代器，如果没有找到第一次出现的元素，则返回指向last1的迭代器。
+
+```cpp
+void test()
+{
+	vector<int> vec = { 1,2,88,3,4,5,9,7 };
+
+	int ints[] = {4,5};
+	auto it =  search(vec.begin(), vec.end(), ints, ints + 2);
+	if (it != vec.end())
+	{
+		cout << "ints fount at pos:" << it - vec.begin() << endl;
+	}
+}
+```
+
+
+
+#### [**search_n**](https://cplusplus.com/reference/algorithm/search_n/)
+
+搜索范围[first,last)中元素的值为val的数量是否为count，每个元素的比较值都等于val(或pred返回true)。
+
+该函数返回指向第一个此类元素的迭代器，如果没有找到此类序列则返回指向最后一个元素的迭代器。
+
+```cpp
+void test()
+{
+	vector<int> vec = { 10,20,30,30,20,10,10,20 };
+	auto it = search_n(vec.begin(), vec.end(), 2, 30);
+	if (it != vec.end())
+	{
+		cout << "找到了两个30 第一次出现在位置:" << it - vec.begin() << endl;
+	}
+	else
+	{
+		cout << "match not found" << endl;
+	}
+}
+```
+
+
+
+### 质变算法(30个)
 
 质变算法：算法会改变容器的数据
 
-- [**copy**](https://cplusplus.com/reference/algorithm/copy/)
+#### [**copy**](https://cplusplus.com/reference/algorithm/copy/)
 
-  拷贝范围内的元素
+将范围[first,last)中的元素复制到Dest开始的范围中。
 
-- [**copy_n**](https://cplusplus.com/reference/algorithm/copy_n/)
+该函数返回一个指向目标范围末端的迭代器(该迭代器指向复制的最后一个元素后面的元素)。
 
-  拷贝元素
+范围不能重叠，result不能指向范围内的元素(第一个，最后一个)。对于这种情况，请参阅copy_backward。
 
-- [**copy_if**](https://cplusplus.com/reference/algorithm/copy_if/)
+```cpp
+void test()
+{
+	vector<int> vec(5);
+	int nums[] = {1,2,3,4,5};
+	//要确保vec空间足够，可以使用vec.resize(n)来调整vec的大小
+	copy(nums,nums+5,vec.begin());
+}
+```
 
-  拷贝范围内的某些元素
+#### [**copy_n**](https://cplusplus.com/reference/algorithm/copy_n/)
 
-- [**copy_backward**](https://cplusplus.com/reference/algorithm/copy_backward/)
+将first开始的范围中的前n个元素复制到result开始的范围中。
 
-  向后复制范围内额元素(从右往左)
+该函数返回一个指向目标范围末端的迭代器(指向复制的最后一个元素的下一个位置)。
 
-- [**move**](https://cplusplus.com/reference/algorithm/move/)
+如果n是负的，函数什么都不做。
 
-  移动范围内的元素
+如果范围重叠，则result所指向的范围中的某些元素可能具有未定义但有效的值。
 
-- [**move_backward**](https://cplusplus.com/reference/algorithm/move_backward/)
+```cpp
+void test()
+{
+	vector<int> vec(5);
+	int nums[] = {1,2,3,4,5};
+	//要确保vec空间足够，可以使用vec.resize(n)来调整vec的大小
+	copy(nums,nums+5,vec.begin());
 
-  向后移动范围内的元素
+	vec.clear();
+	vec.resize(3);	//目标容器的大小必须和拷贝的数量一致
+	copy_n(nums, 3, vec.begin());
+}
+```
 
-- [**swap**](https://cplusplus.com/reference/algorithm/swap/)
+#### [**copy_if**](https://cplusplus.com/reference/algorithm/copy_if/)
 
-  交换两个对象的值
+拷贝范围内的某些元素
 
-- [**swap_ranges**](https://cplusplus.com/reference/algorithm/swap_ranges/)
+```cpp
+void test()
+{
+	vector<int> vec(5);
+	int nums[] = {1,2,3,4,5};
 
-  交换两个范围的值
+	copy_if(nums, nums + 5, vec.begin(), [](int n)
+		{
+			return n > 3;
+		});
+}
+```
 
-- [**iter_swap**](https://cplusplus.com/reference/algorithm/iter_swap/)
 
-  交换由两个迭代器指向的对象的值
+
+#### [**copy_backward**](https://cplusplus.com/reference/algorithm/copy_backward/)
+
+向后复制范围内额元素(从右往左)
+
+将范围[first,last]中的元素从end开始复制到以result结束的范围。
+
+该函数返回指向目标范围内第一个元素的迭代器。
+
+结果范围的元素顺序与[first,last)完全相同。要反转它们的顺序，请参阅reverse_copy。
+
+```cpp
+void test()
+{
+	vector<int> vec(5);
+	int nums[] = {1,2,3,4,5};
+
+	copy_backward(nums, nums + 5, vec.end());
+}
+```
+
+
+
+#### [**move**](https://cplusplus.com/reference/algorithm/move/)
+
+将范围[first，last)中的元素移动到从结果开始的范围中。`即实现了移动语义，如果容器里面存的对象有指针，则会移动，普通数据类型和copy一样`
+
+```cpp
+void test()
+{
+	vector<string> names = { "顽石","hello","world" };
+	vector<string> foo(3);
+
+	cout << "names contains " << endl;
+	for (auto& str : names)cout <<"[" << str << "] ";
+	cout << endl;
+	cout << "foo contains " << endl;
+	for (auto& str : foo)cout << "[" << str << "] ";
+	cout <<"\n\n" << endl;
+
+	cout << "Moving ranges..." << endl;
+	move(names.begin(), names.end(), foo.begin());
+	cout << "names contains " << endl;
+	for (auto& str : names)cout << "[" << str << "] ";
+	cout << endl;
+	cout << "foo contains " << endl;
+	for (auto& str : foo)cout << "[" << str << "] ";
+	cout << endl;
+
+	cout << "Moving Container" << endl;
+	names = std::move(foo);
+
+}
+```
+
+#### [**move_backward**](https://cplusplus.com/reference/algorithm/move_backward/)
+
+向后移动范围内的元素
+
+#### [**swap**](https://cplusplus.com/reference/algorithm/swap/)
+
+交换两个对象的值
+
+#### [**swap_ranges**](https://cplusplus.com/reference/algorithm/swap_ranges/)
+
+交换两个范围的值
+
+```cpp
+void test()
+{
+	vector<string> names = { "顽石","hello","world" };
+	vector<string> foo(3);
+	swap(names, foo);
+	swap_ranges(foo.begin(), foo.end()-1, names.begin());
+}
+```
+
+#### [**iter_swap**](https://cplusplus.com/reference/algorithm/iter_swap/)
+
+交换由两个迭代器指向的对象的值
 
 - [**transform**](https://cplusplus.com/reference/algorithm/transform/)
 

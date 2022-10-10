@@ -1,4 +1,4 @@
-# Easyx图形编程
+#  Easyx图形编程
 
 ## 基本说明
 
@@ -22,7 +22,7 @@ EasyX图形库支持Vs各种版本，下载解压后，直接执行安装程序�
 本质是，查找Vs的安装目录，并将相关文件分别拷贝至lib目录和include目录
 
 ![](assets/image-20210428143409134.png)
-安装成功后，包含头文件graphics.h即可开始快乐学习了![image-20210428143554873](assets/image-20210428143554873.png)
+安装成功后，包含头文件easyx.h即可开始快乐学习了![image-20210428143554873](assets/image-20210428143554873.png)
 
 ## Easyx库原理
 
@@ -49,6 +49,8 @@ void closegraph();
 + 清空绘图设备
 
 ```cpp
+//设置背景颜色
+void setbkcolor(RED);
 void cleardevice();
 ```
 
@@ -175,7 +177,7 @@ void cleardevice();
 
 ### 鼠标消息
 
-鼠标消息需要使用**MOUSEMSG**类型，比如：MOUSEMSG msg，然后用**MoustHit**()判断是否有鼠标消息。
+鼠标消息需要使用**MOUSEMSG**类型，比如：MOUSEMSG msg，然后用**MouseHit**()判断是否有鼠标消息。
 
 如果有鼠标消息就可以进行接收鼠标消息了msg = GetMouseMsg();
 
@@ -308,11 +310,9 @@ switch(key)
   左：VK_LEFT
   右：VK_RIGHT
   _其他键值可以通过上面的宏转到定义查看
-```
-  
+  ```
+```cpp
 
-  
-  ```cpp
   if(GetAsyncKeyState(VK_UP))
   {
       puts("上键按下");
@@ -330,9 +330,9 @@ switch(key)
       puts("右键按下");
   }
 ```
-  
 
-  
+
+
   **注意：**_getch()会阻塞程序，但是GetAsyncKeyState()是异步的，不阻塞程序，所以会非常流畅。根据自己的项目需要选择合适的函数进行使用。
 
 ### 播放音乐

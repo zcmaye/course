@@ -14,8 +14,9 @@
 
 **不同的Qt需要不同版本的工具包，版本不同可能会导致配置失败，为了方便，我们把这三个工具包都放到同一目录中**
 
-- [JDK](https://www.oracle.com/java/technologies/javase/javase8-archive-downloads.html)- - - - 8u311-x64
-- [SDK](http://tools.android-studio.org/index.php/sdk)- - - - r24.4.1(推荐.zip版本)
+- [JDK]([Java Downloads | Oracle](https://www.oracle.com/java/technologies/downloads/#java11))- - - - 11.0.16.1
+- [SDK](https://developer.android.google.cn/studio#downloads)- - - - r31(推荐.zip版本)
+  - [sdkManger命令使用](https://developer.android.google.cn/studio/command-line/sdkmanager)
 - [NDK](https://developer.android.google.cn/ndk/downloads/) - - - - r21e
 
 ![image-20211118213626952](assets/image-20211118213626952.png)
@@ -119,4 +120,11 @@ Ok，成功生成apk
 
 ![image-20211118222418905](assets/image-20211118222418905.png)
 
+
+
+
+
+```cpp
+the selected path has an invaild ndk.  this might mean that the path contains space characters,or that it does not have a "toolchains" sub-directory,or that the NDK version could not be retrieved because of a missing "source. properties" or "RELEASE.TXT" file
+```
 

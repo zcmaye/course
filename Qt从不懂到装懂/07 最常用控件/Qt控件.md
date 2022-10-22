@@ -1,6 +1,6 @@
-# Qt最常用控件
+# Qt控件
 
-#### 按钮抽象基类(QAbstractButton)
+## 按钮抽象基类(QAbstractButton)
 
 ##### **简介**
 

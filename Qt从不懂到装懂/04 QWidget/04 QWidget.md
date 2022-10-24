@@ -1,92 +1,131 @@
 # 1. QWidget
 
-> QWidget类是所有窗口类的父类(控件类是也属于窗口类), 并且QWidget类的父类的QObject, 也就意味着所有的窗口类对象只要指定了父对象, 都可以实现内存资源的自动回收。这里给大家介绍一下关于这个类常用的一些API函数。
+QWidget类是所有可视控件的基类，控件是用户界面的最小元素，用于接受各种事件(如：鼠标、键盘等)并且绘制出来给用户观看。
 
-![image-20201009170432819](assets/image-20201009170432819.png)
+每个控件都是矩形的，他们按照Z轴顺序排列。
 
-## 父对象
+如果控件没有父控件，则称之为窗口，窗口会被一个框架包裹(包含标题栏，边框等)，可以通过某些函数来修改边框属性。
+
+## 窗口几何
+
+> Window and Dialog Widgets
+
+QWidget提供了几个处理小部件几何形状的函数。其中一些函数操作在纯客户区(即不包括窗框的窗口)上，其他函数包括窗框。区分的方式是透明地涵盖最常见的用法。
+
++ 包含窗口边框：`x()`，`y()`，`frameGeometry()`，`pos()`，and `move()`
++ 不包含窗口边框：`geometry()`， `width()`，`height()`， `rect()`，and `size()`
+
+注意，这种区别只对顶级小部件有意义。对于所有子小部件，frame geometry等于小部件的客 client geometry。
+
+![image-20221025022751891](assets/image-20221025022751891.png)
+
+## 大小位置
+
+### 获取坐标和大小
 
 ```cpp
-// 构造函数
-QWidget::QWidget(QWidget *parent = nullptr, Qt::WindowFlags f = Qt::WindowFlags());
-
-// 公共成员函数
-// 给当前窗口设置父对象
-void QWidget::setParent(QWidget *parent);
-void QWidget::setParent(QWidget *parent, Qt::WindowFlags f);
-// 获取当前窗口的父对象, 没有父对象返回 nullptr
-QWidget *QWidget::parentWidget() const;
-```
-
-
-
-## 位置和尺寸
-
-```cpp
-//------------- 窗口位置 -------------
-// 得到相对于当前窗口父窗口的几何信息, 边框也被计算在内
-QRect QWidget::frameGeometry() const;
-// 得到相对于当前窗口父窗口的几何信息, 不包括边框
-const QRect& geometry() const;
-// 设置当前窗口的几何信息(位置和尺寸信息), 不包括边框
-void setGeometry(int x, int y, int w, int h);
-void setGeometry(const QRect &);
-//此属性保存小部件的内部几何形状，不包括任何窗口框架,等于QRect(0,0, width()， height()) 
-QRect rect();
-//获取小控件在父控件中的位置
+//包含窗口边框
+int x() const
+int y() const
 QPoint pos() const
-    
-// 移动窗口, 重新设置窗口的位置
-void move(int x, int y);
-void move(const QPoint &);
-
-//------------- 窗口尺寸 -------------
-// 获取当前窗口的尺寸信息
+//不包含窗口边框    
+int width() const   
+int height() const    
 QSize size() const
-// 重新设置窗口的尺寸信息
-void resize(int w, int h);
-void resize(const QSize &);
-// 获取当前窗口的最大尺寸信息
-QSize maximumSize() const;
-// 获取当前窗口的最小尺寸信息
-QSize minimumSize() const;
-// 设置当前窗口固定的尺寸信息
-void QWidget::setFixedSize(const QSize &s);
-void QWidget::setFixedSize(int w, int h);
-// 设置当前窗口的最大尺寸信息
-void setMaximumSize(const QSize &);
-void setMaximumSize(int maxw, int maxh);
-// 设置当前窗口的最小尺寸信息
-void setMinimumSize(const QSize &);
-void setMinimumSize(int minw, int minh);
-
-
-// 获取当前窗口的高度    
-int height() const;
-// 获取当前窗口的最小高度
-int minimumHeight() const;
-// 获取当前窗口的最大高度
-int maximumHeight() const;
-// 给窗口设置固定的高度
-void QWidget::setFixedHeight(int h);
-// 给窗口设置最大高度
-void setMaximumHeight(int maxh);
-// 给窗口设置最小高度
-void setMinimumHeight(int minh);
-
-// 获取当前窗口的宽度
-int width() const;
-// 获取当前窗口的最小宽度
-int minimumWidth() const;
-// 获取当前窗口的最大宽度
-int maximumWidth() const;
-// 给窗口设置固定宽度
-void QWidget::setFixedWidth(int w);
-// 给窗口设置最大宽度
-void setMaximumWidth(int maxw);
-// 给窗口设置最小宽度
-void setMinimumWidth(int minw);
+    
+const QRect &geometry() const    
+QSize frameSize() const  
+QRect frameGeometry() const  
+//控件内部几何QRect(0,0,width(),height())    
+QRect rect() const
 ```
+
+### 设置坐标和大小
+
+```cpp
+void move(const QPoint &)
+void move(int x, int y)
+
+void resize(int w, int h)
+void resize(const QSize &)
+    
+void setGeometry(const QRect &)
+void setGeometry(int x, int y, int w, int h)    
+```
+
+### 固定大小
+
+```cpp
+void setFixedSize(const QSize &s)
+void setFixedSize(int w, int h) 
+```
+
+### 大小限定
+
+去掉set就是获取函数
+
+```cpp
+void setMaximumWidth(int maxw) 
+void setMaximumHeight(int maxh)
+void setMaximumSize(const QSize &)
+void setMaximumSize(int maxw, int maxh)
+     
+void setMinimumWidth(int minw)
+void setMinimumHeight(int minh)
+void setMinimumSize(const QSize &)
+void setMinimumSize(int minw, int minh)
+```
+
+
+
+## 内容边距
+
+设置小部件内容周围的空白，使其具有左、上、右和下的大小。边距被布局系统使用，并且可以被子类用来指定要绘制的区域(例如，不包括框架)。
+
+```cpp
+void setContentsMargins(int left, int top, int right, int bottom)
+void setContentsMargins(const QMargins &margins)
+QMargins contentsMargins() const
+//获取内容区域(除去边距)    
+QRect contentsRect() const    
+```
+
+**案例**：创建一个窗口，包含一个标签，标签内容为"社会我顽哥，人狠话不多 "，标签大小为300x300，让内容放在标签的右下角。
+
+## 鼠标指针
+
+### 指针形状
+
+```cpp
+QCursor cursor() const
+void setCursor(const QCursor &)
+void unsetCursor()
+```
+
+如果要全局设置鼠标光标样式，可以使用`QGuiApplication::setOverrideCursor()`， 设置鼠标指针的形状需要使用QCursor类，通过像素图或枚举指定鼠标光标形状。
+
+#### QCursor
+
+```cpp
+ QCursor(const QPixmap &pixmap, int hotX = -1, int hotY = -1)
+ QCursor(const QBitmap &bitmap, const QBitmap &mask, int hotX = -1, int hotY = -1)
+ QCursor(Qt::CursorShape shape)
+```
+
+QCursor提供了获取/设置鼠标全局坐标的静态方法。
+
+```cpp
+[static] QPoint pos()
+[static] QPoint pos(const QScreen *screen)
+[static] void setPos(int x, int y)
+[static] void setPos(QScreen *screen, int x, int y)
+[static] void setPos(const QPoint &p)
+[static] void setPos(QScreen *screen, const QPoint &p)
+```
+
+
+
+
 
 ## 窗口可见性/状态
 

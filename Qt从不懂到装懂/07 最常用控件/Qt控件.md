@@ -1,90 +1,179 @@
 # Qt控件
 
-## 按钮抽象基类(QAbstractButton)
+## 1. 按钮
 
-##### **简介**
+### QAbstractButton(抽象类)
 
-QAbstractButton类是按钮部件的抽象基类，提供了按钮所共有的功能。
+#### **描述**
 
 QAbstractButton类实现了一个抽象按钮，并且让它的子类来指定如何处理用户的动作，并指定如何绘制按钮。
 
-QAbstractButton提供了点击和勾选按钮。QRadioButton和QCheckBox类只提供了勾选按钮，QPushButton和QToolButton提供了点击按钮，如果需要的话，它们还可以提供切换行为。
+QAbstractButton提供了点击和勾选按钮。
 
-任何按钮，都可以显示一个包含文本和图标的标签。
++ QRadioButton和QCheckBox类只提供了勾选按钮;
++ QPushButton和QToolButton提供了点击按钮，如果需要的话，它们还可以提供切换行为。
 
-+ setText(const QString&) 设置文本
+要子类化QAbstractButton，您至少必须重新实现paintEvent()来绘制按钮的轮廓及其文本或像素图。通常建议也重新实现sizeHint()，有时也实现hitButton()(以确定按钮按下是否在按钮内)。对于有两个以上状态的按钮(如三状态按钮)，还必须重新实现checkStateSet()和nextCheckState()。
 
-+ setIcon(const QIcon&)    设置图标
+#### 功能
 
-
-
-##### **信号与槽**
-
-**signals**
-
-+ *clicked，pressed，released信号*
+##### 文本
 
 ```cpp
-QPushButton*btn = new QPushButton("Touch Me",this);
-btn->move(100,100);
+void setText(const QString &text)	//设置按钮文本
+QString text() const				//获取按钮文本
+```
 
-//按钮按下释放之后会触发
+**案例**
+
+创建一个按钮，初始文本为1，要求每点击一次，让文本数字增加1。
+
+
+
+##### 图标
+
+```cpp
+void setIcon(const QIcon &icon) 
+QIcon icon() const
+void setIconSize(const QSize &size)
+QSize iconSize() const
+```
+
+
+
+##### 快捷键
+
+````cpp
+void setShortcut(const QKeySequence &key)
+QKeySequence shortcut() const
+````
+
+
+
+##### 自动重复
+
+```cpp
+ bool autoRepeat() const
+ int autoRepeatDelay() const
+ int autoRepeatInterval() const
+```
+
+
+
+##### 状态
+
++ 按钮按下
+
+```cpp
+bool isDown() const
+ void setDown(bool)
+```
+
++ 按钮选中
+
+```cpp
+//如果可以选中，是否已经选中了
+void setChecked(bool)
+bool isChecked() const
+//是否可以选中
+void setCheckable(bool)
+bool isCheckable() const 
+//切换选中/非选中状态    
+void toggle()    
+```
+
+
+
+##### 排他性
+
+如果同时存在多个按钮, 而此时所有按钮又设置了排他性，则在同一时刻只能选中一个按钮。一般按钮都是false, 只有单选按钮是true
+
+```cpp
+bool autoExclusive() const
+void setAutoExclusive(bool)
+```
+
+
+
+##### 点击
+
+在需要通过代码触发按钮点击时，可以通过以下API
+
+```cpp
+//普通点击
+void click()		
+//动画点击    
+void animateClick()
+```
+
+##### 设置有效区域
+
+设置有效区域，需要重下`hitButton`函数，默认情况下鼠标在按钮矩形区域有效，可以设置只点击按钮中心的圆形区域才有效。
+
+```cpp
+ virtual bool hitButton(const QPoint &pos) const
+```
+
+
+
+#### 信号
+
+##### clicked
+
+鼠标点击按钮并释放触发
+
+```cpp
 connect(btn,&QPushButton::clicked,this,[](){qDebug()<<"clicked";});
-//按钮按下触发
+```
+
+##### pressed
+
+鼠标点击按钮触发
+
+```cpp
 connect(btn,&QPushButton::pressed,this,[](){qDebug()<<"pressed";});
-//按钮释放触发
+```
+
+##### released
+
+鼠标点击之后释放触发
+
+```cpp
 connect(btn,&QPushButton::released,this,[](){qDebug()<<"released";});
 ```
 
-+ *toggled信号*：每当切换按钮(toggleButton)改变其状态时，就会发出此信号。
+##### tooggled
+
+如果按钮能被选中，状态切换时触发
 
 ```cpp
 btn->setCheckable(true);	//设置按钮可选中
-connect(btn,&QPushButton::toggled,this,[=]()
-{
-    qDebug()<<"toggled"<<btn->isChecked();
-});
+connect(btn,&QPushButton::toggled,this,[=](bool checked){qDebug()<<"toggled"<<checked;});
 ```
 
-**slots**
-
-+ void animateClick(int msec = 100)  定时自动点击按钮
-+ void click()  自动点击按钮
-+ void setIconSize(const QSize &size)  设置图标大小，较小的图标可能会设置无效
-+ void setChecked(bool) 设置是否选中按钮(checkable必须被启用)
-+ void toggle()  切换按钮的选中状态
-
-##### 其他函数
-| 序号 | 函数&描述                                                    |
-| :--: | ------------------------------------------------------------ |
-|  1   | <span style = "font-size:18px;color:rgb(0,102,0)" >int void setAutoExclusive(bool)</span><br /><span style="font-size:13px">可选中按钮是否独占， 在独占按钮组(同一父对象为同一组)中，任何时候只能选中一个按钮</span> |
-|  2   | <span style = "font-size:18px;color:rgb(0,102,0)" >void setAutoRepeat(bool)</span><br /><span style="font-size:13px">如果启用，按钮按下不松开，pressed()、released()和clicked()信号会定期发出</span> |
-|  3   | <span style = "font-size:18px;color:rgb(0,102,0)" >void setAutoRepeatDelay(int)</span><br /><span style="font-size:13px">如果启用了autoRepeat，那么autoRepeatDelay将定义自动重复生效前的初始延迟(以毫秒为单位)。  </span> |
-|  4   | <span style = "font-size:18px;color:rgb(0,102,0)" >void setAutoRepeatInterval(int)</span><br /><span style="font-size:13px">如果启用了autoRepeat，则autoRepeatInterval定义了自动重复间隔的长度，以毫秒为单位。 </span> |
-|  5   | <span style = "font-size:18px;color:rgb(0,102,0)" >void setCheckable(bool)</span><br /><span style="font-size:13px">设置按钮是否能够被选中，默认是不能被选中的</span> |
-|  6   | <span style = "font-size:18px;color:rgb(0,102,0)" >void setDown(bool)</span><br /><span style="font-size:13px">设置按钮是否被按下</span> |
-|  7   | <span style = "font-size:18px;color:rgb(0,102,0)" >void setIcon(const QIcon &icon)</span><br /><span style="font-size:13px">设置图标</span> |
-|  8   | <span style = "font-size:18px;color:rgb(0,102,0)" >void setShortcut(const QKeySequence &key)</span><br /><span style="font-size:13px">设置快捷键</span> |
-|  9   | <span style = "font-size:18px;color:rgb(0,102,0)" >void setText(const QString &text)</span><br /><span style="font-size:13px">设置文本</span> |
 
 
+### PushButton(按钮)
 
-
-#### 1，按钮(PushButton)
+#### 描述
 
 最常用的控件之一，应用场景十分广泛。
 
-##### 信号与槽
+#### 功能
 
-**signals**
+##### 菜单
 
-`Inherits:QAbstractButton 继承自父类`
+可以设置点击按钮是弹出的菜单， 供用户选择
 
-**slots**
+```cpp
+void setMenu(QMenu *menu)
+QMenu *menu() const
+[slots] void showMenu()   
+```
 
-`void showMenu()	如果有菜单，弹出菜单，否则啥也不做(这个槽貌似没啥用)`
 
 
+  
 
 ##### 常用函数
 | 序号 | 函数&描述                                                    |

@@ -76,7 +76,26 @@ void setMinimumSize(const QSize &)
 void setMinimumSize(int minw, int minh)
 ```
 
+## 坐标系统转换
 
+```cpp
+QPoint mapFrom(const QWidget *parent, const QPoint &pos) const
+QPoint mapFromGlobal(const QPoint &pos) const
+QPoint mapFromParent(const QPoint &pos) const
+QPoint mapTo(const QWidget *parent, const QPoint &pos) const
+QPoint mapToGlobal(const QPoint &pos) const
+QPoint mapToParent(const QPoint &pos) const
+```
+
++ 这几个函数都是转换相对坐标系用的. **用另一个坐标系统的坐标值, 来表达当前坐标系统中某个坐标所指向的某个点,**
+
+  记住: 一定要先确**两个坐标系统**再确定**一个点**
+
++ **相对坐标**：获取自己相对于父控件的位置 QWidget::pos()
+
++ **绝对坐标**：将当前控件的相对位置转换为屏幕绝对位置 QWidget::mapToGlobal()
+
++ **绝对坐标转为相对坐标**：将屏幕绝对位置对应到控件的相对位置 QWidget::mapFromGlobal()
 
 ## 内容边距
 
@@ -123,138 +142,165 @@ QCursor提供了获取/设置鼠标全局坐标的静态方法。
 [static] void setPos(QScreen *screen, const QPoint &p)
 ```
 
+## 顶层窗口相关
 
-
-
-
-## 窗口可见性/状态
+### 图标
 
 ```cpp
-// 判断窗口是否可用
-bool isEnabled() const;
-// 设置窗口是否可用, 不可用窗口无法接收和处理窗口事件
-void setEnabled(bool);
+void setWindowIcon(const QIcon &icon)
+QIcon windowIcon() const    
+```
 
-//------------- 窗口显示 -------------
-// 关闭当前窗口
-[slot] bool QWidget::close();
-// 隐藏当前窗口
-[slot] void QWidget::hide();
-// 显示当前创建以及其子窗口
-[slot] void QWidget::show();
-//设置窗口是否可见
+### 标题
+
+```cpp
+QString windowTitle() const
+void setWindowTitle(const QString &)
+```
+
+窗口标题附加操作！
+
+```cpp
+void setWindowModified(bool)
+```
+
+此属性保存窗口中显示的文档是否有未保存的更改。
+
+修改后的窗口是指内容已更改但尚未保存到磁盘的窗口。这个标志将根据平台的不同而有不同的效果。在macOS上关闭按钮会有一个修改过的外观；在其他平台上，窗口标题将带有“\*”(星号)。
+
+窗口标题必须包含“[\*]”占位符，它指示“\*”应该出现的位置。通常，它应该出现在文件名后面(例如，"document1.txt[\*] -文本编辑器")。如果窗口没有被修改，占位符就会被删除。
+
+注意，如果一个小部件被设置为已修改，那么它的所有祖先也将被设置为已修改。但是，如果在一个小部件上调用setWindowModified(false)，这将不会传播到它的父组件，因为父组件的其他子组件可能已经被修改了。
+
+如果你想要在窗口标题后面显示，应用程序名称，可以使用以下函数。(这个不算标题的一部分)
+
+```cpp
+[static]void QGuiApplication::setApplicationDisplayName(const QString &name)
+```
+
+### 不透明度
+
+```cpp
+void setWindowOpacity(qreal level)
+qreal windowOpacity() const
+```
+
+### 窗口状态
+
+```cpp
+Qt::WindowStates windowState() const
+void setWindowState(Qt::WindowStates windowState)   
+bool isActiveWindow()    	//是否为活跃窗口
+```
+
+| 枚举                 | 描述     |
+| -------------------- | -------- |
+| Qt::WindowNoState    | 无状态   |
+| Qt::WindowMinimized  | 最小化   |
+| Qt::WindowMaximized  | 最大化   |
+| Qt::WindowFullScreen | 全屏     |
+| Qt::WindowActive     | 活动窗口 |
+
+如果窗口不可见(即isVisible()返回false)，当show()被调用时窗口状态才生效。对于可见的窗口，会立即生效。例如，要在全屏模式和普通模式之间切换，使用以下代码:
+
+```cpp
+ w->setWindowState(w->windowState() ^ Qt::WindowFullScreen);
+```
+
+为了恢复和激活最小化的窗口(同时保持其最大化和/或全屏状态)，请使用以下命令:
+
+```cpp
+ w->setWindowState((w->windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
+```
+
+
+
+### 最大化最小化
+
+```cpp
+void showFullScreen()
+void showMaximized()
+void showMinimized()
+void showNormal()
+    
+bool isMaximized() const
+bool isMinimized() const    
+bool isFullScreen() const    
+```
+
+
+
+### 窗口标志
+
+[常用标志详见 附录1](#附录一)
+
+```cpp
+void overrideWindowFlags(Qt::WindowFlags flags)
+     
+void setWindowFlag(Qt::WindowType flag, bool on = true)
+void setWindowFlags(Qt::WindowFlags type)
+Qt::WindowFlags windowFlags() const
+```
+
+## 交互状态
+
+#### 是否禁用
+
+```cpp
+void setDisabled(bool disable)
+void setEnabled(bool)
+bool isEnabled() const
+bool isEnabledTo(const QWidget *ancestor) const    
+```
+
+#### 是否显示/隐藏
+
+```cpp
 virtual void setVisible(bool visible)
-
-// 全屏显示当前窗口, 只对windows有效
-[slot] void QWidget::showFullScreen();
-// 窗口最大化显示, 只对windows有效
-[slot] void QWidget::showMaximized();
-// 窗口最小化显示, 只对windows有效
-[slot] void QWidget::showMinimized();
-// 将窗口回复为最大化/最小化之前的状态, 只对windows有效
-[slot] void QWidget::showNormal();
 ```
 
-
-
-## 光标
-
-### QCursor
-
-这个类主要用于创建与特定小部件关联的鼠标光标，以及获取和设置鼠标光标的位置。
-
-Qt有许多标准的游标形状，但您也可以基于QBitmap、掩码和热点定制游标形状。
-
-要将游标与小部件关联，请使用QWidget::setCursor()。要将游标与所有小部件关联(通常是短时间内)，请使用QGuiApplication::setOverrideCursor()。
-
-要设置游标形状，可以使用QCursor::setShape()或使用QCursor构造函数，它以游标的形状作为参数，或者您可以使用Qt::CursorShape枚举中定义的预定义游标之一。
-
-如果你想用你自己的位图创建一个游标，使用QCursor构造函数，它接受一个位图和一个掩码，或者使用一个像素图作为参数的构造函数。
-
-要设置或获取鼠标光标的位置，请使用静态方法QCursor::pos()和QCursor::setPos()。
-
-#### Public Functions
+`setVisible`的马甲
 
 ```cpp
- QCursor(QCursor &&other)
- QCursor(const QCursor &c)
- QCursor(const QPixmap &pixmap, int hotX = -1, int hotY = -1)
- QCursor(const QBitmap &bitmap, const QBitmap &mask, int hotX = -1, int hotY = -1)
- QCursor(Qt::CursorShape shape)
- QCursor()
- QCursor &operator=(QCursor &&other)
- QCursor &operator=(const QCursor &c)
- ~QCursor()
- QBitmap bitmap() const
- QPoint hotSpot() const
- QBitmap mask() const
- QPixmap pixmap() const
- void setShape(Qt::CursorShape shape)
- Qt::CursorShape shape() const
- void swap(QCursor &other)
- QVariant operator QVariant() const
+void show()
+void hide()
+void setHidden(bool hidden)    
 ```
 
-#### Static Public Members
+判断是否可见
 
 ```cpp
-//获取鼠标的全局坐标
-[static] QPoint pos()
-[static] QPoint pos(const QScreen *screen)
-//将鼠标移动到全局的指定坐标    
-[static] void setPos(int x, int y)
-[static] void setPos(QScreen *screen, int x, int y)
-[static] void setPos(const QPoint &p)
-[static] void setPos(QScreen *screen, const QPoint &p)
-//QScreen在多屏幕的时候可用    
-```
-
-### 设置光标样式
-
-通过QWidget的`setCursor`函数设置光标，Qt给我们内置了常见的光标，如果需要还可以自定义光标样式~
-
-+ 以下代码可以通过点击按钮切换并查看所有内置光标的形状
-
-```cpp
-QPushButton*btn = new QPushButton("切换鼠标形状",this);
-connect(btn,&QPushButton::clicked,this,[=]()
-	{
-    	static int i = 0;
-    	this->setCursor(Qt::CursorShape(i));
-    	i = (i+1)%25;
-        qDebug()<<"切换成功"<<Qt::CursorShape(i);
-    });
-
-```
-
-+ 下面我们将学习如何自定义光标形状，推荐一个下载图标的网站[iconfont图标下载网站](https://www.iconfont.cn/)
-
-```cpp
-QPixmap* cursorPixmaps[2]={new QPixmap("://images/cursor_one.png"),
-                              new QPixmap("://images/cursor_two.png")};
-QPushButton*btn = new QPushButton("切换鼠标样式",this);
-connect(btn,&QPushButton::clicked,this,[=]()
-{
-    static int i = 0;
-    setCursor(QCursor(*cursorPixmaps[i]));
-    i = (i+1)%2;
-});
+bool isVisible() const
+bool isHidden() const
+bool isVisibleTo(const QWidget *ancestor) const    //如果能随着widget控件的显示和隐藏, 而同步变化, 则返回true 
 ```
 
 ## 帮助系统
 
-在QWidget和子类中可以使用`setToolTip`设置提示信息，使用`toolTip`获取提示信息。
+> Help System
+
+### toolTip
+
+当鼠标悬停在空间上时，会在鼠标旁边显示"工具提示"
 
 ```cpp
- QString toolTip() const
- void setToolTip(const QString &)
+void setToolTip(const QString &)
+QString toolTip() const
+     
+void setToolTipDuration(int msec)     
+int toolTipDuration() const
 ```
 
-当鼠标移动到控件上的时候，会显示提示信息！
 
 
+### whatsThis
 
-除了提示信息之外，还有一个“这是什么”帮助系统，使用setWhatsThis设置"这是什么"信息。
+切换到whatsThis模式，鼠标点击控件会显示"这是啥提示"
+
+```cpp
+void setWhatsThis(const QString &)
+QString whatsThis() const    
+```
 
 + 先创建三个按钮
 
@@ -284,59 +330,61 @@ connect(btn,&QPushButton::clicked,this,[=]()
 
 + 调用QWhatsThis的静态函数enterWhatsThisMode进入whatsThis模式，此时当鼠标移动到设置了whatsThis的widget上光标会出现一个问号，再点击则会出现whatsThis的窗口。
 
+## 父子关系
 
-
-## 设置标题/图标
-
-### 设置窗口标题
-
-> windowTitle : QString
-
-这个属性只对顶级小部件有意义，比如窗口和对话框。如果没有设置标题，则标题基于windowFilePath。如果两者都没有设置，则标题为空字符串。
-
-如果您使用windowModified机制，窗口标题必须包含一个“[\*]”占位符，它指示'\*'应该出现在哪里。通常，它应该出现在文件名之后(例如，"document1.txt[*] -文本编辑器")。如果windowModified属性为false(默认值)，占位符就会被删除。
-
-在某些桌面平台上(包括Windows和Unix)，如果设置了，应用程序名称(来自QGuiApplication::applicationDisplayName)会添加在窗口标题的末尾。这是由QPA插件完成的，所以它显示给用户，但不是windowTitle字符串的一部分。
-
-Access functions:
+返回控件坐标系中位置(x, y)处的可见子控件，没有则返回nullptr。
 
 ```cpp
- QString windowTitle() const
- void setWindowTitle(const QString &)
+QWidget *childAt(int x, int y) const
+QWidget *childAt(const QPoint &p) const 
 ```
 
-Notifier signal:
+返回包裹所有子控件的矩形(隐藏的控件除外)
 
 ```cpp
- void windowTitleChanged(const QString &title)
+QRect childrenRect() const
+QRegion childrenRegion() const 
 ```
 
-### 设置窗口图标
-
-> windowIcon : QIcon
-
-这个属性只对窗口有意义。如果没有设置图标，windowIcon()返回应用程序图标(QApplication::windowIcon())。
-
-+ 修改窗口和任务栏显示的图标
+返回父控件
 
 ```cpp
-this->setWindowIcon(QIcon("://images/snowBall.png"));
+QWidget *parentWidget() const  
 ```
 
-Access functions:
+## 层级控制
 
 ```cpp
-QIcon windowIcon() const
-void setWindowIcon(const QIcon &icon)
+void lower()	//将控件降低到父控件堆栈的底部
+void raise()    //将控件提升到父控件堆栈顶部 
+void stackUnder(QWidget *w)	//将控件放在w控件下面。控件本身和w必须是兄弟姐妹。
 ```
 
-Notifier signal:
+
+
+## 焦点控制
+
+### 单个控件
 
 ```cpp
-void windowIconChanged(const QIcon &icon)
+void setFocus(Qt::FocusReason reason)    
+void clearFocus()
+Qt::FocusPolicy focusPolicy() const
 ```
 
-QWidget类的`setWindowIcon`只能设置本窗口的图标，如果想要把所有的窗口图标都设置为同一个，需要使用`qApp->setWindowIcon()`;
+
+
+### 多个子控件
+
+```cpp
+QWidget *focusWidget() const
+bool focusNextChild()
+bool focusPreviousChild()
+virtual bool focusNextPrevChild(bool next)
+[static] void setTabOrder(QWidget *first, QWidget *second)
+```
+
+
 
 ### 设置exe图标
 
@@ -357,64 +405,11 @@ QWidget类的`setWindowIcon`只能设置本窗口的图标，如果想要把所�
   add_executable(QtTest ${MY_SCOURCES} "icon.rc")
   ```
 
-最后重新运行程序，找到exe，完成！
+最后重新运行程序，找到exe，完成！     
 
-​           
 
-## 坐标系统转换
 
-```cpp
-QPoint mapFrom(const QWidget *parent, const QPoint &pos) const
-QPoint mapFromGlobal(const QPoint &pos) const
-QPoint mapFromParent(const QPoint &pos) const
-QPoint mapTo(const QWidget *parent, const QPoint &pos) const
-QPoint mapToGlobal(const QPoint &pos) const
-QPoint mapToParent(const QPoint &pos) const
-```
 
-+ 这几个函数都是转换相对坐标系用的. **用另一个坐标系统的坐标值, 来表达当前坐标系统中某个坐标所指向的某个点,**
-
-  记住: 一定要先确**两个坐标系统**再确定**一个点**
-
-+ **相对坐标**：获取自己相对于父控件的位置 QWidget::pos()
-
-+ **绝对坐标**：将当前控件的相对位置转换为屏幕绝对位置 QWidget::mapToGlobal()
-
-+ **绝对坐标转为相对坐标**：将屏幕绝对位置对应到控件的相对位置 QWidget::mapFromGlobal()
-
-  
-
-## 设置窗口状态
-
-+ 将窗口状态设置为windowState。 窗口状态是[附录二](#附录二)中状态的组合。
-+  如果窗口不可见(即isVisible()返回false)，窗口状态将在调用show()时生效。 对于可见窗口，更改是立即的。 例如，要在全屏模式和普通模式之间切换，请使用以下代码:  
-
-```cpp
- w->setWindowState(w->windowState() ^ Qt::WindowFullScreen);
-```
-
-+ 为了恢复和激活最小化的窗口(同时保持其最大化和/或全屏状态)，使用以下方法:  
-
-```cpp
-w->setWindowState((w->windowState() & ~Qt::WindowMinimized) | Qt::WindowActive);
-```
-
-+ 调用这个函数将隐藏小部件。 必须调用show()使小部件再次可见，在某些窗口系统中，Qt::WindowActive不是立即的，在某些情况下可能会被忽略。  
-
-## 设置窗口标志
-
-+ 用Qt写一个窗口，如果继承QDialog，那窗口就只有关闭按钮，如果继承QWidget，那么就有关闭，最大化，最小化三个按钮，怎样才能让关闭按钮可用，而最大化和最小化按钮不可用呢？
-
-```cpp
-//仅仅显示关闭按钮，添加一个帮助按钮?
-this->setWindowFlags(Qt::WindowType::WindowCloseButtonHint | Qt::WindowContextHelpButtonHint);
-//从窗口标志中移除帮助按钮标志
-this->setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
-//移除标志或单纯添加一个标志，可以用一下简单的函数	true为设置，false为移除
-this->setWindowFlag(Qt::WindowContextHelpButtonHint,false);
-```
-
-+ 更多标志详见[附录一 ](#附录一 )
 
 ## 设置窗口属性
 
@@ -430,39 +425,6 @@ this->setWindowFlag(Qt::WindowContextHelpButtonHint,false);
 | Qt::WA_DeleteOnClose         | 55         | 使Qt在小部件接受关闭事件时删除该小部件                       |
 | Qt::WA_MouseTracking         | 2          | 指示小部件启用了鼠标跟踪。 参见QWidget:: mouseTracking       |
 | Qt::WA_TranslucentBackground | 120        | 指示小部件应该有一个半透明的背景，也就是说，小部件的任何非透明区域都将是半透明的，因为小部件将有一个alpha通道。 设置此标志将导致设置WA_NoSystemBackground。 在Windows上，小部件还需要设置Qt:: framesswindowhint窗口标志。 该标志由小部件的作者设置或清除。 |
-
-## 右键菜单
-
-在桌面右击鼠标会出现菜单，这个我们一般叫做右键菜单，那么在Qt中我们如何使用右键菜单呢？
-
-首先需要给控件设置上下文菜单策略 setContextMenuPolicy(Qt::CustomContextMenu) ；设置该策略后当我们右键点击控件时qt会发送一个信号 customContextMenuRequested(const QPoint &pos) ，其中参数pos用来传递右键点击时的鼠标的坐标，这个坐标一般是相对于控件左上角而言的；最后给这个信号设置相应的槽函数，在槽函数中将菜单展示出来就行了。
-
-+ 设置上下文菜单策略
-
-```css
-setContextMenuPolicy(Qt::ContextMenuPolicy::CustomContextMenu);
-```
-
-+ 连接上下文菜单触发的信号
-
-```cpp
-connect(btn,&QPushButton::customContextMenuRequested,this,[=](const QPoint&pos)
-{
-    //在指定位置弹出菜单
-    //contextMenu->exec(btn->mapToParent(this->mapToParent(pos)));
-    contextMenu->exec(QCursor::pos());
-});
-```
-
-+ 创建的菜单
-
-```cpp
-QMenu contextMenu = new QMenu;
-QAction* copyAct = contextMenu->addAction("复制");
-QAction* pasteAct= contextMenu->addAction("粘贴");
-```
-
-
 
 ## Qt部署应用程序发布包
 
@@ -587,53 +549,13 @@ setWindowIcon(QIcon("d:\\pic\\1.ico"));
 
 
 
-
-资源文件的创建
-
-![image-20200412103034187](assets/image-20200412103034187-1601290192153.png)
-
-![image-20200412103106280](assets/image-20200412103106280-1601290192156.png)
-
-![image-20200412103135989](assets/image-20200412103135989-1601290192157.png)
-
-![image-20200412103213774](assets/image-20200412103213774-1601290192157.png)
-
-- 资源文件的使用
-
-  - 打开资源文件
-
-  ![image-20200412103300715](assets/image-20200412103300715-1601290192157.png)
-
-  - 添加前缀
-
-  ![image-20200412103405364](assets/image-20200412103405364-1601290192158.png)
-
-  - 添加文件
-
-    ![image-20200412103458462](assets/image-20200412103458462-1601290192158.png)
-
-    - 弹出以文件选择对话框, 选择资源文件
-
-      - 资源文件放到什么地方?
-        - 放到和 项目文件  .pro 同一级目录或者更深的目录中
-        - `错误的做法: 将资源文件放到 .pro文件的上级目录, 这样资源文件无法被加载到`
-
-    - 资源文件中添加的图片资源
-
-      ![image-20200412104000877](assets/image-20200412104000877-1601290192158.png)
-
-  - 如何在程序中使用资源文件中的图片
-
-    ![image-20200412104156739](assets/image-20200412104156739-1601290192158.png)
-
-
 # 附录一 
 
 + 此枚举类型用于为小部件指定各种窗口系统属性。 它们相当不寻常，但在少数情况下是必要的。 其中一些标志取决于底层窗口管理器是否支持它们。
 
 | 枚举              | 值(十六进制)        | 描述                                                         |
 | ----------------- | ------------------- | ------------------------------------------------------------ |
-| Qt::Widget        | 0x00000000          | 这是QWidget的默认类型。 这种类型的小部件如果有父部件，则为子部件，如果没有父部件，则为独立窗口。 |
+| Qt::Widget        | 0x00000000          | 这是QWidget的默认类型。 这种类型的控件如果有父控件，则为控件，如果没有父控件，则为独立窗口。 |
 | Qt::Window        | 0x00000001          | 指示小部件是一个窗口，通常带有窗口系统框架和标题栏，而不管小部件是否有父窗口。 |
 | Qt::Dialog        | 0x00000002\| Window | 指示小部件是一个窗口，应该装饰为一个对话框(即，通常在标题栏中没有最大化或最小化按钮)。 |
 | Qt::Sheet         | 0x00000004\| Window | 指示窗口是macOS上的工作表。 由于使用工作表意味着窗口模式，推荐的方法是使用QWidget::setWindowModality()，或QDialog::open() |
@@ -651,18 +573,18 @@ setWindowIcon(QIcon("d:\\pic\\1.ico"));
 
 | 枚举                            | 值(十六进制)                                        | 描述                                                         |
 | ------------------------------- | --------------------------------------------------- | ------------------------------------------------------------ |
-| Qt::FramelessWindowHint         | 0x00000800                                          | 产生一个无边框的窗口。 用户不能通过窗口系统移动或调整无边框窗口的大小 |
+| Qt::FramelessWindowHint         | 0x00000800                                          | 窗口无边框                                                   |
 | Qt::NoDropShadowWindowHint      | 0x40000000                                          | 去掉窗口阴影                                                 |
 | Qt::CustomizeWindowHint         | 0x02000000                                          | 关闭默认的窗口标题提示                                       |
 | Qt::WindowTitleHint             | 0x00001000                                          | 给窗口一个标题栏                                             |
 | Qt::WindowSystemMenuHint        | 0x00002000                                          | 添加一个窗口系统菜单，可能还有一个关闭按钮(例如在Mac上)。 如果你需要隐藏或显示关闭按钮，使用WindowCloseButtonHint更便于移植。 |
-| Qt::WindowMinimizeButtonHint    | 0x00004000                                          | 添加一个最小化按钮                                           |
-| Qt::WindowMaximizeButtonHint    | 0x00008000                                          | 添加一个最大化按钮                                           |
-| Qt::WindowMinMaxButtonsHint     | WindowMinimizeButtonHint \|WindowMaximizeButtonHint | 添加最小化和最大化按钮                                       |
+| Qt::WindowMinimizeButtonHint    | 0x00004000                                          | 激活最小化和关闭按钮，禁止最大化按钮                         |
+| Qt::WindowMaximizeButtonHint    | 0x00008000                                          | 激活最大化和关闭按钮，禁止最小化按钮                         |
+| Qt::WindowMinMaxButtonsHint     | WindowMinimizeButtonHint \|WindowMaximizeButtonHint | 激活最小化，最大化和关闭按钮                                 |
 | Qt::WindowCloseButtonHint       | 0x08000000                                          | 添加一个关闭按钮                                             |
-| Qt::WindowContextHelpButtonHint | 0x00010000                                          | 向对话框添加上下文帮助按钮                                   |
-| Qt::WindowStaysOnTopHint        | 0x00040000                                          | 通知窗口系统该窗口应该位于所有其他窗口的顶部                 |
-| Qt::WindowStaysOnBottomHint     | 0x04000000                                          | 通知窗口系统该窗口应位于所有其他窗口的底部                   |
+| Qt::WindowContextHelpButtonHint | 0x00010000                                          | 添加问号和关闭按钮，同对话框                                 |
+| Qt::WindowStaysOnTopHint        | 0x00040000                                          | 窗口顶置                                                     |
+| Qt::WindowStaysOnBottomHint     | 0x04000000                                          | 窗口底置                                                     |
 
 # 附录二
 

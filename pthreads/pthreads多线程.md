@@ -1,6 +1,6 @@
 多线程编程早已不是一个新鲜概念，在现代计算机的硬件支持下，开启多个线程分段执行耗时任务已成为一种常见的性能优化手段，并且使用多线程还可以充分利用 CPU 的资源。
 
-## 一、进程、线程和并发、并行
+# 1. 进程、线程和并发、并行
 
 要理解多线程，需要先搞懂几个概念：
 
@@ -16,9 +16,28 @@
 
 **POSIX线程**（POSIX threads），简称Pthreads，是线程的**POSIX标准**。该标准定义了创建和操纵线程的一整套API。在**类Unix操作系统**（Unix、Linux、Mac OS X等）中，都使用Pthreads作为操作系统的线程。
 
-*pthreads-win32*是一个Windows下使用的开源POSIX线程库。
+*[pthreads-win32](http://www.sourceware.org/pthreads-win32/)*是一个Windows下使用的开源POSIX线程库。
 
-# 1.线程管理
++ 下载
+  + [pthreads local](./assets/pthreads.zip)
++ 解压
+  + ![image-20221209024257787](assets/image-20221209024257787.png)
+  + 解压之后可以看到有头文件、lib文件、dll文件
++ 配置到VS
 
-## 1.1 你好并发世界
+# 2.线程管理
+
+## 2.1 线程管理基础
+
+### 2.1.1启动线程
+
+使用`pthread_create`启动线程：
+
+```c
+int  pthread_create(
+    pthread_t * tid,						//线程标识符指针(传出参数)
+    const pthread_attr_t * attr,			//线程属性
+    void* (* start) (void*),				//线程运行函数地址
+    void* arg);								//给线程函数传递的参数
+```
 

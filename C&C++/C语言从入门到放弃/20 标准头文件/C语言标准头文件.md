@@ -435,15 +435,15 @@ typedef int jmp_buf[16];
 |  20  | <span style = "font-size:18px;color:rgb(0,102,0)" >char *strstr(const char *haystack, const char *needle)</span><br />在字符串 haystack 中查找第一次出现字符串 needle（不包含空结束字符）的位置。 |
 |  21  | <span style = "font-size:18px;color:rgb(0,102,0)" >char *strtok(char *str, const char *delim)</span><br />分解字符串 str 为一组字符串，delim 为分隔符。 |
 |  22  | <span style = "font-size:18px;color:rgb(0,102,0)" >size_t strxfrm(char *dest, const char *src, size_t n)</span><br />根据程序当前的区域选项中的 LC_COLLATE 来转换字符串 src 的前 n 个字符，并把它们放置在字符串 dest 中。 等同strncpy |
-|      | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strdup(char const* _String        );</span><br />根据程 |
-|      | <span style = "font-size:18px;color:rgb(0,102,0)" >int  strcmpi(char const* _String1,char const* _String2);</span><br />根据程 |
-|      | <span style = "font-size:18px;color:rgb(0,102,0)" >int  stricmp(char const* _String1,char const* _String2); </span><br />根据程 |
-|      | <span style = "font-size:18px;color:rgb(0,102,0)" >int  strnicmp(char const* _String1,char const* _String2,size_t      _MaxCount);</span><br />根据程 |
-|      | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strlwr(char* _String);</span><br />根据程 |
-|      | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strnset(char* _String,int    _Value,size_t _MaxCount);</span><br />根据程 |
-|      | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strrev(char* _String); </span><br />根据程 |
-|      | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strset(char* _String,int   _Value);</span><br />根据程 |
-|      | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strupr(char* _String);</span><br />根据程 |
+|  23  | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strdup(char const* _String        );</span><br />拷贝字符串，返回动态分配的内存，使用完毕后需要手动free |
+|  24  | <span style = "font-size:18px;color:rgb(0,102,0)" >int  strcmpi(char const* _String1,char const* _String2);</span><br />根据程 |
+|  25  | <span style = "font-size:18px;color:rgb(0,102,0)" >int  stricmp(char const* _String1,char const* _String2); </span><br />根据程 |
+|  26  | <span style = "font-size:18px;color:rgb(0,102,0)" >int  strnicmp(char const* _String1,char const* _String2,size_t      _MaxCount);</span><br />根据程 |
+|  27  | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strnset(char* _String,int    _Value,size_t _MaxCount);</span><br />将一个字符串中的前n个字符都设为指定字符ch的函数。 |
+|  28  | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strrev(char* _String); </span><br />strrev用于反转字符串。strrev属于非标准函数，Linux不支持。 |
+|  29  | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strset(char* _String,int   _Value);</span><br />把字符串s中的所有字符都设置成字符c |
+|  30  | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strlwr(char* _String);</span><br />将字符串S转换为小写形式 |
+|  31  | <span style = "font-size:18px;color:rgb(0,102,0)" >char* strupr(char* _String);</span><br />将字符串s转换为大写形式 |
 
 
 

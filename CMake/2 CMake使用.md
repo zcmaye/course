@@ -72,7 +72,7 @@ cmake --build build
 
 直译模式简单解释就是不生成Makefile的模式。这很方便我们验证一些CMakeLists.txt的语法及验证一些数学运算等。
 
-**直译模式：**
+**直译模式(Process script mode)：**
 
 输入 **-P 参数**指定CMakeLists.txt脚本以直译模式解析(不需要C/C++源文件)。其中，message是CMakeLists.txt中用于输出信息的命令。以直译模式解析就不会生成Makefile文件，并且终端输出的信息就是我们CMakeLists.txt指定输出的内容。
 
@@ -145,10 +145,16 @@ message(STATUS "CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR}")
 通过命令`Set`可一个普通、缓存和环境变量的值。语法格式：
 
 ```cmake
-set(<variable> <value>,...)
+set(<variable> <value>)
 ```
 
-<value>...这一部分可以是零个以上的值，也就是意味着可以为空。多个参数将以分号分隔的列表形式连接，以形成要设置的实际变量值。如果值为空，那么等价于`unset`
+<value>...这一部分可以是零个以上的值，也就是意味着可以为空。多个参数将以分号分隔的列表形式连接，以形成要设置的实际变量值。
+
+如果值为空，那么等价于`unset`取消变量设置
+
+```cmake
+unset(<variable>)
+```
 
 访问一个值，格式`${<variable>}`。使用起来较复杂（美元符号+大括号包裹要使用的变量名）
 
@@ -297,7 +303,9 @@ if(<string>)
 + “123”  为true     123为常量
 + "YES" 为true      YES为常量
 
-### 逻辑运算
+### 运算符
+
+逻辑运算符
 
 | 运算符 | 案例           | 描述                                     |
 | ------ | -------------- | ---------------------------------------- |
@@ -307,7 +315,7 @@ if(<string>)
 
 + 复杂的逻辑表达式：`if((condition) AND (condition OR (condition)))`
 
-### 存在性检查
+#### 存在性检查
 
 | 运算符  | 案例                        | 描述                                                         |
 | ------- | --------------------------- | ------------------------------------------------------------ |
@@ -315,7 +323,7 @@ if(<string>)
 | TARGET  | if(TARGET hello_camke)      | 如果给定名称是由调用创建的现有逻辑目标名称，则为真[`add_executable()`](https://cmake.org/cmake/help/latest/command/add_executable.html#command:add_executable),[`add_library()`](https://cmake.org/cmake/help/latest/command/add_library.html#command:add_library)， 或者[`add_custom_target()`](https://cmake.org/cmake/help/latest/command/add_custom_target.html#command:add_custom_target)已经调用的命令（在任何目录中）。 |
 | IN_LIST | if(hello IN_LIST TEST_LIST) | *3.3 新版功能：*如果给定元素包含在命名列表变量中，则为真。   |
 
-### 比较
+#### 比较运算符
 
 | 运算符           | 案例 | 描述                                                         |
 | ---------------- | ---- | ------------------------------------------------------------ |
@@ -331,7 +339,7 @@ if(<string>)
 | STRLESS_EQUAL    |      | *3.7 版中的新功能：*如果给定字符串或变量的值按字典顺序小于或等于右侧的字符串或变量，则为真。 |
 | STRGREATER_EQUAL |      | *3.7 新版功能：*如果给定字符串或变量的值在字典上大于或等于右侧的字符串或变量，则为真。 |
 
-### 版本比较
+#### 版本比较
 
 | 运算符                | 案例 | 描述                                                         |
 | --------------------- | ---- | ------------------------------------------------------------ |
@@ -585,6 +593,79 @@ install(TARGETS targets... [DESTINATION <dir>])
 [find_package()函数](https://blog.csdn.net/fb_941219/article/details/88526157)
 
 [如何将CMAKE_MODULE_PATH设置为在CMake中进行常规构建和源代码外构建？](https://cloud.tencent.com/developer/ask/sof/193478)
+
+## 12 列表(list)
+
+list是一个由`;`分隔的字符串组。可以使用set命令创建列表。例如，set(var a b c d e)创建一个包含a;b;c;d;e的列表，而set(var "a b c d e")创建一个字符串或包含一项的列表。
+
+### 读取
+
++ 获取list长度
+
+  ```cmake
+  list(LENGTH <list> <output variable>)
+  ```
+
++ 获取list指定下标的元素
+
+  ```cmake
+  list(GET <list> <element index> [<element index> ...] <output var>)
+  ```
+
++ 连接list每个元素
+
+  ```cmake
+  list(JOIN <list> <glue> <output var>)
+  ```
+
+  返回一个使用指定字符串连接列表所有元素的字符串。
+
++ 获取子列表
+
+  ```cmake
+  list(SUBLIST <list> <beginIndex> <length> <output var>)
+  ```
+
+  返回给定列表的子列表。如果<length>为0，则返回一个空列表。如果<length> = -1或列表小于<begin>+<length>，则返回列表中从<begin>开始的剩余元素。
+
+### 查找
+
+```cmake
+list(FIND <list> <value> <output var>)
+```
+
+返回列表中指定元素的索引，如果没有找到则返回-1。
+
+### 修改
+
++ 添加元素
+
+```cmake
+list(APPEND <list> [<element>...])
+```
+
+将元素追加到列表中。如果当前作用域中不存在名为<list>的变量，则其值将被视为空，元素将被追加到该空列表中。
+
++ 过滤列表
+
+  ```cmake
+  list(FILTER <list> <INCLUDE|EXCLUDE> REGEX <regular_expression>)
+  ```
+
+  + INCLUDE：只留下满足正则表达式的项
+  + EXCLUDE：删除满足正则表达式的项
+
++ 插入
+
+  ```cmake
+  list(INSERT <list> <element_index> <element> [<element>...])
+  ```
+
+  在element_index指定的索引处，插入element，指定超出范围的索引是错误的。有效的索引是0到N，其中N是列表的长度，包括。空列表的长度为0。如果当前作用域中不存在名为<list>的变量，则其值将被视为空，元素将被插入到该空列表中。
+
+  
+
+
 
 # 附录
 

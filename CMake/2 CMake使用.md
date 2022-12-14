@@ -663,9 +663,136 @@ list(APPEND <list> [<element>...])
 
   在element_index指定的索引处，插入element，指定超出范围的索引是错误的。有效的索引是0到N，其中N是列表的长度，包括。空列表的长度为0。如果当前作用域中不存在名为<list>的变量，则其值将被视为空，元素将被插入到该空列表中。
 
-  
++ 尾删/头删
 
+  ```cmake
+  list(POP_BACK <list> [<out-var>...])
+  list(POP_FRONT <list> [<out-var>...])
+  ```
 
+  如果没有给出变量名，则只删除最后一个元素。否则，提供了多少个个变量名，将最后多少个元素的值赋给给定的变量，然后从<list>中删除。
+
++ 删除指定的元素
+
+  ```cmake
+  list(REMOVE_ITEM <list> <value> [<value>...])
+  ```
+
++ 删除指定下标的元素
+
+  ```cmake
+  list(REMOVE_AT <list> <index> [<index>...])
+  ```
+
++ 删除重复元素(去重，只留下第一个)
+
+  ```cmake
+  list(REMOVE_DUPLICATES <list>)
+  ```
+
+#### 变换
+
+通过对列表中的**所有元素**应用操作或指定<SELECTOR>来转换列表，将结果存储在原地或指定的输出变量中。
+
+注意TRANSFORM子命令不会改变列表中元素的数量。如果指定了<SELECTOR>，则只有一些元素将被更改，其他元素将保持与转换之前相同。
+
+##### ACTION
+
+<ACTION>指定应用于列表元素的操作。这些操作与string()命令的子命令具有完全相同的语义。<ACTION>必须是以下之一:
+
+**APPEND, PREPEND：**将指定的值附加到列表的每个元素。
+
+```cmake
+list(TRANSFORM <list> <APPEND|PREPEND> <value>...)
+```
+
+**TOUPPER, TOLOWER：**将列表中的每个元素转换为大写、小写字符。
+
+```cmake
+list(TRANSFORM <list> <TOUPPER|TOLOWER>)
+```
+
+**STRIP：**删除列表中每个元素的前导和尾随空格。
+
+```cmake
+list(TRANSFORM <list> STRIP)	#没测试出来
+```
+
+**GENEX_STRIP：**从列表的每个元素中删除任何生成器表达式。
+
+```cmake
+list(TRANSFORM <list> GENEX_STRIP)
+
+#list(APPEND m_list $<BOOL:"hello">)
+#list(TRANSFORM m_list GENEX_STRIP)
+```
+
+**REPLACE：**尽可能多地匹配正则表达式<regular_expression>，并将列表中每个匹配的元素替换为<replace_expression>(与REGEX REPLACE from string()命令的语义相同)。
+
+```cmake
+list(TRANSFORM <list> REPLACE <regular_expression>
+                              <replace_expression> ...)
+```
+
+##### SELECTOR
+
+<SELECTOR>决定转换列表中的哪些元素。一次只能指定一种类型的选择器。当给出时，<SELECTOR>必须是以下之一:
+
+**AT：**指定索引列表，对指定的元素进行变换。
+
+```cmake
+list(TRANSFORM <list> <ACTION> AT <index> [<index> ...] ...)
+```
+
+**FOR：**指定一个迭代范围，对迭代的元素进行变换，<start>为开始下标，<stop>为结束下标，<step>为增量步长。
+
+```cmake
+list(TRANSFORM <list> <ACTION> FOR <start> <stop> [<step>] ...)
+```
+
+**REGEX：**指定正则表达式。只有匹配正则表达式的元素才会被转换。
+
+```cmake
+list(TRANSFORM <list> <ACTION> REGEX <regular_expression> ...)
+```
+
+### 排序
+
++ 反转列表
+
+  ```cmake
+  list(REVERSE <list>)
+  ```
+
++ 按字母顺序对列表进行排序，默认升序。
+
+  ```cmake
+  list(SORT <list> [COMPARE <compare>] [CASE <case>] [ORDER <order>])
+  ```
+
+  使用COMPARE关键字选择排序的比较方法。<compare>选项应该是以下选项之一:
+
+  + **STRING：**按字母顺序对字符串列表进行排序。如果没有给出COMPARE选项，这是默认行为。
+
+  + **FILE_BASENAME：**根据文件的基名对路径名列表进行排序。
+
+  + **NATURAL：**使用自然顺序对字符串列表进行排序(参见strverscmp(3)手册)，即将连续的数字作为整数进行比较。例如:下面的列表10.0，1.1，2.1，8.0，2.0，3.1将被排序为1.1，2.0，2.1，3.1，8.0，10.0如果选择了NATURAL比较，它将被排序为1.1，10.0，2.0，2.1，3.1，8.0与STRING比较。
+
+  使用CASE关键字选择区分大小写或不区分大小写的排序模式。<case>选项应该是以下选项之一:
+
+  + **SENSITIVE：**列表项以区分大小写的方式排序。如果没有给出CASE选项，这是默认行为。
+
+  + **INSENSITIVE：**列表项不区分大小写。仅大小写不同的项的顺序没有指定。
+
+  要控制排序顺序，可以给出order关键字。<order>选项应该是以下选项之一:
+
+  + **ASCENDING：**按升序对列表进行排序。这是没有给出ORDER选项时的默认行为。
+
+  + **DESCENDING：**按降序排序。
+
+## 13 生成器表达式
+
+https://blog.csdn.net/u012156872/article/details/121605642
 
 # 附录
 

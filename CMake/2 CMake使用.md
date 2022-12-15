@@ -519,7 +519,7 @@ endwhile()
 
 ## 8 文件操作
 
-文件操作命令`file`，这个命令专用于需要访问文件系统的文件和路径操作。  
+文件操作命令`file`，这个命令专用于需要访问文件系统的文件和路径操作。  对于其他仅处理语法方面的路径操作，请查看cmake_path()命令。
 
 ### 8.1 读文件
 
@@ -529,7 +529,7 @@ endwhile()
 file(READ <filename> <variable> [OFFSET <offset>] [LIMIT <max-in>] [HEX])
 ```
 
-从名为<filename>的文件中读取内容，并将其存储在<variable>中。 可选地从给定的<offset>开始，最多读取<max-in>字节。 HEX选项将数据转换为十六进制表示(对二进制数据很有用)。 如果指定了HEX选项，输出中的字母(a到f)都是小写的。  
+从名为<filename>的文件中读取内容，并将其存储在<variable>中。 可选地从给定的<offset>(文件位置指针从0开始)开始，最多读取<max-in>字节。 HEX选项将数据转换为十六进制表示(对二进制数据很有用)。 如果指定了HEX选项，输出中的字母(a到f)都是小写的。  
 
 + 读取文本文件
 
@@ -537,7 +537,27 @@ file(READ <filename> <variable> [OFFSET <offset>] [LIMIT <max-in>] [HEX])
 file(STRINGS <filename> <variable> [<options> ...])
 ```
 
-解析来自<filename>的ASCII字符串列表，并将其存储在<variable>中。 忽略文件中的二进制数据。 忽略回车(\r, CR)字符。 的选项是:  [详见附录][appendix]
+解析来自<filename>的ASCII字符串列表，并将其存储在<variable>中。 忽略文件中的二进制数据。 忽略回车(\r, \n)字符。 选项有:  [选项列表](#2 file命令选项表)
+
+#### 其他
+
++ 对文件内容进行哈希
+
+  ```cmake
+  file(<HASH> <filename> <variable>)
+  ```
+
++ 获取文件修改的时间
+
+  ```cmake
+  file(TIMESTAMP <<filename> <variable>)
+  ```
+
+  计算<filename>的修改时间的字符串表示，并将其存储在<变量>中。如果该命令无法获取时间戳变量，则将其设置为空字符串("")。
+
++ 递归地获得给定文件所依赖的库列表。
+
+  + 未测试
 
 
 
@@ -550,7 +570,20 @@ file(APPEND <filename> <content>...)
 
 将<content>写入名为<filename>的文件。 如果该文件不存在，则创建该文件。 如果文件已经存在，WRITE模式将覆盖它，APPEND模式将追加到文件的末尾。 <filename>指定的路径中不存在的任何目录将被创建。  
 
-COPY
+如果该文件是一个构建输入，则仅在其内容更改时使用configure_file()命令更新该文件。
+
++ 触摸文件
+
+  ```cmake
+  file(TOUCH [<files>...])
+  file(TOUCH_NOCREATE [<files>...])
+  ```
+
+  **TOUCH：**如果文件不存在，则创建。如果文件已经存在，它的访问和/或修改将被更新到函数调用执行时。
+
+  **TOUCH_NOCREATE：**触摸一个文件，如果它存在，它的访问和/或修改将被更新到函数调用执行时。如果文件不存在，它将被无声地忽略(啥也不做)。
+
+  > 使用TOUCH和TOUCH_NOCREATE，现有文件的内容将不会被修改。
 
 
 
@@ -812,7 +845,7 @@ command(<target> [E] <A|B|C>)
 
 
 
-## 2，file命令选项表
+## 2 file命令选项表
 
 | 选项                     | 描述                                                         |
 | ------------------------ | ------------------------------------------------------------ |

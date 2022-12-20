@@ -81,7 +81,7 @@ SDL 2.0 在[zlib 许可](http://www.gzip.org/zlib/zlib_license.html)下分发。
 
 ### SDL 在哪些平台上运行？
 
-**视窗**
+**Windows**
 
 - 使用 Win32 API 进行显示，利用 Direct3D 进行硬件加速
 - 使用 DirectSound 和 XAudio2 作为声音
@@ -101,7 +101,7 @@ SDL 2.0 在[zlib 许可](http://www.gzip.org/zlib/zlib_license.html)下分发。
 - 使用 UIKit 进行视频显示，利用 OpenGL ES 2.0 进行硬件加速
 - 使用 Core Audio 播放声音
 
-**安卓**
+**Android**
 
 - 使用 JNI 接口进行视频显示，利用 OpenGL ES 1.1 和 2.0 进行硬件加速
 - 对声音使用 JNI 音频回调
@@ -120,29 +120,29 @@ SDL 2.0 在[zlib 许可](http://www.gzip.org/zlib/zlib_license.html)下分发。
 
 ### 安装SDL2
 
-1. 点击[SDL2 核心库下载](https://libsdl.org/download-2.0.php)下载SDL2库，如下图根据编译器选择不同版本(Visual Studo系列选择第一个)。
+1. 点击[SDL2 核心库下载](https://libsdl.org/download-2.0.php)下载SDL2库，进入GitHub下载。
 
-![image-20220107011525411](assets/image-20220107011525411.png)
+![image-20221220145749736](assets/image-20221220145749736.png)![image-20221220150045570](assets/image-20221220150045570.png)
 
 2. 下载出来会有一个压缩包，放到一个合适的目录(记住这个目录哦，经常要用的)，解压。
 
-![image-20220107012310856](assets/image-20220107012310856.png)
+![image-20221220152540164](assets/image-20221220152540164.png)
 
 3. 进入解压后的目录，如下图：
+   1. cmake：cmake配置文件
+   2. docs：文档目录，只不过都是英文的
+   3. include：头文件目录，编程需要的
+   4. lib：库目录(静态库和动态库都有)
 
-+ docs：文档目录，只不过都是英文的
-+ include：头文件目录，编程需要的
-+ lib：库目录(静态库和动态库都有)
-
-![image-20220107012345067](assets/image-20220107012345067.png)
+![image-20221220152636960](assets/image-20221220152636960.png)
 
 4. 给环境变量添加库目录，让程序运行的时候能够找到动态库。<font style="color:red">PS：配置好了记得重启Vs</font>
 
-![image-20220107021223192](assets/image-20220107021223192.png)
+![image-20221220153419072](assets/image-20221220153419072.png)
 
 
 
-### 在Visual Studio中使用SDL
+### VS中使用SDL2
 
 1. 创建一个空项目，如下图：
 
@@ -190,7 +190,45 @@ SDL 作为动态链接库。动态链接库包含 3 个部分：
 
 在您的程序被编译和链接之后，您需要能够在运行时链接到该库。为了运行动态链接的应用程序，您需要能够在运行时导入库二进制文件。当您运行程序时，您的操作系统需要能够找到库二进制文件。您可以将库二进制文件放在与可执行文件相同的目录中，也可以放在操作系统保存库二进制文件的目录中。
 
+### CMake使用SDL2
 
+1. 把SDL2的根目录，配置到环境变量`F:\Tools\SDL2\SDL2-2.26.1`
+
+2. 创建CMake项目，并在CMakeLists.txt文件中写入如下命令
+
+   ```cmake
+   #CMake最小请求版本
+   cmake_minimum_required (VERSION 3.8)
+   
+   #项目名称
+   project ("SDL2_CMake")
+   
+   #查找SDL2包，REQUIRED强制请求，没找到报错
+   find_package(SDL2 REQUIRED)
+   
+   #使用指定的源文件生成目标(SDL2_CMake)
+   add_executable (SDL2_CMake "main.c")
+   
+   #指定目标在链接时需要的依赖(库)
+   target_link_libraries(SDL2_CMake SDL2::SDL2 SDL2::SDL2main)
+   ```
+
+3. 创建`main.c`源文件，写入如下代码
+
+   ```cpp
+   #include<SDL.h>
+   int main(int argc, char* argv[])
+   {
+   	SDL_version ver;
+   	SDL_GetVersion(&ver);
+   	SDL_Log("%d %d %d\n", ver.major, ver.minor, ver.patch);
+   	return 0;
+   }
+   ```
+
+4. 成功运行！
+
+![image-20221220155524821](assets/image-20221220155524821.png)
 
 ## SDL2教程
 
@@ -276,6 +314,126 @@ int main(int argc,char*argv[])
 ```
 
 最后我们让程序延迟5秒再退出，否则窗口会一闪而过；退出之前需要调用SDL_DestroyWindow手动销毁窗口和调用SDL_Quit清理所有初始化的子系统。
+
+### 2.基本图形绘制
+
+接下来我们来学习基本的图形绘制，SDL2支持的基本图形有：
+
++ 点
+
+  ```cpp
+  int SDL_RenderDrawPoint()
+  int SDL_RenderDrawPoints()
+  ```
+
++ 线
+
+  ```cpp
+  int SDL_RenderDrawLine()
+  int SDL_RenderDrawLines()
+  ```
+
++ 矩形
+
+  ```cpp
+  int SDL_RenderDrawRect()
+  int SDL_RenderFillRect()
+  int SDL_RenderDrawRects()
+  int SDL_RenderFillRects()
+  ```
+
++ 颜色混合模式
+
+  ```cpp
+  void SDL_SetRenderDrawBlendMode()
+  ```
+
++ 绘图操作的颜色
+
+  ```cpp
+  void SDL_SetRenderDrawColor()
+  ```
+
++ 用颜色清楚整个屏幕
+
+  ```cpp
+  SDL_RenderClear(render);
+  ```
+
++ 渲染器出场(输出渲染结果)
+
+```cpp
+void SDL_RenderPresent()
+```
+
++ 自定义的绘制圆形的函数
+
+```cpp
+void SDL_RenderDrawCircle(SDL_Renderer* pRender, float x, float y, float r)
+{
+	float angle = 0;
+	for (angle = 0; angle < 360; angle += 0.1)
+	{
+		SDL_RenderDrawPoint(pRender, x + r * SDL_cos(angle), y + r * SDL_sin(angle));
+	}
+}
+void SDL_RenderFillCircle(SDL_Renderer* pRender, float x, float y, float r)
+{
+	register float angle = 0;
+	while (r > 0)
+	{
+		for (angle = 0; angle < 360; angle += 0.1)
+		{
+			SDL_RenderDrawPoint(pRender, x + r * SDL_cos(angle), y + r * SDL_sin(angle));
+		}
+		r -= 1;
+	}
+}
+
+void SDL_RenderDrawEllipse(SDL_Renderer* pRender, SDL_Rect* rect)
+{
+	//半轴长
+	int aHalf = rect->w / 2;
+	int bHalf = rect->h / 2;
+
+	int x, y;
+	//求出圆上每个坐标点
+	for (float angle = 0; angle < 360; angle += 0.1f)
+	{
+		x = (rect->x + aHalf) + aHalf * SDL_cos(angle);
+		y = (rect->y + bHalf) + bHalf * SDL_sin(angle);
+		SDL_RenderDrawPoint(pRender, x, y);
+	}
+}
+void SDL_RenderFillEllipse(SDL_Renderer* pRender, SDL_Rect* rect)
+{
+	SDL_Rect r = *rect;
+	//半轴长
+	float aHalf;
+	float bHalf;
+	//椭圆上每点坐标
+	float x, y;
+
+	while (r.w >= 0 && r.h >= 0)
+	{
+		aHalf = r.w / 2.f;
+		bHalf = r.h / 2.f;
+		//求出圆上每个坐标点
+		for (float angle = 0; angle < 360; angle += 0.1f)
+		{
+			x = (r.x + aHalf) + aHalf * SDL_cos(angle);
+			y = (r.y + bHalf) + bHalf * SDL_sin(angle);
+			SDL_RenderDrawPointF(pRender, x, y);
+		}
+		r.x++;
+		r.y++;
+		r.w -= 2;
+		r.h -= 2;
+	}
+}
+```
+
+
 
 ### 2.在屏幕上显示一张图片
 

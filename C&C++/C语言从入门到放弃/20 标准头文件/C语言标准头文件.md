@@ -830,3 +830,4 @@ int main(void)
 		FALSE),
 		SC_CLOSE,
 		MF_BYCOMMAND);
+

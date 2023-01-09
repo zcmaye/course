@@ -439,6 +439,10 @@ void SWaterProgressBar::updaterWater()
 
 Qt6自带的QtCreator是64bit，所以要在QC中使用插件，只能使用64bit的DLL文件，将64bit/Release版本的.dll文件复制到QtCreator的路径下，然后打开Qt就可以看到控件了（无需将64bit/Debug版本的放入，QtCreator只支持64bit/Release版本的.dll文件）。
 
+> PS：出现如下警告，运行程序窗口不会显示出来
+>
+> MSVC 如果在Debug模式下，使用了Release模式编译的DLL，则会警告：QWidget: Must construct a QApplication before a QWidget
+
 1. 赋值64bit/Release版本的 **swaterprogressbarplugin.dll** 到`\Qt\Tools\QtCreator\bin\plugins\designer`
 
 ![image-20230106184810749](assets/image-20230106184810749.png)

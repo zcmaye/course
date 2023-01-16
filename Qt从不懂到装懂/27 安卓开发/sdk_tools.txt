@@ -1,0 +1,5 @@
+build-tools;31.0.0
+platform-tools
+platforms;android-31
+extras;google;usb_driver
+ndk;22.1.7171670

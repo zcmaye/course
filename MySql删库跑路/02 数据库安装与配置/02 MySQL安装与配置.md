@@ -145,7 +145,15 @@ mysqld --install "MySQL80" --defaults-file="F:\Tools\mysql-8.0.22-winx64\my.ini"
 net start MySQL80;
 ```
 
-
+> PS：如果已经安装过了，Mysql服务中间的可执行文件路径和Mysql安装目录不一致，导致mysql服务启动失败，此时需要修改可执行路径。
+>
+> 1.cmd 输入 regedit，打开注册表。
+>
+> 2.找到mysql服务注册表，`HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\MySQL80`，修改imagePath值为正确的路径。
+>
+> ![image-20230117150017718](assets/image-20230117150017718.png)
+>
+> 3.然后重启服务应该就好了！
 
 ## 安装版安装配置
 

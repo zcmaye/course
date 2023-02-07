@@ -1,0 +1,26 @@
+{
+	"BUILD_DIR" : "C:/Users/Maye/Downloads/QQ_ContactsList/out/build/x64-debug/QQ_ContactsList_autogen",
+	"CMAKE_BINARY_DIR" : "C:/Users/Maye/Downloads/QQ_ContactsList/out/build/x64-debug",
+	"CMAKE_CURRENT_BINARY_DIR" : "C:/Users/Maye/Downloads/QQ_ContactsList/out/build/x64-debug",
+	"CMAKE_CURRENT_SOURCE_DIR" : "C:/Users/Maye/Downloads/QQ_ContactsList",
+	"CMAKE_SOURCE_DIR" : "C:/Users/Maye/Downloads/QQ_ContactsList",
+	"INCLUDE_DIR" : "C:/Users/Maye/Downloads/QQ_ContactsList/out/build/x64-debug/QQ_ContactsList_autogen/include",
+	"INPUTS" : 
+	[
+		"C:/Users/Maye/Downloads/QQ_ContactsList/ContactsAssets/images/quit.png",
+		"C:/Users/Maye/Downloads/QQ_ContactsList/ContactsAssets/images/svip.png",
+		"C:/Users/Maye/Downloads/QQ_ContactsList/ContactsAssets/images/vip.png",
+		"C:/Users/Maye/Downloads/QQ_ContactsList/ContactsAssets/images/quit-hover.png",
+		"C:/Users/Maye/Downloads/QQ_ContactsList/ContactsAssets/images/defaultProfile.png"
+	],
+	"LOCK_FILE" : "C:/Users/Maye/Downloads/QQ_ContactsList/out/build/x64-debug/CMakeFiles/QQ_ContactsList_autogen.dir/AutoRcc_ContactsAssets_EWIEGA46WW_Lock.lock",
+	"MULTI_CONFIG" : false,
+	"OPTIONS" : [ "-name", "ContactsAssets" ],
+	"OUTPUT_CHECKSUM" : "EWIEGA46WW",
+	"OUTPUT_NAME" : "qrc_ContactsAssets.cpp",
+	"RCC_EXECUTABLE" : "D:/MySoftware/Qt/Qt6/6.2.4/msvc2019_64/./bin/rcc.exe",
+	"RCC_LIST_OPTIONS" : [ "--list" ],
+	"SETTINGS_FILE" : "C:/Users/Maye/Downloads/QQ_ContactsList/out/build/x64-debug/CMakeFiles/QQ_ContactsList_autogen.dir/AutoRcc_ContactsAssets_EWIEGA46WW_Used.txt",
+	"SOURCE" : "C:/Users/Maye/Downloads/QQ_ContactsList/ContactsAssets.qrc",
+	"VERBOSITY" : 0
+}

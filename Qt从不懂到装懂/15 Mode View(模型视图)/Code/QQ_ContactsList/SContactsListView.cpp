@@ -6,9 +6,9 @@
 
 #include "SContactsItemDelegate.h"
 #include "ContactsInfo.h"
-
+#include <qrandom.h>
 SContactsListView::SContactsListView(QWidget* parent)
-	:QListView(parent)
+	:SListView(parent)
 	, m_model(new QStandardItemModel(this))
 {
 	
@@ -17,8 +17,8 @@ SContactsListView::SContactsListView(QWidget* parent)
 
 void SContactsListView::init()
 {
-	auto dgate = new SContactsItemDelegate(this);
-	setItemDelegate(dgate);
+	setEditTriggers(SListView::EditTrigger::NoEditTriggers);
+	setItemDelegate(new SContactsItemDelegate(this));
 	setModel(m_model);
 
 	//准备联系人信息
@@ -26,6 +26,11 @@ void SContactsListView::init()
 	m_infos.append(new ContactsInfo("十一期 江涛", "面包会有的，一切都会有的"));
 	m_infos.append(new ContactsInfo("爵士", "嗦粉去"));
 	m_infos.append(new ContactsInfo("宁静之湖", "我是我是无敌无敌的小可爱"));
+
+	for (int i = 0; i < 1000; i++)
+	{
+		m_infos.append(new ContactsInfo("机器人" + QString::number(i), QString::number( QRandomGenerator::global()->bounded(0,9999999999))));
+	}
 
 	//创建item
 	for (auto info : m_infos)
@@ -35,11 +40,11 @@ void SContactsListView::init()
 		m_model->appendRow(item);
 
 	}
-	connect(dgate, &SContactsItemDelegate::hovered, this, [=](const QModelIndex& index,int role)
+	connect(this, &SContactsListView::hoveredRole, this, [=](const QModelIndex& index,int role)
 		{
 			if (!index.isValid())
 				return;
-			qInfo() << index << role;
+			//qInfo() << index << role;
 			ContactsInfo* info = index.data(Qt::UserRole + 1).value<ContactsInfo*>();
 			QString toolTipStr;
 			switch (role)
@@ -60,37 +65,15 @@ void SContactsListView::init()
 				toolTipStr = info->signature_;
 				break;
 			default:
-				toolTipStr = "??";
+				//toolTipStr = "??";
 				break;
 			}
 			m_model->itemFromIndex(index)->setData(toolTipStr, Qt::ToolTipRole);
 		});
-}
-
-bool SContactsListView::viewportEvent(QEvent* ev)
-{
-	//qInfo() << ev->type()<<viewportSizeHint();
-
-	if (ev->type() == QEvent::HoverMove)
-	{
-		//qInfo() << static_cast<QHoverEvent*>(ev)->pos();		
-		auto hoverEv = static_cast<QHoverEvent*>(ev);
-		QModelIndex index = indexAt(hoverEv->pos());
-		if (index.isValid())
+	connect(this, &SContactsListView::pressedRole, this, [=](const QModelIndex& index, int role)
 		{
-			QStyleOptionViewItem option;
-			option.initFrom(this);
-			option.widget = this;
-			option.rect = visualRect(index);
-			option.text = index.data().toString();
-			option.state.setFlag(index == currentIndex() ? QStyle::StateFlag::State_Selected : QStyle::StateFlag::State_None);
-
-			//qInfo() << option.rect << option.text << option.state;
-
-			static_cast<SContactsItemDelegate*>(itemDelegate())->hoverEvent(hoverEv, option, index);
-
-
-		}
-	}
-	return QListView::viewportEvent(ev);
+			qInfo() << "pressedRole" << index << role;
+		});
 }
+
+

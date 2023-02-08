@@ -5,7 +5,7 @@
 #include <QHoverEvent>
 #include <QAbstractItemView>
 SContactsItemDelegate::SContactsItemDelegate(QObject* parent)
-	:QStyledItemDelegate(parent)
+	:SItemDelegate(parent)
 {
 }
 
@@ -13,53 +13,44 @@ SContactsItemDelegate::~SContactsItemDelegate()
 {
 }
 
-void SContactsItemDelegate::hoverEvent(QHoverEvent* ev, const QStyleOptionViewItem& option, const QModelIndex& index)
+int SContactsItemDelegate::itemRole(const QPoint& pos, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-	m_hoverPos = ev->pos();
-	//if (1)
+	m_mousePos = pos;
+	//获取用户数据
+	auto info = index.data(Qt::UserRole + 1).value<ContactsInfo*>();
+	if (!info)
+		return -1;
+
+	int spacing = 5;
+	QRect profileRect = { option.rect.x(),option.rect.y() + (option.rect.height() - 42) / 2,42,42 };
+	if (profileRect.contains(pos))
 	{
-		//qInfo() << option.widget;
-		auto w  = const_cast<QWidget*>(option.widget);
-		auto view = qobject_cast<QAbstractItemView*>(w);
-		view->update(index);
-		
-	}
-
-	emit hovered(index, hoverRole(m_hoverPos, option, index));
-}
-
-void SContactsItemDelegate::pressEvent(QMouseEvent* ev, const QStyleOptionViewItem& option, const QModelIndex& index)
-{
-}
-
-int SContactsItemDelegate::hoverRole(const QPoint& pos, const QStyleOptionViewItem& option, const QModelIndex& index) const
-{
-	//qInfo() << m_profileRect << pos;
-	//m_profileRect不能一直在paint中更新
-	if (m_profileRect.contains(pos))
-	{
+		//qInfo() << "m_profileRect" << profileRect << pos << profileRect.contains(pos);
 		return ContactsInfo::InfoRole::ProfileRole;
 	}
-	if (m_usernameRect.contains(pos))
+	int nameTextHeight = option.fontMetrics.height();
+	int nameTextWidth = option.fontMetrics.horizontalAdvance(info->username_);
+	QRect usernameRect = { profileRect.right() + spacing, profileRect.y() ,nameTextWidth,nameTextHeight };
+	if (usernameRect.contains(pos))
 	{
+
 		return ContactsInfo::InfoRole::UsernameRole;
 	}
-	if (m_vipRect.contains(pos))
+	QRect vipRect = { usernameRect.x() + nameTextWidth + spacing, usernameRect.y(),28,10 };
+	//qInfo() << "vipRect" << vipRect << pos << vipRect.contains(pos);
+	if (vipRect.contains(pos))
 	{
+
 		return ContactsInfo::InfoRole::VipRole;
 	}
-	if (m_signatureRect.contains(pos))
+
+	QRect signatureRect = { profileRect.right() + spacing, usernameRect.y() + spacing + nameTextHeight ,option.fontMetrics.horizontalAdvance(info->signature_),nameTextHeight };
+	if (signatureRect.contains(pos))
 	{
 		return ContactsInfo::InfoRole::SignatureRole;
 	}
 	return -1;
 }
-
-int SContactsItemDelegate::pressRole(const QPoint& pos, const QStyleOptionViewItem& option, const QModelIndex& index) const
-{
-	return -1;
-}
-
 
 void SContactsItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
@@ -87,7 +78,6 @@ void SContactsItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem&
 	//绘制头像
 	//qInfo() << option.rect.x()<< option.rect.y() << m_hoverPos;
 	m_profileRect = { option.rect.x(),option.rect.y() + (option.rect.height() - 42) / 2,42,42 };
-	qInfo() << m_profileRect << m_hoverPos;
 	painter->drawPixmap(m_profileRect, info->profile_);
 
 	//绘制名字
@@ -95,7 +85,7 @@ void SContactsItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem&
 	int nameTextWidth = painter->fontMetrics().horizontalAdvance(info->username_);
 	m_usernameRect = { m_profileRect.right() + spacing, m_profileRect.y() ,nameTextWidth,nameTextHeight };
 	painter->drawText(m_usernameRect, info->username_);
-	painter->drawRect(m_usernameRect);
+	//painter->drawRect(m_usernameRect);
 
 	//绘制vip
 	QPixmap pix;
@@ -112,8 +102,8 @@ void SContactsItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem&
 	}
 	m_vipRect = { m_usernameRect.x() + nameTextWidth + spacing, m_usernameRect.y(),pix.width(),pix.height()};
 	painter->drawPixmap(m_vipRect, pix);
-
-	if (m_vipRect.contains(m_hoverPos))
+	//qInfo() << index.data(MousePosRole);
+	if (m_vipRect.contains(m_mousePos))
 	{
 		painter->setPen(Qt::GlobalColor::red);
 		painter->drawRect(m_vipRect.adjusted(0,-1,0,1));
@@ -123,7 +113,7 @@ void SContactsItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem&
 	painter->setPen(QColor(132, 132, 132));
 	m_signatureRect = { m_profileRect.right() + spacing, m_usernameRect.y() + spacing +nameTextHeight ,painter->fontMetrics().horizontalAdvance(info->signature_),nameTextHeight };
 	painter->drawText(m_signatureRect, info->signature_);
-	painter->drawRect(m_signatureRect);
+	//painter->drawRect(m_signatureRect);
 	painter->restore();
 
 	//QStyledItemDelegate::paint(painter, option, index);

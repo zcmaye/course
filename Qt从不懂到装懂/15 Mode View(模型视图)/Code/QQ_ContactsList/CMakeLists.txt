@@ -7,8 +7,15 @@ set(CMAKE_AUTORCC ON)
 
 find_package(Qt6 COMPONENTS REQUIRED Widgets )
 
-
-add_executable(QQ_ContactsList  "main.cpp" "ContactsAssets.qrc"
- "SContactsListView.h" "SContactsListView.cpp" "SContactsItemDelegate.h" "SContactsItemDelegate.cpp" "ContactsInfo.cpp" "ContactsInfo.h")
+#aux_source_directory(./SCustomWidgets SRC_Widgets)
+add_executable(QQ_ContactsList  
+"main.cpp" "ContactsAssets.qrc"
+ "SCustomWidgets/SListView.h" "SContactsListView.cpp" 
+ "SContactsItemDelegate.h" "SContactsItemDelegate.cpp" 
+ "ContactsInfo.cpp" "ContactsInfo.h" 
+ "SCustomWidgets/SItemDelegate.cpp" 
+ "SCustomWidgets/SItemDelegate.h" 
+ "SCustomWidgets/SListView.cpp" 
+ "SCustomWidgets/SListView.h")
 
 target_link_libraries(QQ_ContactsList Qt6::Widgets)

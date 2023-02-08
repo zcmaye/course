@@ -1,5 +1,0 @@
-C:/Users/Maye/Downloads/QQ_ContactsList/out/build/x64-debug/CMakeFiles/QQ_ContactsList.dir
-C:/Users/Maye/Downloads/QQ_ContactsList/out/build/x64-debug/CMakeFiles/edit_cache.dir
-C:/Users/Maye/Downloads/QQ_ContactsList/out/build/x64-debug/CMakeFiles/rebuild_cache.dir
-C:/Users/Maye/Downloads/QQ_ContactsList/out/build/x64-debug/CMakeFiles/QQ_ContactsList_autogen_timestamp_deps.dir
-C:/Users/Maye/Downloads/QQ_ContactsList/out/build/x64-debug/CMakeFiles/QQ_ContactsList_autogen.dir

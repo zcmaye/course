@@ -1,0 +1,23 @@
+# ninja log v5
+6	617	6977287156675518	QtProject_autogen/timestamp	35925d1df80884fc
+6	617	6977287156675518	QtProject_autogen/mocs_compilation.cpp	35925d1df80884fc
+6	617	6977287156675518	F:/MyCode/cmakeCode/_QtModelView/out/build/x64-Debug/QtProject_autogen/timestamp	35925d1df80884fc
+6	617	6977287156675518	F:/MyCode/cmakeCode/_QtModelView/out/build/x64-Debug/QtProject_autogen/mocs_compilation.cpp	35925d1df80884fc
+619	3623	6977287188605292	CMakeFiles/QtProject.dir/QtProject_autogen/mocs_compilation.cpp.obj	691a5dcf63989f76
+631	3633	6977287188675270	CMakeFiles/QtProject.dir/SItemCheckDelegate.cpp.obj	783e417b280a536
+644	3710	6977287189535011	CMakeFiles/QtProject.dir/main.cpp.obj	70098ec26385ba1f
+3710	4317	6977287195353126	F:/MyCode/cmakeCode/_QtModelView/bin/QtProject.exe	6c8ae4b7d85268d3
+7	353	6977288011139554	QtProject_autogen/timestamp	35925d1df80884fc
+7	353	6977288011139554	QtProject_autogen/mocs_compilation.cpp	35925d1df80884fc
+7	353	6977288011139554	F:/MyCode/cmakeCode/_QtModelView/out/build/x64-Debug/QtProject_autogen/timestamp	35925d1df80884fc
+7	353	6977288011139554	F:/MyCode/cmakeCode/_QtModelView/out/build/x64-Debug/QtProject_autogen/mocs_compilation.cpp	35925d1df80884fc
+8	344	6977288226948094	QtProject_autogen/timestamp	35925d1df80884fc
+8	344	6977288226948094	QtProject_autogen/mocs_compilation.cpp	35925d1df80884fc
+8	344	6977288226948094	F:/MyCode/cmakeCode/_QtModelView/out/build/x64-Debug/QtProject_autogen/timestamp	35925d1df80884fc
+8	344	6977288226948094	F:/MyCode/cmakeCode/_QtModelView/out/build/x64-Debug/QtProject_autogen/mocs_compilation.cpp	35925d1df80884fc
+7	344	6977288290878527	QtProject_autogen/timestamp	35925d1df80884fc
+7	344	6977288290878527	QtProject_autogen/mocs_compilation.cpp	35925d1df80884fc
+7	344	6977288290878527	F:/MyCode/cmakeCode/_QtModelView/out/build/x64-Debug/QtProject_autogen/timestamp	35925d1df80884fc
+7	344	6977288290878527	F:/MyCode/cmakeCode/_QtModelView/out/build/x64-Debug/QtProject_autogen/mocs_compilation.cpp	35925d1df80884fc
+346	3018	6977288317589977	CMakeFiles/QtProject.dir/SItemCheckDelegate.cpp.obj	783e417b280a536
+3019	3323	6977288319939230	F:/MyCode/cmakeCode/_QtModelView/bin/QtProject.exe	6c8ae4b7d85268d3

@@ -4,9 +4,11 @@
 
 异常是程序在执行期间产生的问题。C++ 异常是指在程序运行时发生的特殊情况，比如尝试除以零的操作。
 
-异常提供了一种转移程序控制权的方式。C++ 异常处理涉及到三个关键字：**try、catch、throw、noexcept **。
+异常处理提供了一种可以使程序从执行的某点将控制流和信息转移到与执行先前经过的某点相关联的处理代码的方法（换言之，异常处理将控制权沿调用栈向上转移）。
 
-- **hrow:** 当问题出现时，程序会抛出一个异常。这是通过使用 **throw** 关键字来完成的。
+C++ 异常处理涉及到三个关键字：**try、catch、throw、noexcept **。
+
+- **throw:** 当问题出现时，程序会抛出一个异常。这是通过使用 **throw** 关键字来完成的。
 - **catch:** 在您想要处理问题的地方，通过异常处理程序捕获异常。**catch** 关键字用于捕获异常。
 - **try:** try 块中的代码标识将被激活的特定异常。它后面通常跟着一个或多个 catch 块。
 - **noexcept ：**用于描述函数不会抛出异常，一旦有异常抛出，会立刻终止程序，它可以阻止异常的传播与扩散。noexcept可以带一个“常量表达式作为参数，常量表达式为true，表示不会抛出异常，否则代表可以抛出异常
@@ -33,7 +35,7 @@ try
 
 ## 抛出异常
 
-您可以使用 **throw** 语句在代码块中的任何地方抛出异常。throw 语句的操作数可以是任意的表达式，表达式的结果的类型决定了抛出的异常的类型。
+可以使用 **throw** 语句在代码块中的任何地方抛出异常。throw 语句的操作数可以是任意的表达式，表达式的结果的类型决定了抛出的异常的类型。
 
 以下是尝试除以零时抛出异常的实例:
 
@@ -148,7 +150,7 @@ using namespace std;
  
 struct MyException : public exception
 {
-  const char * what () const throw ()
+  const char * what () const
   {
     return "C++ Exception";
   }
@@ -179,7 +181,33 @@ MyException caught
 C++ Exception
 ```
 
+## 抑制new抛异常
 
+当使用new申请内存时，如果内存申请失败，会抛出std::bad_alloc异常，需要如下处理：
+
+```cpp
+try
+{
+	while (true)
+	{
+		new char[1024];
+	}
+}
+catch (const std::bad_alloc& e)
+{
+	cout << "has exception "<<e.what() << endl;
+}
+```
+
+如果想根据返回的指针来判断，就需要抑制new抛出异常。
+
+```cpp
+double* p = nullptr;
+do
+{
+	 p = new(std::nothrow) double[1024];
+} while (p);
+```
 
 # 类型转换
 

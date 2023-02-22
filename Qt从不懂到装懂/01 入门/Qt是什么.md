@@ -378,6 +378,17 @@ CMakeLists.txt是Qt的工程文件，这个文件是给CMake用来生成Makefile
 
 ![image-20220625154853569](assets/image-20220625154853569.png)
 
+# 3.Visual Studio
+
+如果没有生成ui文件的对应头文件，可以在CMakeLists.txt中添加如下命令。
+
+```cmake
+#根据ui文件生成头文件
+qt_wrap_ui(QtProject "MainWindow.ui")	
+#包含ui生成的头文件的目录
+include_directories(CMAKE_INCLUDE_PATH ${CMAKE_BINARY_DIR})
+```
+
 
 
 # 3. Qt 模块解析

@@ -417,45 +417,68 @@ std::cout << *p << '\n';      // p指向的原有空间已经无效
 #### 实现代码
 
 ```cpp
-class RefCount
-{
-public:
-	RefCount(size_t useCnt):_useCount(useCnt) {}
-	size_t& useCount() { return _useCount; }
-	void inc() { ++_useCount; }
-	void dec() { --_useCount; }
-	void destroy() { delete this; }
-protected:
-	size_t _useCount{0};	//引用数量
-};
-
-class StringRefCount : public RefCount
-{
-public:
-	size_t size;
-	size_t capacity;
-	char* data;
-	StringRefCount(const char* str)
-		:RefCount(1)
-	{
-		size = strlen(str);
-		if (capacity <= size)
-			capacity = grow_to(size + 1, capacity, INT_MAX);
-		data = new char[capacity];
-		strcpy_s(data, capacity, str);
-	}
-};
-
-int main()
-{
-
-	return 0;
-}
-
 class COW_String
 {
 public:
+	COW_String(const char* str) :_rep(new StringRep(str)) {}
+	COW_String(const class COW_String& other)
+	{
+		_rep = other._rep;
+		_rep->inc();
+	}
+	~COW_String() {
+		if (_rep->dec() == 0)
+			_rep->destroy();
+	}
+	char& operator[](int index)
+	{
+		if (_rep->useCount > 1)
+		{
+			_rep->dec();
+			_rep = new StringRep(_rep->data);
+		}
+		return _rep->data[index];
+	}
+
+	char operator[](int index)const
+	{
+		return _rep->data[index];
+	}
+	friend std::ostream& operator<<(std::ostream& out, const COW_String& other)
+	{
+		int len = strlen(other._rep->data);
+		for (int i = 0; i < len; i++)
+		{
+			out << other._rep->data[i];
+		}
+		return out;
+	}
 private:
+	class StringRep
+	{
+	public:
+		size_t useCount{ 1 };
+		size_t size{0};
+		size_t capacity{ 16 };
+		char* data{nullptr};
+		StringRep(const char* str)
+		{
+			size = strlen(str);
+			capacity = size + 1;
+			
+			data = new char[capacity];
+			strcpy_s(data, capacity, str);
+		}
+		~StringRep()
+		{
+			if(data) delete[] data;
+		}
+		size_t inc() { return ++useCount; }
+		size_t dec() { return --useCount; }
+		void destroy() { delete this; }
+	};
+private:
+	StringRep* _rep;
 };
 ```
 
@@ -471,13 +494,111 @@ https://zhuanlan.zhihu.com/p/348614098
 
 #### 解释
 
+Small String Optimization. **基于字符串大多数比较短的特点**，利用 string 对象本身的栈空间来存储短字符串。而当字符串长度大于某个临界值时，则使用 eager copy 的方式。
+
+SSO 下，string 的数据结构会稍微复杂点，使用 union 来区分短字符串和长字符串的场景：
+
+```cpp
+class string {
+  char *start;
+  size_t size;
+  static const int localSize = 15;
+  union{
+    char buffer[localSize+1];      // 满足条件时，用来存放短字符串
+    size_t capacity;
+  }data;
+};
+```
+
+短字符串，SSO：
+
+![img](assets/v2-71467c883bb210e418e96ba36e63e030_720w.webp)
+
+长字符串，eager copy：
+
+![img](assets/v2-43df45b38a8889757e2e077a771d481e_720w.webp)
+
+这种数据结构的实现下，SSO 的阈值一般是 15 字节。
+
+优点：
+
+- 短字符串时，无动态内存分配。
+
+缺点：
+
+- string 对象占用空间比 eager copy 和 cow 要大。
+
 #### 实现代码
 
-COW 写时复制，短字符串优化
+```cpp
+class SSO_String
+{
+public:
+	SSO_String() {}
+	SSO_String(const char* str) 
+	{
+		_size = strlen(str);
+		if (_size < localSize)
+		{
+			_str = _buffer;		
+		}
+		else if (_size >= localSize)
+		{
+			_capacity = _size + 1;
+			_str = new char[_capacity];
+		}
+		strcpy_s(_str, capacity(), str);
+	}
+	SSO_String(const SSO_String& other)
+	{
+		if (this == &other)
+			return;
 
-COW（Copy-On-Write）,也称为"写时拷贝"。
+		if (!isSmall())
+		{
+			_capacity = other._capacity;
+			_size = other._size;
+			_str = new char[_capacity];
+			strcpy_s(_str, _capacity, other._str);
+		}
+	}
+	~SSO_String()
+	{
+		if (!isSmall())
+		{
+			delete[] _str;
+		}
+	}
+	size_t capacity() const
+	{
+		if (isSmall())
+			return localSize;
+		else
+			return _capacity;
+	}
+	friend std::ostream& operator<<(std::ostream& out, const SSO_String& other)
+	{
+		for (int i = 0; i < other._size; i++)
+		{
+			out << other._str[i];
+		}
+		return out;
+	}
+private:
+	//是否是短字符串
+	bool isSmall()const { return _size < localSize; }
+private:
+	char* _str{ nullptr };
+	size_t _size{ 0 };
 
-
+	static const size_t localSize = 16;
+	union
+	{
+		size_t _capacity{ 0 };
+		char _buffer[localSize];
+	};
+};
+```
 
 
 
@@ -485,63 +606,224 @@ COW（Copy-On-Write）,也称为"写时拷贝"。
 
 Copy And Swap，也称为"拷贝交换技术"。
 
+任何管理某资源的类比如智能指针需要遵循一个规则[（The Rule of Three）](#4. The Rule of Three)：如果你需要显式地声明一下三者中的一个：析构函数、拷贝构造函数或者是拷贝赋值操作符，那么你需要显式的声明所有这三者。
 
+拷贝构造函数和析构函数实现起来比较容易，但是拷贝赋值操作符要复杂许多。它是怎么实现的？我们需要避免那些误区？
+
+那么Copy And Swap就是完美的解决方案。而且可以很好地帮助拷贝赋值操作符达到两个目标：避免代码重复、提供强烈的异常安全保证。
+
+### 传统实现的问题
+
+我们在The Rule of Three中实现的代码，会有如下三个问题。
+
+#### 1. 需要进行自我赋值判别
 
 ```cpp
-class Widget
+if (this != &other)
+```
+
+这个判别有两个目的：是一个阻止冗余代码的一个简单的方法；可以防止出现bug（删除数组接着又进行复制操作）。在其他时候不会有什么问题，只是使得程序变慢了。自我赋值在程序中比较少见，所以大部分情况下这个判别是多余的。这样，如果没有这个判别也能够正常工作就更好了
+
+#### 2. 只提供了基本异常安全保证
+
+如果new char[len]失败，那么*this就被修改了（数组大小是错误的，数组也丢失了）。为了提供强烈保证，需要这样做：
+
+```cpp
+Person& operator=(const Person& other)
 {
-    ...
-private:
-    Bitmap* pb;
-}
-Widget& Widget::operator=(const Widget& rhs)
-{
-    Bitmap* pOrig = pb;
-    pb = new Bitmap(*rhs.pb);
-    delete pOrig;
-    return *this;
+	if (this != &other)
+	{
+		char* temp = name;		//先保存，不要释放
+		int len = strlen(other.name) + 1;
+		name = new char[len];
+		delete[] temp;			//如果new成功了，再释放
+		strcpy_s(name, len, other.name);
+	}
+	return *this;
 }
 ```
 
-对于上述的类Widget定义是没有办法直接使用`copy and swap`技术的，原因是这个Widget的类定义，没有实现对资源的自动管理。也就是说他的析构函数上没有对`Bitmap* pb`进行释放。以a=b为例，`copy and swap`的核心是，先生成b的一份复制体c，然后把a里面旧的数据和资源与c进行交换，然后析构c，在析构c的时候，会把a原来旧的资源释放掉。所以要求c在析构的时候能够自己释放资源。同时我们还需要实现一个swap函数，用户交换a与c的数据。
+但是这样做就导致了另外一个问题，就是代码冗余！
 
-综上要使用`copy and swap`技术，Widget类还需要一个能够管理资源的析构函数， 还需要一个swap函数，还需要一个拷贝构造函数(需要用这个函数生成复制体)。有了这些前提条件，才能使用该技术。
+#### 3.代码冗余
+
+核心代码只有两行即分配空间和拷贝。如果要实现比较复杂的资源管理，那么代码的膨胀将会导致非常严重的问题。
+
+### 成功的解决方案
+
+#### Copy-And-Swap实现
+
+就像前面所提到的，Copy-And-Swap可以解决所有这些问题。但是现在，我们还需要完成另外一件事：swap函数。规则“The rule of three”指明了拷贝构造函数、赋值操作符以及析构函数的存在。其实它应该被称作是“The Big And Half”：任何时候你的类要管理一个资源，提供swap函数是有必要的。
+
+我们需要向我们的类添加swap函数，看以下代码：
 
 ```cpp
-typedef int Bitmap;
-const int MAX = 10;
-class Widget
+friend void swap(Person& left, Person& right)
+{
+	std::swap(left.age, right.age);
+	std::swap(left.name, right.name);
+}
+```
+
+现在我们不仅可以交换Person，而且交换是很有效率的进行：它只是交换指针和数组大小，而不是重新分配空间和拷贝整个数组。
+这样，我们可以如下实现拷贝赋值操作符：
+
+```cpp
+Person& operator=(const Person& other)
+{
+	Person temp(other);
+	swap(*this, temp);
+	return *this;
+}
+```
+
+就是这样！以上提到的三个问题全部获得解决。
+
+#### 为啥可以正常工作
+
+首先，在赋值拷贝函数里面定义了临时的对象temp，temp拷贝自other。
+
+然后，使用swap函数把temp和*this的值进行了交换。
+
+最后，当函数返回时，temp的内存会释放，而*this已经发生了改变。从而实现了赋值拷贝效果。
+
+实际上，还有一种写法，<font color='green'>**不要拷贝函数参数。你应该按值传递参数，让编译器来完成拷贝工作。**</font>
+
+即：
+
+```cpp
+Person& operator=(Person other)
+{
+	swap(*this, other);
+	return *this;
+}
+```
+
+
+
+这种管理资源的方式解决了代码冗余的问题，我们可以用拷贝构造函数完成拷贝功能，而不用按位拷贝。拷贝功能完成后，我们就可以准备交换了。
+
+注意到，上面一旦进入函数体，所有新数据都已经被分配、拷贝，可以使用了。这就提供了强烈的异常安全保证：如果拷贝失败，我们不会进入到函数体内，那么this指针所指向的内容也不会被改变。（在前面我们为了实施强烈保证所做的事情，现在编译器为我们做了）。
+
+swap函数时non-throwing的。我们把旧数据和新数据交换，安全地改变我们的状态，旧数据被放进了临时对象里。这样当函数退出时候，旧数据被自动释放。
+
+因为copy-and-swap没有代码冗余，我们不会在这个而操作符里面引入bug。我们也避免了自我赋值检测。
+
+## 4. The Rule of Three
+
+不同于 C 语言，在 C++ 中，我们通常会使用“类”结构，来定义和管理资源。类，可以让我们将程序逻辑和数据按照不同的角色，进行封装，进而提高代码的重用性、灵活性和扩展性。但随之而来的类对象的“隐式”拷贝，却也在不经意间充斥在整个应用程序运行的各个生命周期中。好的类结构定义，可以让应用程序通过“资源移动”等方式，使数据资源的流动和使用变得更高效。相反，不当的类结构定义反而会使应用程序，在运行过程中发生未知的资源使用问题，比如常见的内存泄漏、内存溢出、悬挂指针，以及非法的内存释放，等等。那么，为了尽可能避免出现这些问题，”The Rule of Three“ 这一套编码准则，在经过不断地实践后，便被人们总结出来了。
+
+接下来，让我们先从 C++ 中最基础的拷贝构造函数开始，来一步步了解 “The Rule of Three” 这套编码准则所要解决的一些问题。
+
+### 问题引出
+
+通常来说，在大多数情况下，我们并不需要“显式”地定义类结构的拷贝构造函数与拷贝赋值函数，但前提是：只要我们能够确保没有在类的构造函数中进行堆内存的上资源分配。
+
+看一段代码，如下所示：
+
+```cpp
+class Person
 {
 public:
-    Widget()
-    {
-        pb = new int[MAX]();
-    }
-    Widget(const Widget&rhs)
-    {
-        pb = new int[MAX]();
-    	std::copy(rhs.pb, rhs.pb+MAX, pb);
-    }
-    void swap(Widget&a, Widget &c)
-    {
-        using std::swap;
-        swap(a.pb,b.pb);
-    }
-    ~Widget()
-    {
-        delete[] pb;
-    }
-    Widget& operator= (const Widget& rhs)
-    {
-        Widget tmp(rhs);
-        swap(*this,tmp);
-        return *this;
-    }
-private:
-    Bitmap* pb;
+	Person(const char* name, int age)
+	{
+		this->age = age;
+		int len = strlen(name) +1;
+		this->name = new char[len];
+		strcpy_s(this->name, len, name);
+	}
+	~Person()
+	{
+		delete[] name;
+	}
+public:
+	int age;
+	char* name;
+};
+
+int main()
+{
+	Person maye("maye", 20);
 }
 ```
 
-在上述的拷贝赋值函数中，我们先利用拷贝构造函数生成了一个复制体tmp，注意tmp里面的资源是独立的，自己维护的，只不过资源内容和复制主体一模一样而已。
- 之后通过swap，把*this 内的数据与复制体交换。这里交换的只是指针索引，实际数据资源的位置并没有变化，只是归属发生了变化。
- 最后return后，我们如愿赋值到了我们想要的数据。赋值前的老数据我们交换给了tmp，并且在函数体退出后，tmp自动释放了老数据。
+如上述代码所示，这里我们定义了一个类 “Person”，这个类有两个数据成员，分别表示一个人的名字（name）和年龄（age）。在主函数中，我们通过这个类的构造函数，创建了一个名为 “maye” 的 “Person” 类对象。
+
+> 注意，类 “Person” 中 “name” 成员类型为字符指针，这个指针将指向堆内存中一个字符数组的首地址。而为了构造这个在堆内存中的字符数组，我们使用 `new` 方法分配了一块用于存放字符的堆内存区域，然后再使用 `strcpy` 方法将原来位于栈内存上的字符内容，直接拷贝到了我们刚刚分配的这块内存区域中。
+
+需要注意的是，在构造函数中，我们在堆内存上分配了相应的内存资源，而这些资源就需要在类解构时被相应地释放。因此，这里我们还需要为类编写该类所对应的析构函数，并在函数中通过`delete` ，来释放之前分配的内存资源。那么同样地，在类对象进行拷贝构造和拷贝赋值时，我们也需要进行类似的内存申请以及资源拷贝过程，**而不能直接依赖编译器默认生成的拷贝构造和拷贝赋值函数的行为**。这里我们以如下这段代码为例：
+
+```cpp
+int main()
+{
+	Person maye("maye", 20);
+	Person yue(maye);
+	return 0;
+}
+```
+
+在这段代码中，我们在主函数中通过拷贝构造的方式，生成了名为 “yue” 的对象，代码的其他部分与之前一致。而当我们运行这段代码时，得到的结果是这样的，如下图所示：
+
+![image-20230302182154346](assets/image-20230302182154346.png)
+
+调试时会出现如下结果：
+
+![image-20230302182224997](assets/image-20230302182224997.png)
+
+那么，为什么会这样呢？其实这是由于编译器默认生成的拷贝构造函数，仅会按顺序依次拷贝目标对象各成员的值，而在这里经过拷贝后，“maye” 与 “yue” 两个对象的 “name” 成员，将指向同一块堆内存区域。当 “yue” 对象完成析构后，这段内存区域就已经被释放了。因此，当 “maye” 对象再次执行其析构函数进行内存释放时，就会出现**重复释放同一内存区域**这一问题，所以就出现了这样的错误。
+
+### 解决办法
+
+把拷贝构造和赋值运算符重载都实现一下，就可以解决。
+
+```cpp
+class Person
+{
+public:
+	Person(const char* name, int age)
+	{
+		this->age = age;
+		int len = strlen(name) +1;
+		this->name = new char[len];
+		strcpy_s(this->name, len, name);
+	}
+	Person(const Person& other) 
+	{
+		if (this != &other)
+		{
+			age = other.age;
+			int len = strlen(other.name) + 1;
+			name = new char[len];
+			strcpy_s(name, len, other.name);
+		}
+	}
+	Person& operator=(const Person& other)
+	{
+		if (this != &other)
+		{
+			delete[] name;
+			int len = strlen(other.name) + 1;
+			name = new char[len];
+			strcpy_s(name, len, other.name);
+		}
+		return *this;
+	}
+	~Person()
+	{
+		delete[] name;
+	}
+public:
+	int age;
+	char* name;
+};
+```
+
+
+
+### 总结
+
+至此，让我们回过头来看下 “The Rule of Three” 这个编码准则的具体内容。其实很简单，它规定我们：“**如果你需要自己显式地声明一个类的析构函数，那么你可能也需要同时显式地声明它的拷贝构造函数以及拷贝赋值函数。**”由于这三种函数在大多数情况下，需要同时被定义，或者同时不被定义，因此我们称这条准则为 “The Rule of Three”。
+
+“The Rule of Three” 这条编码准则，出现于 C++11 之前的时代，而 C++11 的出现，使得 “The Rule of Three” 被拓展成了 “The Rule of Five”。这里多出的 “2”，就分别对应于类的移动构造函数和移动赋值函数。
+
+C++ 由于其复杂性和灵活性，导致我们在日常开发的过程中，一不留神就会编写出带有潜在风险的代码。因此，在编码过程中遵循一定的原则便显得格外重要。除此之外，也可以通过多实践、多踩坑的方式来了解常见问题可能出现的原因，学会“抓住线索、基于经验、按照顺序”的排查问题方法，是在 C++ 开发中必不可少的一项技能。

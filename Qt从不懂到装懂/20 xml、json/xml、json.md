@@ -1,3 +1,283 @@
+# JSON
+
+JSON(JavaScript Object Notation, JS 对象简谱) 是一种轻量级的数据交换格式。它基于 ECMAScript (欧洲计算机协会制定的js规范)的一个子集，采用完全独立于编程语言的文本格式来存储和表示数据。简洁和清晰的层次结构使得 JSON 成为理想的数据交换语言。 易于人阅读和编写，同时也易于机器解析和生成，并有效地提升网络传输效率。
+
+## 格式
+
+JSON是一个标记符的序列。这套标记符包含六个**构造字符**、**字符串**、**数字**和三个**字面名**。
+
++ 1，六个构造字符
+  + 开始和结束数组：[  ]
+  + 开始和结束对象：{  }
+  + 名称分隔：:	 (冒号)
+  + 值分隔：,		(逗号)
+
++ 2，字符串用双引号包含
++ 3，数字直接表示，不用引号包含
++ 4，三个字面量
+  + true
+  + flase
+  + null
+
+JSON是一个序列化的**对象**或**数组**。
+
++ **对象**由花括号括起来的逗号分割的成员构成，成员是字符串键和值(**值**可以是**对象**、**数组**、**数字**、**字符串**或者三个**字面值**(false、null、true)中的一个)组成
+
+  ```json
+  {"name":"maye","age":18,"address":{"country":"china","city":"changsha"}}
+  ```
+
++ **数组**是由方括号括起来的一组值构成
+
+  ```json
+  {"city":["长沙","南京","北京"]}
+  ```
+
+## Json解析
+
+在Qt库中，为JSON的相关操作提供了完整的类支持，包括QJsonValue，QJsonObject，QJsonArray，QJsonDocument和QJsonParseError。
+
++ QJsonValue类表示json格式中的一个值；
+
++ QJsonObject表示一个json对象；
+
++ QJsonArray顾名思义表示一个json数组；
+
++ QJsonDocument主要用来读写json文档；
+
++ 而QJsonParseError是用来表示json解析过程中出现的错误的方便类。
+
+### QJsonDocument
+
+QJsonDocument是一个包装完整JSON文档的类，可以从UTF-8编码的基于文本的表示中读取该文档，并将其写入其中。 
+
+JSON文档可以使用QJsonDocument::fromJson()将其基于文本的表示形式转换为QJsonDocument。toJson()将其转换回文本。解析器非常快速和有效，并将JSON转换为Qt使用的二进制表示。
+
+ ```cpp
+//创建Json文档对象
+QJsonDocument jdoc = QJsonDocument::fromJson(R"({"name":"maye","age":18,"citys":["长沙","常德"],"father":{"name":"老张","age":null}})");
+//获取Json文本,可选格式[Indented(有格式有排版) | Compact(压缩的，去掉了空白字符)]
+qInfo() << jdoc.toJson();      
+ ```
+
+### QJsonParseError
+
+QJsonParseError类用于报告JSON解析过程中的错误。
+
+使用唯一的成员函数`errorString()`获取错误字符串，使用成员变量`error`获取错误码，使用成员变量`offset`获取错误位置。
+
+```cpp
+//创建Json错误对象
+QJsonParseError jerr;
+//创建Json文档对象
+QJsonDocument jdoc = QJsonDocument::fromJson(R"({"name":null})", &jerr);
+//判断是否解析成功
+if (jerr.error != QJsonParseError::NoError)
+{
+    qWarning("json parse failed:%s", qUtf8Printable(jerr.errorString()));
+    return;
+}
+```
+
+
+
+### QJsonObject
+
+JSON对象是键值对的列表，其中键是唯一的字符串，值由QJsonValue表示。
+
+QJsonObject可以与QVariantMap进行转换。您可以使用size()、insert()和remove()查询(key, value)对的数量，并使用标准的c++迭代器模式遍历其内容。
+
+```cpp
+for(QJsonObject::const_iterator it = obj.constBegin();it != obj.constEnd() ;it++)
+{
+     qDebug()<<it.key()<< it.value();
+}
+for(QJsonValue val : obj)
+{
+     qDebug()<<val;
+}
+```
+
+QJsonObject是一个隐式共享类，只要它没有被修改，它就与创建它的文档共享数据。  
+
+### QJsonArray
+
+JSON数组是一个值列表。可以通过从数组中插入和删除QJsonValue来操作该列表。
+
+QJsonArray可以与QVariantList进行转换。您可以使用size()、insert()和removeAt()条目从它中查询条目的数量，并使用标准的C++迭代器模式迭代其内容。
+
+```cpp
+for(QJsonValue val : jarray)
+{
+}
+
+for (int i = 0; i < jarray.size(); i++)
+{
+    qInfo() << jarray.at(i).toString();
+}
+```
+
+QJsonArray是一个隐式共享类，只要它没有被修改，它就与创建它的文档共享数据。  
+
+### QJsonValue
+
+JSON是一种存储结构化数据的格式。它有6种基本数据类型:
+
++ `bool` QJsonValue::Bool
++ `double` QJsonValue::Double
++ `string` QJsonValue::String
++ `array` QJsonValue::Array
++ `object` QJsonValue::Object
++ `null` QJsonValue::Null
+
+值可以表示上述任何一种数据类型。此外，QJsonValue有一个特殊标志来表示未定义的值。这可以用isUndefined()查询。  
+
+值的类型可以用type()或访问器查询，如isBool()， isString()等。同样，可以使用toool()、toString()等方法将值转换为存储在其中的类型。
+
+值在内部是严格类型的，与QVariant相反，它不会尝试进行任何隐式类型转换。这意味着转换为未存储在值中的类型将返回默认构造的返回值。
+
+### 示例
+
+```cpp
+void parseJson()
+{
+        //创建Json错误对象
+        QJsonParseError jerr;
+        //创建Json文档对象
+        QJsonDocument jdoc = QJsonDocument::fromJson(R"({"name":"maye","age":18,"citys":["长沙","常德"],"father":{"name":"老张","age":null}})",&jerr);
+        qInfo() << jdoc.toJson(QJsonDocument::JsonFormat::Compact);
+
+        //判断是否解析成功
+        if (jerr.error != QJsonParseError::NoError)
+        {
+            qWarning("json parse failed:%s", qUtf8Printable(jerr.errorString()));
+            return;
+        }
+        //获取Json根对象
+        QJsonObject root = jdoc.object();
+        /*{
+            //获取所有key（不会输出子对象的key）
+            qInfo() << root.keys();
+            //根据key获取value
+            qInfo() << root.value("age");
+            //根据key查找value
+            qInfo() << root.find("name").value();
+            //判断是否包含key
+            qInfo() << root.contains("name");
+            //遍历所有value
+            for (auto v : root)
+            {
+                qInfo() << v;
+            }
+
+            //JsonValue
+            qInfo() << root.value("age").toInt();
+        }
+        */
+
+        //获取所有对象
+        {
+            if (root.contains("name"))
+            {
+                qInfo()<< root.value("name").toString();
+            }
+            if (root.contains("age"))
+            {
+                qInfo() << root.value("age").toInt();
+            }
+            if (root.contains("citys"))
+            {
+                //解析数组
+                auto jvalue =  root.value("citys");
+                if (jvalue.isArray())
+                {
+                    auto jarray = jvalue.toArray();
+                    for (int i = 0; i < jarray.size(); i++)
+                    {
+                        qInfo() << jarray.at(i).toString();
+                    }
+                }
+                //qInfo() << root.value("age").toInt();
+            }
+            if (root.contains("father"))
+            {
+                //解析对象
+                QJsonValue jvalue = root.value("father");
+                if (jvalue.isObject())
+                {
+                    QJsonObject jobj = jvalue.toObject();
+                    if (jobj.contains("name"))
+                    {
+                        qInfo() << jobj.value("name").toString();
+                    }
+
+                }                  
+            }
+        }
+}
+```
+
+
+
+## Json生成
+
+生成也是用上面的类，需要注意的是：生成json时会自动把key排序
+
+```cpp
+void Widget::writeJson(const QString &filename)
+{
+    QJsonDocument json;
+
+    //构建一个主对象
+    QJsonObject obj;
+    obj.insert("year","2019");
+    obj.insert("month","10");
+    obj.insert("day","29");
+    obj.insert("weather","晴");
+    //构建一个数组
+    QJsonArray array ={"北京","天津"};
+    array.append("上海");
+    obj.insert("city",array);
+    //构建一个子对象
+    QJsonObject subObj;
+    subObj.insert("one",1);
+    subObj.insert("two",2);
+    obj.insert("list",subObj);
+
+    //给jsonDocument设置主对象
+    json.setObject(obj);
+    //保存
+    QFile file(filename);
+    if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+         qWarning("文件打开失败");
+         return;
+    }
+    QByteArray jsonText = json.toJson();
+    file.write(jsonText);
+}
+```
+
+结果：
+
+```cpp
+{
+    "city": [
+        "北京",
+        "天津",
+        "上海"
+    ],
+    "day": "29",
+    "list": {
+        "one": 1,
+        "two": 2
+    },
+    "month": "10",
+    "weather": "晴",
+    "year": "2019"
+}
+```
+
 # XML
 
 ## 简介
@@ -64,10 +344,6 @@ Qt 提供了三种读取 XML 文档的方法：
 
 + QXmlStreamReader：一种快速的基于流的方式访问良格式 XML 文档，特别适合于实现一次解析器（所谓“一次解析器”，可以理解成我们只需读取文档一次，然后像一个遍历器从头到尾一次性处理 XML 文档，期间不会有反复的情况，也就是不会读完第一个标签，然后读第二个，读完第二个又返回去读第一个，这是不允许的）；
 + DOM（Document Object Model）：将整个 XML 文档读入内存，构建成一个树结构，允许程序在树结构上向前向后移动导航，这是与另外两种方式最大的区别，也就是允许实现多次解析器（对应于前面所说的一次解析器）。DOM 方式带来的问题是需要一次性将整个 XML 文档读入内存，因此会占用很大内存；
-+ SAX（Simple API for XML）：提供大量虚函数，以事件的形式处理 XML 文档。这种解析办法主要是由于历史原因提出的，为了解决 DOM 的内存占用提出的（在现代计算机上，这个一般已经不是问题了）。
-  
-
-
 
 有如下XML文档，描述了登录数据库所需要的信息，通过解析可以获取信息以登录数据库。
 
@@ -104,9 +380,31 @@ Qt 提供了三种读取 XML 文档的方法：
 
 ### QXmlStreamReader
 
-QXmlStreamReader类提供了一个快速解析器，通过简单的流API读取格式良好的XML 。
+QXmlStreamReader提供了一个简单的流API来解析格式良好的XML。QXmlStreamReader从QIODevice(参见setDevice())或原始QByteArray(参见addData())读取数据。
 
-QXmlStreamReader从QIODevice或原始QByteArray读取数据。  
+Qt提供了QXmlStreamWriter用于编写XML。
+
+流读取器的基本概念是将XML文档报告为令牌流。使用QXmlStreamReader，应用程序代码本身驱动循环，并根据需要一个接一个地从阅读器中提取令牌。这是通过调用readNext()来完成的，读取器从输入流中读取，直到完成下一个标记，然后返回tokenType()。然后可以使用一组方便的函数(包括isStartElement()和text())来检查令牌，以获得有关已读取内容的信息。这种拉式方法的最大优点是可以使用它构建递归下降解析器，这意味着可以轻松地将XML解析代码分割为不同的方法或类。这使得在解析XML时很容易跟踪应用程序自身的状态。
+
+典型的QXmlStreamReader循环如下所示:
+
+```cpp
+QXmlStreamReader xml;
+...
+while (!xml.atEnd()) 
+{
+	xml.readNext ();
+	... //处理
+｝
+if (xml.hasError()) 
+{
+	... //执行错误处理
+｝
+```
+
+如果在解析时发生错误，atEnd()和hasError()返回true, error()返回发生的错误。函数errorString()、lineNumber()、columnNumber()和characterOffset()用于构造适当的错误或警告消息。为了简化应用程序代码，QXmlStreamReader包含一个raiseError()机制，该机制允许您引发自定义错误，从而触发上述相同的错误处理。
+
+
 
 ```cpp
 void Widget::parseXml(const QString &filename)
@@ -163,126 +461,104 @@ void Widget::parseXml(const QString &filename)
 }
 ```
 
+### QDomDocument
+
+#### 简介
+
+QDomDocument类表示整个XML文档。从概念上讲，它是文档树的根，并提供对文档数据的主要访问。
+
+由于元素、文本节点、注释、处理指令等不能存在于文档的上下文之外，因此文档类还包含创建这些对象所需的工厂函数。创建的节点对象有一个ownerDocument()函数，该函数将节点对象与创建节点的上下文中的文档关联起来。最常使用的DOM类是QDomNode、QDomDocument、QDomElement和QDomText。
+
+解析后的XML在内部由对象树表示，可以使用各种QDom类访问这些对象树。所有QDom类只引用内部树中的对象。一旦最后一个引用它们的QDom对象或QDomDocument本身被删除，DOM树中的内部对象就会被删除。
+
+> 注意:如果XML文档很大，DOM树最终可能会保留大量内存。对于这样的文档，QXmlStreamReader或QXmlQuery类可能是更好的解决方案。
 
 
-#### 常用函数
 
-```cpp
-//如果读取器一直读取到XML文档的末尾，或者发生了error()并中止了读取，则返回true。 否则，返回false。  
-bool atEnd() const
-//如果发生错误则返回true，否则返回false。  
-bool hasError();
-//获取错误码
-QXmlStreamReader::Error error() const
-//获取错误字符串
-QString errorString() const
-//读取下一个标记并返回其类型
-QXmlStreamReader::TokenType readNext()
-//获取当前读取器的标记类型
-QXmlStreamReader::TokenType tokenType() const    
-//以字符串的形式返回读取器的当前标记类型
-QString tokenString() const
-//获取标记
-QStringRef name() const
-//返回字符、注释、DTD或EntityReference的文本。  
-QStringRef text() const    
-//获取当前元素的文本(StartElement和EndElement之间的文本)    
-QString readElementText(QXmlStreamReader::ReadElementTextBehaviour behaviour = ErrorOnUnexpectedElement)
-//获取当前元素的属性
-QXmlStreamAttributes attributes() const    
-	//例：QXmlStreamAttributes attrs = xmlReader.attributes();
-	//例：qDebug()<<attrs.value("class").toString()<<attrs.value("name").toString();  
-//读取当前元素之后的起始元素。 当到达start元素时返回true。 (读取当前元素的子标签)  
-bool readNextStartElement()    
-//获取当前元素的属性列表
-QXmlStreamAttributes attributes() const    
-```
+>  DOM 是由 W3C 提出的一种处理 XML 文档的标准接口。Qt 实现了 DOM Level 2 级别的不验证读写 XML 文档的方法。DOM 一次性读入整个 XML 文档，在内存中构造为一棵树（被称为 DOM 树）。我们能够在这棵树上进行导航，比如移动到下一节点或者返回上一节点，也可以对这棵树进行修改，或者是直接将这颗树保存为硬盘上的一个 XML 文件。
 
-### DOM（Document Object Model）
+#### 使用
 
-DOM 是由 W3C 提出的一种处理 XML 文档的标准接口。Qt 实现了 DOM Level 2 级别的不验证读写 XML 文档的方法。DOM 一次性读入整个 XML 文档，在内存中构造为一棵树（被称为 DOM 树）。我们能够在这棵树上进行导航，比如移动到下一节点或者返回上一节点，也可以对这棵树进行修改，或者是直接将这颗树保存为硬盘上的一个 XML 文件。
+首先，需要加载`Xml`模块。
 
-在使用之前需要在pro文件里加上xml模块。
+然后，包含头文件`#include<QDomDocument>`。
+
+
 
 ```cpp
-void Widget::parseDocXml(const QString &filename)
-{
-    QFile file(filename);
-    if(!file.open(QIODevice::ReadOnly| QIODevice::Text))
+    void parseXml()
     {
-        qWarning("%s 文件打开失败",filename.toUtf8().data());
-        return;
-    }
-
-    QString err;
-    int errline;
-    int errcol;
-
-    QDomDocument domdoc;
-    //成功解析返回true，否则返回false
-    if(!domdoc.setContent(&file,false,&err,&errline,&errcol))
-    {
-        qWarning("xml 解析失败");
-        return;
-    }
-    //获取版本信息和编码信息
-    qDebug()<< domdoc.firstChild().nodeName()<<domdoc.firstChild().nodeValue();
-
-    //获取dom树的根元素(标签)
-    QDomElement root = domdoc.documentElement();
-    if(root.tagName() != "root")
-    {
-        qWarning("根元素不是root，xml文档有误~");
-        return;
-    }else
-    {
-        //traverseXmlNode(root);
-        QDomElement node = root.firstChild().toElement();
-        while(!node.isNull())
+        QFile file("./MainWindow.ui");
+        if (!file.open(QIODevice::ReadOnly))
         {
-            if(node.tagName() == "HostName")
-            {
-                qDebug()<<node.text();
-            }
-            else if(node.tagName() == "Port")
-            {
-                QDomElement subNode = node.firstChildElement();
-                while(!subNode.isNull())
-                {
-                    if(subNode.tagName() == "a")
-                    {
-                        qDebug()<<subNode.text();
-                    }
-                    else if(subNode.tagName() == "fuck")
-                    {
-                        qDebug()<<subNode.text();
-                    }
-                    subNode = subNode.nextSiblingElement();
-                }
-            }
-            else if(node.tagName() == "UserName")
-            {
-                qDebug()<<node.text();
-            }
-            else if(node.tagName() == "PassWord")
-            {
-                qDebug()<<node.text();
-            }
-            else if(node.tagName() == "DatabaseName")
-            {
-                qDebug()<<node.text();
-            }
-            node = node.nextSiblingElement();
+            qWarning() << file.fileName() << "open failed:" << file.errorString();
+        }
+
+        //错误信息
+        QString errMsg;
+        int errLine;
+        int errCol;
+
+        QDomDocument dom;
+        //给dom设置内容
+        bool ok = dom.setContent(&file, false, &errMsg, &errLine, &errCol);
+        if (!ok)
+        {
+            qWarning("xml parse failed:%s",qUtf8Printable(errMsg));
+            return;
+        }
+        //获取版本信息和编码
+        qInfo() << dom.firstChild().nodeName() << dom.firstChild().nodeValue();
+
+        //返回文档中名称为tagname的所有元素
+        QDomNodeList nList = dom.elementsByTagName("string");
+        for (int i = 0; i < nList.size(); i++)
+        {
+            qInfo() << nList.at(i).toElement().text();
+        }
+
+        //获取dom的根标签<ui>
+        QDomElement root = dom.documentElement();
+        //获取标签名和标签对应的文本
+        //qInfo() << root.tagName()<<root.text();
+        if (root.tagName() != "ui")
+        {
+            qWarning("根元素不是ui，xml文档有误~");
+            return;
+        }
+        //获取根元素的第一个子元素
+        QDomElement node = root.firstChild().toElement();
+        //遍历node的直接子元素
+        while (!node.isNull())
+        {
+            qInfo() << node.tagName();
+            printNode(node);
+            //if (node.tagName() == "widget")
+            //{
+            //    QDomElement subNode = node.firstChild().toElement();
+            //    while (!subNode.isNull())
+            //    {
+            //        qInfo() << "---" << subNode.tagName();
+            //        subNode = subNode.nextSibling().toElement();
+            //    }
+            //}
+            node = node.nextSibling().toElement();
+        }
+
+    }
+    void printNode(QDomElement node)
+    {
+        QDomElement subNode = node.firstChild().toElement();
+        while (!subNode.isNull())
+        {
+            qInfo() << "---" << subNode.tagName();
+            printNode(subNode);
+            subNode = subNode.nextSibling().toElement();
         }
     }
-} 
 ```
 
-### SAX（Simple API for XML）
-
-QXmlStreamReader是Qt自己的SAX解析器的更快、更方便的替代品(参见QXmlSimpleReader)。 在某些情况下，对于使用DOM树的应用程序(请参阅QDomDocument)来说，它可能是一种更快、更方便的替代方法。 QXmlStreamReader从QIODevice(参见setDevice())或原始QByteArray(参见addData())读取数据。  
-
-### 三种解析方式比较
+### 两种解析方式比较
 
 **1、DOM解析XML文档的特点**
 
@@ -292,16 +568,8 @@ QXmlStreamReader是Qt自己的SAX解析器的更快、更方便的替代品(参�
 
 缺点：如果XML文件较大，或者只需要解析XML文档的一部分数据，就会占用大量的内存空间
 
-**2、SAX解析XML文档的特点**
-
-SAX解析的核心是事件处理机制，SAX采用事件机制的方式来解析XML文档。使用SAX解析器对XML文档进行解析时，SAX解析器根本不创建任何对象，只是在遇到XML文档的各种标签如文档开始、元素开始、文本、元素结束时触发对应的事件，并将XML元素的内容封装成事件传出去。而程序员则负责提供事件监听器来监听这些事件，从而触发相应的事件处理方法，并通过这些事件处理方法实现对XML文档的访问。
-
-优点：具有占用内存少，效率高等特点。
-
-缺点：不便于随机访问任意节点。
-
-**3、流方式解析XML文档的特点**
-    QXmlStreamReader使用了递增式的解析器，适合于在整个XML文档中查找给定的标签、读入无法放入内存的大文件以及处理XML的自定义数据。
+**2、流方式解析XML文档的特点**
+QXmlStreamReader使用了递增式的解析器，适合于在整个XML文档中查找给定的标签、读入无法放入内存的大文件以及处理XML的自定义数据。
 
 优点：快速、方便，分块读取XML文件，可读取大文件
 
@@ -391,344 +659,6 @@ QDomText createTextNode(const QString &value)
 ```
 
 
-
-# JSON
-
-JSON(JavaScript Object Notation, JS 对象简谱) 是一种轻量级的数据交换格式。它基于 ECMAScript (欧洲计算机协会制定的js规范)的一个子集，采用完全独立于编程语言的文本格式来存储和表示数据。简洁和清晰的层次结构使得 JSON 成为理想的数据交换语言。 易于人阅读和编写，同时也易于机器解析和生成，并有效地提升网络传输效率。
-
-## 格式
-
-JSON是一个标记符的序列。这套标记符包含六个**构造字符**、**字符串**、**数字**和三个**字面名**。
-
-+ 1，六个构造字符
-  + 开始和结束数组：[  ]
-  + 开始和结束对象：{  }
-  + 名称分隔：:	 (冒号)
-  + 值分隔：,		(逗号)
-
-+ 2，字符串用双引号包含
-+ 3，数字直接表示，不用引号包含
-+ 4，三个字面量
-  + true
-  + flase
-  + null
-
-JSON是一个序列化的**对象**或**数组**。
-
-+ **对象**由花括号括起来的逗号分割的成员构成，成员是字符串键和值(**值**可以是**对象**、**数组**、**数字**、**字符串**或者三个**字面值**(false、null、true)中的一个)组成
-
-  ```json
-  {"name":"maye","age":18,"address":{"country":"china","city":"changsha"}}
-  ```
-
-+ **数组**是由方括号括起来的一组值构成
-
-  ```json
-  {"city":["长沙","南京","北京"]}
-  ```
-
-## Json解析
-
-在Qt库中，为JSON的相关操作提供了完整的类支持，包括QJsonValue，QJsonObject，QJsonArray，QJsonDocument和QJsonParseError。其中，QJsonValue类表示json格式中的一个值；QJsonObject表示一个json对象；QJsonArray顾名思义表示一个json数组；QJsonDocument主要用来读写json文档；而QJsonParseError是用来表示json解析过程中出现的错误的方便类。
-
-### QJsonDocument
-
-QJsonDocument类提供了一种读取和写入JSON文档的方法。  
-
-QJsonDocument是一个包装完整JSON文档的类，可以从基于UTF-8编码的文本表示以及Qt自己的二进制格式读取和写入该文档。  
-
-可以使用QJsonDocument::fromJson()将JSON文档从基于文本的表示转换为QJsonDocument。 toJson()将其转换回文本。 该解析器非常快速和高效，并将JSON转换为Qt使用的二进制表示。  
-
-可以使用!isNull()查询已解析文档的有效性  
-
-可以使用isArray()和isObject()查询文档是否包含数组或对象。 可以使用array()或object()检索文档中包含的数组或对象，然后读取或操作。  
-
-还可以使用fromBinaryData()或fromRawData()从存储的二进制表示创建文档。  
-
-```cpp
-bool isArray() const		//是否包含数组  {"name":"maye"}  ["maye","顽石","wwk"]
-bool isEmpty() const		//是不是空
-bool isNull() const
-bool isObject() const		//是否包含对象
-
-QJsonArray array() const	//返回文档中包含的QJsonObject。如果文档包含数组，则返回空对象。  
-QJsonObject object() const	//返回文档中包含的QJsonArray。 如果文档包含一个对象，则返回一个空数组。  
-//根据key或下标获取对应的值
-const QJsonValue operator[](const QString &key) const
-const QJsonValue operator[](int i) const    
-//将arrayh或object设置为本文档的主对象。      
-void setArray(const QJsonArray &array)
-void setObject(const QJsonObject &object)    
-//设置主对象之后可以tojson，然后保存到文件
-QByteArray toJson() const
-QByteArray toJson(QJsonDocument::JsonFormat format) const    
-```
-
-
-
-### QJsonObject
-
-QJsonObject类封装了一个JSON对象 。
-
-JSON对象是键值对的列表，其中键是唯一的字符串，值由QJsonValue表示。  
-
-QJsonObject可以转换为QVariantMap，也可以转换为QVariantMap。 可以使用size()、insert()和remove()条目从它查询(键、值)对的数量，并使用标准c++迭代器模式遍历其内容。  
-
-```cpp
-for(QJsonObject::const_iterator it = obj.constBegin();it != obj.constEnd() ;it++)
-{
-     qDebug()<<it.key()<< it.value();
-}
-for(QJsonValue val : obj)
-{
-     qDebug()<<val;
-}
-```
-
-QJsonObject是一个隐式共享类，只要它没有被修改，它就与创建它的文档共享数据。  
-
-```cpp
-//查找key为指定key的项，如果没有返回constEnd();
-QJsonObject::const_iterator constFind(const QString &key) const
-QJsonObject::iterator find(const QString &key)
-//返回key对应的QJsonValue 如果键不存在，则返回QJsonValue为QJsonValue::Undefined。  
-QJsonValue value(const QString &key) const
-QJsonValue operator[](const QString &key) const
-      
-//如果对象包含key key，则返回true。  
-bool contains(const QString &key) const
-//从映射中移除迭代器所指向的(键，值)对，并返回一个指向映射中下一项的迭代器。  
-QJsonObject::iterator erase(QJsonObject::iterator it) 
-//从对象中移除key
-void remove(const QString &key)    
-//插入键值对    
-QJsonObject::iterator insert(const QString &key, const QJsonValue &value)    
-    
-//返回存储在对象中的(键，值)对的数目。  
-int count() const
-int length() const
-int size() const
-//是否为空
-bool empty() const
-```
-
-
-
-### QJsonArray
-
-QJsonArray类封装了一个JSON数组。
-
-JSON数组是一个值列表。 可以通过从数组中插入和删除QJsonValue操作列表。  
-
-QJsonArray可以转换为QVariantList，也可以转换为QVariantList。 您可以查询它的size()、insert()和removeAt()条目的数量，并使用`标准c++迭代器模式遍历`其内容。  
-
-```cpp
-for(QJsonValue val : json_array)
-{
-}
-```
-
-QJsonArray是一个隐式共享类，只要它没有被修改，它就与创建它的文档共享数据。  
-
-```cpp
-//在数组的末尾追加value
-void append(const QJsonValue &value)
-//在数组的开头插入value
-void prepend(const QJsonValue &value)
-void push_back(const QJsonValue &value)
-void push_front(const QJsonValue &value)
-    void insert(int i, const QJsonValue &value)
-QJsonArray::iterator insert(QJsonArray::iterator before, const QJsonValue &value)   
-    
-//获取指定位置的值，如果i越界，则返回的QJsonValue为Undefined。  
-QJsonValue at(int i) const    
-QJsonValue operator[](int i) const 
-QJsonValue first() const
-QJsonValue last() const
-//如果数组中包含值的出现，则返回true，否则返回false。  
-bool contains(const QJsonValue &value) const  
-    
-//移除，数组不能为空。 如果数组可以为空，则在调用该函数之前调用isEmpty()。     
-void pop_back()
-void pop_front()
-void removeAt(int i)
-void removeFirst()
-void removeLast()    
-//替换
-void replace(int i, const QJsonValue &value)
-//
-QVariantList toVariantList() const
-   
-int count() const
-int size() const    
-bool empty() const   
-```
-
-
-
-### QJsonValue
-
-QJsonValue类用JSON封装了一个值。  
-
-JSON中的值可以是6种基本类型之一:  
-
-JSON是一种存储结构化数据的格式。 它有6种基本数据类型:  
-
-+ bool QJsonValue::Bool
-+ double QJsonValue::Double
-+ string QJsonValue::String
-+ array QJsonValue::Array
-+ object QJsonValue::Object
-+ null QJsonValue::Null
-
-值可以表示上述任何数据类型。 此外，QJsonValue有一个特殊的标志来表示未定义的值。 这可以通过isUndefined()进行查询。  
-
-可以使用type()或isBool()、isString()等访问器查询值的类型。 同样，可以使用tobool()、toString()等将值转换为存储在其中的类型。  
-
-值在内部是严格类型的，与QVariant相反，它不会尝试执行任何隐式类型转换。 这意味着转换为不存储在值中的类型将返回一个默认构造的返回值。  
-
-```cpp
-//判断类型
-QJsonValue::Type type() const
-//以下是方便的函数    
-bool isArray() const
-bool isBool() const
-bool isDouble() const
-bool isNull() const
-bool isObject() const
-bool isString() const
-bool isUndefined() const
-//将值转换为特定类型并返回，如果type()不是特定类型，则返回defaultValue。  
-QJsonArray 	toArray(const QJsonArray &defaultValue) const
-QJsonArray 	toArray() const
-bool 		toBool(bool defaultValue = false) const
-double 		toDouble(double defaultValue = 0) const
-int 		toInt(int defaultValue = 0) const
-QJsonObject toObject(const QJsonObject &defaultValue) const
-QJsonObject toObject() const
-QString 	toString() const
-QString 	toString(const QString &defaultValue) const
-QVariant 	toVariant() const
-
-
-bool operator==(const QJsonValue &other) const
-const QJsonValue operator[](const QString &key) const
-const QJsonValue operator[](int i) const   
-```
-
-
-
-
-
-```cpp
-void Widget::parseJson(const QString &filename)
-{
-    QFile file(filename);
-    if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        qWarning("文件读取失败");
-        return;
-    }
-    QJsonParseError error;
-    QJsonDocument json = QJsonDocument::fromJson(file.readAll(),&error);
-    if(json.isNull())
-    {
-        qWarning("json 解析失败:%s",error.errorString().toUtf8().data());
-        return;
-    }
-    qDebug()<<json["test"];
-    qDebug()<<json["HostName"].toString()<<json["Port"].toInt()<<json["Username"].toString()
-            <<json["Password"].toString()<<json["DatabaseName"].toString();
-
-    void showAll(const QJsonObject & obj);
-    showAll(json.object());
-
-
-}
-
-void showAll(const QJsonObject & obj)
-{
-    for(QJsonValue value : obj)
-    {
-        if(value.isObject())
-        {
-            showAll(value.toObject());
-        }
-        else if(value.isArray())
-        {
-             for(QJsonValue a : value.toArray())
-             {
-                 qDebug()<<a;
-             }
-        }else
-        {
-            qDebug()<<value;
-        }
-
-    }
-}
-```
-
-
-
-## json生成
-
-生成也是用上面的类，需要注意的是：生成json时会自动把key排序
-
-```cpp
-void Widget::writeJson(const QString &filename)
-{
-    QJsonDocument json;
-
-    //构建一个主对象
-    QJsonObject obj;
-    obj.insert("year","2019");
-    obj.insert("month","10");
-    obj.insert("day","29");
-    obj.insert("weather","晴");
-    //构建一个数组
-    QJsonArray array ={"北京","天津"};
-    array.append("上海");
-    obj.insert("city",array);
-    //构建一个子对象
-    QJsonObject subObj;
-    subObj.insert("one",1);
-    subObj.insert("two",2);
-    obj.insert("list",subObj);
-
-    //给jsonDocument设置主对象
-    json.setObject(obj);
-    //保存
-    QFile file(filename);
-    if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
-    {
-         qWarning("文件打开失败");
-         return;
-    }
-    QByteArray jsonText = json.toJson();
-    file.write(jsonText);
-}
-```
-
-结果：
-
-```cpp
-{
-    "city": [
-        "北京",
-        "天津",
-        "上海"
-    ],
-    "day": "29",
-    "list": {
-        "one": 1,
-        "two": 2
-    },
-    "month": "10",
-    "weather": "晴",
-    "year": "2019"
-}
-```
 
 # JSON与XML的区别比较
 

@@ -87,12 +87,368 @@ iterator模式定义如下：提供一种方法，使之能够依序寻访某个
 |      种类      |                             功能                             |                  操作                   |
 | :------------: | :----------------------------------------------------------: | :-------------------------------------: |
 |   输入迭代器   |                     提供对数据的只读访问                     |          只读，支持++、==、!=           |
-|   输出迭代器   |                     提供对数据的只写访问                     |              只写，支持++               |
+|   输出迭代器   |                     提供对数据的读写访问                     |              读写，支持++               |
 |   前向迭代器   |               提供读写操作，并能向前推进迭代器               |          读写，支持++、==、!=           |
 |   双向迭代器   |               提供读写操作，并能向前和向后操作               |           读写，支持++、--，            |
 | 随机访问迭代器 | 提供读写操作，并能以跳跃的方式访问容器的任意数据，是功能最强的迭代器 | 读写，支持++、--、[n]、-n、<、<=、>、>= |
 
-#### 容器、迭代器、算法分离案例
+# 迭代器
+
+简而言之，迭代器的作用是用来访问容器（用来保存元素的数据结构）中的元素的。没错！这和访问数组这个序列的指针一样，因为数组范围内的指针就是迭代器的一种。
+
+## 数组范围指针
+
+以往我们遍历数组，都是使用下标法，简单，清晰！有如下数组:
+
+```cpp
+//容器
+int arr[5] = { 1,2,3,4,5 };
+```
+
++ 下标法遍历
+
+```cpp
+for (int i = 0; i < 5; i++)
+{
+	cout << arr[i] << " ";
+}
+```
+
++ 基于范围的for循环
+
+```cpp
+for(auto& v : arr)
+{
+    cout << v << " ";
+}
+```
+
+为啥能使用基于范围的for循环遍历数组呢？因为只要知道了数组的开始和结束就能去遍历了，看看如下遍历方法，你就明白了！
+
++ 指针法遍历
+
+```cpp
+int* iter = arr;
+for (iter = arr; iter != arr + 5; iter++)
+{
+	cout << *iter << " ";
+}
+```
+
++ 迭代器方式
+
+```cpp
+using  iterator = int*;
+iterator begin = arr;
+iterator end = arr + 5;
+for (iterator it = begin; it != end; it++)
+{
+	cout << *it << " ";
+}
+```
+
+## 自定义容器
+
+### SArray
+
+我们先自己写一个SArray容器。
+
+```cpp
+template<typename T,size_t _Size>
+class SArray
+{
+public:
+	SArray() {}
+	SArray(const std::initializer_list<T>& list)
+	{
+		int i = 0;
+		for (auto& v : list)
+		{
+			_data[i++] = v;
+		}
+	}
+	T& operator[](size_t index)
+	{
+		return _data[index];
+	}
+	size_t size()const { return _Size; };
+private:
+	T _data[_Size]{T()};
+};
+```
+
+
+
+在上面的代码中，我们提供了size()和[]运算符重载，所以可以通过下标去遍历SArray。
+
+```cpp
+SArray<int, 10> nums = {1,2,3,4,5};
+for (int i = 0; i < nums.size(); i++)
+{
+	cout << nums[i] << " ";
+}
+```
+
+那么对于SArray来说，能使用基于范围的for循环吗？
+
+```cpp
+for (auto& v : nums)
+{
+	cout << v << " ";
+}
+```
+
+哦豁，报错了！
+
+![image-20230304151310986](assets/image-20230304151310986.png)
+
+咱们来分析一下这个报错，它说，没有找到begin和end函数，但是基于范围的for循环又需要begin和end函数才能工作，就这样错误产生了！
+
+那么begin和end函数是什么呢？其实就是数组开始的指针和结束的指针，我们可以实现一下这两个函数：begin返回第一个元素的首地址，end返回最后一个元素的下一个元素的地址(注意，这个位置不能访问，仅仅作为结束标记)。
+
+```cpp
+class SArray
+{
+public:
+    ...
+	T* begin() { return _data; }
+	T* end() { return _data + _Size; }
+    ...
+};
+```
+
+通过调试，确实发现基于范围的for循环，调用了咱们写的begin和end函数。
+
+**另一种遍历方式**
+
+在上面，我们通过基于范围的for循环，遍历了SArray，其实还有一种遍历形式也是经常使用的。要想使用，我们还得在类里面加点料。
+
+```cpp
+template<typename T,size_t _Size>
+class SArray
+{
+public:
+	using iterator = T*;
+public:
+    ...
+    iterator begin() { return _data; }
+	iterator end() { return _data + _Size; }
+    ...
+}
+```
+
+在类的开头加上了一个类型`iterator`，它表示迭代器类型，其实就是T*类型的别名，只不过看起来更清晰而已。然后把begin和end的返回类型改为了`iterator`。
+
+```cpp
+for (SArray<int, 10>::iterator it = nums.begin(); it != nums.end(); ++it)
+{
+	cout << *it << " ";
+}
+```
+
+这种方法看起来有点复杂，其实`SArray<int, 10>::iterator`可以直接使用auto来进行推导。
+
+接下来，在看一个例子，我们提供一个函数，专门用来输出SArray的数据。
+
+```cpp
+template<typename T>
+void showSArray(const T& arr)
+{
+	for (auto v : arr)
+	{
+		cout << v << " ";
+	}
+	cout << endl;
+}
+//call
+showSArray(nums);
+```
+
+OH! No,此时编译器会报错错误：
+
+![image-20230304160134800](assets/image-20230304160134800.png)
+
+错误的意思是，找到了你的begin和end函数，但是呢，不是我想要的版本，因为`void showSArray(const T& arr)`函数传递的是常引用，不能调用非const成员函数。
+
+此时，就需要我们再重载一个const版本的。
+
+```cpp
+iterator begin()const { return _data; }
+iterator end()const { return _data + _Size; }
+```
+
+原来的问题解决了，但新的问题又产生了。
+
+![image-20230304160521492](assets/image-20230304160521492.png)
+
+对于指针来说，常函数，必须返回一个常量，我们再在类里面加点料。
+
+```cpp
+using const_iterator = const T*;
+
+const_iterator begin()const { return _data; }
+const_iterator end()const { return _data + _Size; }
+```
+
+这样就可以了，完美解决，那么大家再考虑一下，另一种情况，如果我想要倒着遍历SArray应该怎么做呢？对，没错，提供反向迭代器即可！
+
+```cpp
+using reverse_iterator = T*;
+using const_reverse_iterator = const T*;
+
+reverse_iterator rbegin() { return _data + _Size - 1; }
+reverse_iterator rend() { return _data - 1; }
+const_reverse_iterator rbegin()const { return _data + _Size - 1; }
+const_reverse_iterator rend()const { return _data - 1; }
+```
+
+定义`reverse_iterator`类型，并提供对应的`rbegin`和`rend`函数。
+
+```cpp
+for (auto it = nums.rbegin(); it != nums.rend(); it--)
+{
+	cout << *it << " ";
+}
+```
+
+> 注意：it必须使用--，因为无法区分，到底是不是使用的反向迭代器，针对这个问题，我们可以使用类来包装迭代器解决。
+
+## 迭代器类
+
+其实，在C++STL中，基本上所有迭代器都是通过类来实现的，这样就非常方便的去处理遍历操作了。
+
+实现一个链表：
+
+首先，写出节点类型：
+
+```cpp
+template<typename T>
+struct Node
+{
+	Node(const T& v) :data(v), next{ nullptr } {}
+	T data;
+	Node* next;
+};
+```
+
+然后，写出链表：
+
+```cpp
+template<typename T>
+class SForwardList
+{
+public:
+	SForwardList(){}
+	SForwardList(const std::initializer_list<T>& list) 
+	{
+		for (auto& v : list)
+		{
+			push_back(v);
+		}
+	}
+	~SForwardList() 
+	{
+		Node<T>* curNode = _head;
+		Node<T>* delNode = nullptr;
+		while (curNode)
+		{
+			delNode = curNode;
+			curNode = curNode->next;
+			delete[] delNode;
+		}
+	}
+	void push_back(const T& value)
+	{
+		Node<T>* node = new Node<T>(value);
+		if (!_head)
+		{
+			_head = node;
+			_tail = node;
+		}
+		else
+		{
+			_tail->next = node;
+			_tail = node;
+		}
+	}
+	friend std::ostream& operator<<(std::ostream& out, const SForwardList& list)
+	{
+		Node<T>* curNode = list._head;
+		out << "SForwardList(";
+		while (curNode)
+		{
+			out << curNode->data;
+			if (curNode->next)
+				out<< ",";
+			curNode = curNode->next;
+		}
+		out << ")";
+		return out;
+	}
+private:
+	Node<T>* _head{ nullptr };
+	Node<T>* _tail{ nullptr };
+};
+```
+
+测试：
+
+```cpp
+const SForwardList<int> list = {1,2,3,4,5,6,7,8};
+cout << list << endl;
+```
+
+Ok! 没问题了，接下来实现迭代器。
+
+```cpp
+template<typename T>
+class _SForwardList_iterator
+{
+public:
+	_SForwardList_iterator() {};
+	_SForwardList_iterator(T* ptr) :_ptr(ptr) {};
+	bool operator!=(const _SForwardList_iterator& it)
+	{
+		return _ptr != it._ptr;
+	}
+	_SForwardList_iterator operator++()
+	{
+		_ptr = _ptr->next;
+		return _ptr;
+	}
+	typename  T::value_type & operator*()
+	{
+		return _ptr->data;
+	}
+private:
+	T* _ptr{ nullptr };
+};
+```
+
+`SForwardList`类中添加如下代码：
+
+```cpp
+using iterator = _SForwardList_iterator<Node<T>>;
+
+iterator begin() { return iterator(_head); }
+iterator end() { return iterator(nullptr); }
+```
+
+测试一下:
+
+```cpp
+for (auto& v : list)
+{
+	//v = 5;
+	cout << v << " ";
+}
+```
+
+好了，能运行起来了！
+
+
+
+## 容器、迭代器、算法分离案例
 
 ```cpp
 #include<iostream>
@@ -335,36 +691,6 @@ private:
 
 int main()
 {
-	/*
-	//容器
-	int arr[5] = { 1,2,3,4,5 };
-	//方式1
-	for (int i = 0; i < 5; i++)
-	{
-		cout << arr[i] << " ";
-	}
-	cout << endl;
-	//方式2
-	int* iter = arr;
-	for (iter = arr; iter != arr + 5; iter++)
-	{
-		cout << *iter << " ";
-	}
-	cout << endl;
-	//方式3
-	using  iterator = int*;
-	iterator begin = arr;
-	iterator end = arr + 5;
-	for (iterator it = begin; it != end; it++)
-	{
-		cout << *it << " ";
-	}
-	//方式4
-	for (auto& val : arr)
-	{
-		cout << val << endl;
-	}
-	*/
 	Vector<int> vec(5);
 	for (size_t i = 0; i < vec.capacity(); i++)
 	{
@@ -415,43 +741,7 @@ int main()
 }
 ```
 
-#### initializer_list聚合初始化
 
-数组可以用聚合的方式初始化，int arr[]={1,3,1,4,5,2,0};那么咱们自己写的vector能用聚合初始化吗？
-
-答案是否定的，那么怎么做才能使用聚合形式进行初始化呢？
-
-C++11提供的新模板类型initializer_list<T>,有了它之后咱们就可以使用聚合进行初始化啦！
-
-用法：
-
-```cpp
-void show(initializer_list<int> ls)
-{
-	for (int i : ls)
-	{
-		cout << i << " ";
-	}
-}
-
-show({ 1,3,1,4,5,2,0 });//输出
-```
-
-同理，在类中我们可以提供一个initializer_list类型的构造函数
-
-```cpp
-//构造聚合初始化
-Vector(initializer_list<Data> ls)
-{
-	_capacity = ls.size();
-	_curSize = 0;
-	_Array = new Data[_capacity];
-	for (const Data& temp : ls)
-	{
-		this->push_back(temp);
-	}
-}
-```
 
 # 仿函数
 

@@ -22,7 +22,7 @@ STL的从广义上讲分为三类：algorithm（算法）、container（容器�
 
 在C++标准中，STL被组织为下面的13个头文 件：\<algorithm>、\<deque>、\<functional>、\<iter>、\<vector>、\<list>、\<map>、\<memory>、\<numeric>、\<queue>、\<set>、\<stack> 和\<utility>。
 
-#### 说了这么多，使用STL有什么好处呢？
+### 说了这么多，使用STL有什么好处呢？
 
 1）STL是C++的一部分，因此不用额外安装什么，它被内建在你的编译器之内。
 
@@ -48,7 +48,7 @@ STL的从广义上讲分为三类：algorithm（算法）、container（容器�
 
 <div align="center">Alexander Stepanov</div>
 
-#### 容器
+### 容器
 
 容器，置物之所也。
 
@@ -60,7 +60,7 @@ STL的从广义上讲分为三类：algorithm（算法）、container（容器�
 
 <font style="color:red">关联式容器：</font>非线性排列(二叉树)，在存储元素时会为每个元素在配备一个键，整体以键值对的方式存储到容器中，可以通过键值直接找到对应的元素，而无需遍历整个容器。另外，关联式容器在存储元素，默认会根据各元素键值的大小做升序排序。
 
-#### 算法
+### 算法
 
 算法，问题之解法也。
 
@@ -74,7 +74,7 @@ STL的从广义上讲分为三类：algorithm（算法）、container（容器�
 
 非质变算法：是指运算过程中不会更改区间内的元素内容，例如查找、计数、遍历、寻找极值等等
 
-#### 迭代器
+### 迭代器
 
 迭代器(iterator)是一种抽象的设计概念，现实程序语言中并没有直接对应于这个概念的实物。
 
@@ -743,13 +743,11 @@ int main()
 
 
 
-# 仿函数
+# 可调用对象(Callable object)
 
-#### 可调用对象(Callable object)
+## 简介
 
-函数调用需要使用"()"，这个“()”叫做`函数调用用运算符`。在面向对象编程世界里，一切皆为对象，对象是程序的基本单元。那么这个可调用的函数名，被称为可调用对象。
-
-在C++中除了函数可以调用之外，重载了operator()的类，也是可以调用的，也可成为可调用对象
+在面向对象编程世界里，一切皆为对象，对象是程序的基本单元。那么可以调用的对象称之为可调用对象，在C++中除了函数可以调用之外，重载了operator()的类，也是可以调用的，也可成为可调用对象
 
 *C++中的可调用对象有以下几种：*
 
@@ -763,23 +761,25 @@ int main()
 
 ​						*– bind 函数封装的函数对象*
 
+​					  *– function函数包装类对象*
+
 函数和函数指针不用多说，从仿函数开始把~
 
-#### 仿函数
+## 仿函数
 
 仿函数（Functor）又称为函数对象（Function Object）是一个能行使函数功能的类，仿函数是定义了一个含有operator()成员函数的对象，可以视为一个一般的函数，只不过这个函数功能是在一个类中的运算符operator()中实现，是一个函数对象，它将函数作为参数传递的方式来使用。
 
 写一个简单类，除了维护类的基本成员函数外，只需要重载 operator() 运算符 。这样既可以免去对一些公共变量的维护，也可以使重复使用的代码独立出来，以便下次复用。
 
-STL 中也大量涉及到仿函数，有时仿函数的使用是为了函数拥有类的性质，以达到安全传递函数指针、依据函数生成对象、甚至是让函数之间有继承关系、对函数进行运算和操作的效果。比如 STL 中的容器 set 就使用了仿函数 less ，而 less 继承的 binary_function，就可以看作是对于一类函数的总体声明，这是函数做不到的。
+### 为什么要有仿函数？
 
+#### 案例1：斐波拉契
 
+假如客户有一个需求摆在我们的面前，编写一个函数：函数可以获得斐波拉契数列每项的值；每调用一次便返回一个值；函数可根据需要重复使用。
 
-#### 为什么要有仿函数？
+##### 静态变量
 
-1，假如客户有一个需求摆在我们的面前,编写一个函数：函数可以获得斐波拉契数列每项的值；每调用一次便返回一个值；函数可根据需要重复使用。
-
-​    我们之前在 C 语言中也讲过斐波拉契数列，相信这个很好实现了。那么我们就编写的程序如下
+我们之前在 C 语言中也讲过斐波拉契数列，相信这个很好实现了。那么我们就编写的程序如下
 
 ```cpp
 int fibonacci()
@@ -810,7 +810,9 @@ int main()
 
 我们就开心的完成任务了，于是交给客户了。过两天，客户又给打回来了。说是存在几个问题：函数一但调用就无法重来，静态局部变量处于函数内部，外界无法改变。函数为全局函数，是唯一的，无法多次独立使用。无法指定某个具体的数列项作为初始值。
 
-​    于是我们想着将静态局部变量改为去全局变量，再次重新调用时，便将全局变量重新初始化，重新如下
+##### 全局变量
+
+于是我们想着将静态局部变量改为去全局变量，再次重新调用时，便将全局变量重新初始化，重新如下
 
 ```cpp
 int a0 = 0;	//第一项
@@ -842,21 +844,17 @@ int main()
 }
 ```
 
- 是满足这个需求了，但是要在使用时需要重新初始化全局变量，客户肯定不干啊。所以这个解决方案不可行。于是乎，我们在 C++ 中一个吊炸天的技术来了：函数对象。
+ 是满足这个需求了，但是要在使用时需要重新初始化全局变量，客户肯定不干啊。所以这个解决方案不可行。于是乎，仿函数出现了。
 
-先来说说函数对象：
+##### 仿函数
 
-a> 使用具体的类对象取代函数；
+  让我们来思考，仿函数实现思路：
 
-b> 该类的对象具备函数调用的行为；
++ 定义一个类，重载`operator()`；
++ 构造函数指定具体数列项的起始位置；
++ 多个对象相互独立的求解数列项。
 
-c> 构造函数指定具体数列项的起始位置；
-
-d> 多个对象相互独立的求解数列项。
-
-​    同样函数对象也是通过函数调用操作符()，便是重载操作符了。它只能通过类的成员函数重载，可以定义不同参数的多个重载函数。
-
-​    下来我们来看看最终的解决方案
+​    下来我们来看看最终的解决方案：
 
 ```cpp
 class Fibonacci
@@ -907,7 +905,9 @@ int main()
 
 
 
-2，比如，有一个简单需求：统计一个`vector<int>`中，元素等于3的数量。解决方法可能会是：
+#### 案例2：统计元素
+
+比如，有一个简单需求：统计一个`vector<int>`中，元素等于3的数量。解决方法可能会是：
 
 ```cpp
 int equal_count(const vector<int>::iterator& first,const vector<int>::iterator& last,const int& val)
@@ -1138,7 +1138,7 @@ int main()
 
 
 
-#### 仿函数优点
+### 仿函数优点
 
 如果可以用仿函数实现，那么你应该用仿函数，而不要用CallBack。原因在于：
 
@@ -1146,7 +1146,7 @@ int main()
 
 + 仿函数技术可以获得更好的性能，这点直观来讲比较难以理解。
 
-#### 仿函数作用
+### 仿函数作用
 
 仿函数通常有下面四个作用：
 
@@ -1155,25 +1155,55 @@ int main()
 + 同时拥有多种内部状态，比如返回一个值得同时并累加。
 + 作为算法for_each的返回值使用。
 
-## 函数对象
+### 标准仿函数
+
+STL 中也大量涉及到仿函数，有时仿函数的使用是为了函数拥有类的性质，以达到安全传递函数指针、依据函数生成对象、甚至是让函数之间有继承关系、对函数进行运算和操作的效果。比如 STL 中的容器 set 就使用了仿函数 less ，而 less 继承的 binary_function，就可以看作是对于一类函数的总体声明，这是函数做不到的。
+
+C++ 针对常用的算术和逻辑运算定义了很多函数对象：
+
+| 算术运算                                                     |                                 |
+| ------------------------------------------------------------ | ------------------------------- |
+| [plus](https://zh.cppreference.com/w/cpp/utility/functional/plus) | 实现 x + y 的函数对象 (类模板)  |
+| [minus](https://zh.cppreference.com/w/cpp/utility/functional/minus) | 实现 x - y 的函数对象 (类模板)  |
+| [multiplies](https://zh.cppreference.com/w/cpp/utility/functional/multiplies) | 实现 x * y 的函数对象 (类模板)  |
+| 比较                                                         |                                 |
+| [equal_to](https://zh.cppreference.com/w/cpp/utility/functional/equal_to) | 实现 x == y 的函数对象 (类模板) |
+| [not_equal_to](https://zh.cppreference.com/w/cpp/utility/functional/not_equal_to) | 实现 x != y 的函数对象 (类模板) |
+| [greater](https://zh.cppreference.com/w/cpp/utility/functional/greater) | 实现 x > y 的函数对象 (类模板)  |
+| [less](https://zh.cppreference.com/w/cpp/utility/functional/less) | 实现 x < y 的函数对象 (类模板)  |
+| [greater_equal](https://zh.cppreference.com/w/cpp/utility/functional/greater_equal) | 实现 x >= y 的函数对象 (类模板) |
+| [less_equal](https://zh.cppreference.com/w/cpp/utility/functional/less_equal) | 实现 x <= y 的函数对象 (类模板) |
+
+## 函数适配器
 
 > 头文件<functional>
 
-*函数对象*是专门设计用于使用类似于函数的语法的对象。在 C++ 中，这是通过`operator()`在其类中定义成员函数来实现的。
+函数适配器的功能是：将一种函数对象转化为另外一种符合要求的函数对象。
 
-它们通常用作函数的参数，例如传递给标准算法的谓词或比较函数。
+### bind
 
-### 函数
-
-这些函数根据其参数创建包装类的对象
-
-#### bind
-
-用来绑定函数调用的某些参数，可以将bind函数看作一个通用的函数包装器，它接受一个可调用对象，并返回函数对象。
+bind函数用来绑定函数调用的某些参数，可以将bind函数看作一个通用的函数包装器，它接受一个可调用对象，并返回函数对象。
 
 返回的函数对象参数从前往后，可以依次编号，从1开始；然后可以把传入的参数对原来的参数进行绑定。
 
-**1. 绑定普通函数**
+#### 1. 绑定全局函数
+
+> 全局函数是指定义在类外的函数，可以被其他文件中函数调用。
+
+##### 1.0 绑定无参函数
+
+对于没有参数的函数，绑定起来最简单，只需要传递一个函数名。
+
+```cpp
+std::string myName() { return std::string("顽石老师"); }
+//exp
+auto getNmae = std::bind(myName);
+std::cout << getNmae();
+```
+
+##### 1.1 顺序绑定参数
+
+首先，定义一个有参数的函数。
 
 ```cpp
 void show(int number, const std::string& str)
@@ -1182,28 +1212,30 @@ void show(int number, const std::string& str)
 }
 ```
 
-+ 顺序绑定参数
+然后，进行绑定并调用。
 
-  ```cpp
-  auto bind_show = std::bind(show, placeholders::_1, placeholders::_2);
-  bind_show(2,"world");
-  ```
+```cpp
+auto bind_show = std::bind(show, placeholders::_1, placeholders::_2);
+bind_show(2,"world");
+```
 
-+ 交换参数位置
+##### 1.2 交换参数位置
 
-  ```cpp
-  auto bind_show1 = std::bind(show, placeholders::_2, placeholders::_1);
-  bind_show1("world",1314520);
-  ```
+使用`placeholders`来进行占位，`placeholders::_N` _N表示绑定之后的函数对象的参数位置。
 
-+ 绑定固定参数
+```cpp
+auto bind_show1 = std::bind(show, placeholders::_2, placeholders::_1);
+bind_show1("world",1314520);
+```
 
-  ```cpp
-  auto bind_show3 = std::bind(show, 888,placeholders::_1);
-  bind_show3("玩蛇老师");
-  ```
+##### 1.3 绑定固定参数
 
-**2. 绑定成员函数**
+```cpp
+auto bind_show3 = std::bind(show, 888,placeholders::_1);
+bind_show3("玩蛇老师");
+```
+
+#### 2. 绑定成员函数
 
 ```cpp
 struct Plus
@@ -1221,7 +1253,7 @@ struct Plus
 }
 ```
 
-**3. 绑定函数对象**
+#### 3. 绑定仿函数
 
 ```cpp
 struct Sub
@@ -1237,7 +1269,7 @@ struct Sub
 }
 ```
 
-**4. 绑定lambda表达式**
+#### 4. 绑定lambda表达式
 
 ```cpp
 {	
@@ -1248,65 +1280,7 @@ struct Sub
 
 
 
-#### not1
-
-返回一元函数对象的否定，只能对仿函数进行否定，普通函数不行。
-
-> ##### 一元函数又叫一元谓词
->
-> 谓词( *predicate* )是指普通函数或重载的operator()返回值是bool类型的函数对象(仿函数)。如果operator()接受一个参数，那么叫做一元谓词,如果接受两个参数，那么叫做二元谓词，谓词可作为一个判断式。
-
-```cpp
-struct Greater5 
-	:public unary_function<int, bool>		//必须继承自一元函数类
-{
-	bool operator()(int val) const			//必须加上const
-	{
-		return val > 5;
-	}
-};
-
-int main()
-{
-	cout << boolalpha << Greater5()(10) << endl;
-	auto _less5 = not1(Greater5());
-	cout << boolalpha << _less5(10) << endl;
-    return 0;
-}
-```
-
-
-
-
-
-#### not2
-
-返回二元函数对象的否定，只能对仿函数进行否定，普通函数不行。
-
-```cpp
-struct Greater
-    :public binary_function<int,int,bool>	//必须继承自二元函数类
-{
-	bool operator()(int a, int b) const		//必须加上const
-	{
-		return a > b;
-	}
-};
-
-int main()
-{
-	cout << boolalpha << Greater()(3, 1) << endl;;
-
-	auto _less = not2(Greater());
-	cout << boolalpha << _less(3,1) << endl;;
-
-	return 0;
-}
-```
-
-
-
-#### ref、cref
+### ref、cref
 
 构造一个适当的reference_wrapper类型的对象来保存对elem的引用。
 
@@ -1315,27 +1289,32 @@ int main()
 + cref 常引用
 
 ```cpp
-struct Inc
+class Foo
 {
-	mutable int number = 0;
-	void operator()()const
+public:
+	int _value = 4;
+	void show()
 	{
-		cout << number << endl;
-		number++;
+		++_value;
+		std::cout << _value << std::endl;
 	}
 };
-
 int main()
 {
-	Inc inc;
-	auto func = bind(std::cref(inc));
+	Foo foo;
+
+	auto func = std::bind(&Foo::show, std::ref(foo));
 	func();
-	inc();
-    return 0;
+	func();
+
+	foo.show();
+	foo.show();
+
+	return 0;
 }
 ```
 
-#### mem_fun
+### mem_fn
 
 把成员函数转为函数对象，使用对象指针或对象(引用)进行绑定
 
@@ -1359,23 +1338,18 @@ int main()
 	Foo f;
 	//把成员函数转为函数对象，使用对象指针或对象(引用)进行绑定
 	auto func = mem_fn(&Foo::print);
-	func(f);		//把对象传进去
+	func(f);		//把对象传进去(引用)
 	func(&f);		//对象指针也行
 	func(Foo());	//临时对象也行
 
-	//把成员函数转为函数对象，使用对象指针进行绑定
-	auto func1 = mem_fun(&Foo::print2);
-	func1(&f,666);
-
-	//把成员函数转为函数对象，使用对象(引用)进行绑定
-	auto func2 = mem_fun_ref(&Foo::print);
-	func2(f);
+    auto func2 = mem_fn(&Foo::print2);
+    func2(f,520);
 
 	return 0;
 }
 ```
 
-##### 示例
+#### 示例
 
 ```cpp
 struct Foo
@@ -1411,233 +1385,180 @@ int main()
 
 
 
-##### 总结
+### not1
 
-| **函数**      | **作用**                                                 |
-| :------------ | :------------------------------------------------------- |
-| `mem_fun`     | 把成员函数转为函数对象，使用对象指针进行绑定             |
-| `mem_fun_ref` | 把成员函数转为函数对象，使用对象(引用)进行绑定           |
-| `mem_fn`      | 把成员函数转为函数对象，使用对象指针或对象(引用)进行绑定 |
-| `bind`        | 包括但不限于mem_fn的功能，更为通用的解决方案             |
+返回一元函数对象的否定，只能对仿函数进行否定，普通函数不行。
 
-### 包装类
+> ##### 一元函数又叫一元谓词
+>
+> 谓词( *predicate* )是指普通函数或重载的operator()返回值是bool类型的函数对象(仿函数)。如果operator()接受一个参数，那么叫做一元谓词,如果接受两个参数，那么叫做二元谓词，谓词可作为一个判断式。
 
-包装类是包含一个对象并具有与该对象类似的接口的类，但添加或更改了它的一些特性：
+```cpp
+struct Greater5 
+	:public unary_function<int, bool>		//必须继承自一元函数类
+{
+	bool operator()(int val) const			//必须加上const
+	{
+		return val > 5;
+	}
+};
 
-#### funtion
+int main()
+{
+	cout << boolalpha << Greater5()(10) << endl;
+	auto _less5 = not1(Greater5());
+	cout << boolalpha << _less5(10) << endl;
+    return 0;
+}
+```
 
-> 函数包装器
+
+
+### not2
+
+返回二元函数对象的否定，只能对仿函数进行否定，普通函数不行。
+
+```cpp
+struct Greater
+    :public binary_function<int,int,bool>	//必须继承自二元函数类
+{
+	bool operator()(int a, int b) const		//必须加上const
+	{
+		return a > b;
+	}
+};
+
+int main()
+{
+	cout << boolalpha << Greater()(3, 1) << endl;;
+
+	auto _less = not2(Greater());
+	cout << boolalpha << _less(3,1) << endl;;
+
+	return 0;
+}
+```
+
+### not_fn(C++17)
+
+> `not_fn` 的目的是取代 C++03 时代的取反器 std::not1及 std::not2。
+>
+> `std::not1`和`std::not2`在C++17中弃用，在C++20中被移除了！
+
+构造一个转发调用包装器，返回其所保有的可调用对象的逻辑非。
+
+
+
+## function类
 
 该函数包装器模板能包装任何类型的可调用实体，如普通函数、函数对象(仿函数)、lambda表达式以及bind创建的对象。
 
+std::function对象是对C++中现有的可调用实体的一种类型安全的包裹（我们知道像函数指针这类可调用实体，是类型不安全的）。
+
 通过function类型可以将多个不同类型的可调用对象，整合到一个类型中。
 
-1. 包装普通函数
+### 包装普通函数
 
-   ```cpp
-   int add(int a, int b)
-   {
-   	return a + b;
-   }
-   
-   {
-   	std::function<int(int, int)> fun_add(add);
-   	cout<<fun_add(2, 3);
-   }
-   ```
+```cpp
+int add(int a, int b)
+{
+	return a + b;
+}
 
-2. 包装成员函数(通过bind绑定)
+{
+	std::function<int(int, int)> fun_add(add);
+	cout<<fun_add(2, 3);
+}
+```
 
-   ```cpp
-   class Maye
-   {
-   public:
-   	int add(int a, int b)
-   	{
-   		return a + b;
-   	}
-   };
-   
-   {
-   	Maye maye;
-   	std::function<int(int, int)> fun_maye_add(std::bind(&Maye::add, &maye,placeholders::_1,placeholders::_2));
-   	cout << fun_maye_add(3, 5);
-   }
-   ```
+### 包装成员函数(通过bind绑定)
 
-3. 包装lambda表达式
+```cpp
+class Maye
+{
+public:
+	int add(int a, int b)
+	{
+		return a + b;
+	}
+};
 
-   ```cpp
-   {
-       std::function<int(int, int)> fun_lambda_add([](int a, int b)->int 
-                                                       {
-                                                           return a + b; 
-                                                       });
-   	cout << fun_lambda_add(7, 8) << endl;
-   }
-   ```
+{
+	Maye maye;
+	std::function<int(int, int)> fun_maye_add(std::bind(&Maye::add, &maye,placeholders::_1,placeholders::_2));
+	cout << fun_maye_add(3, 5);
+}
+```
 
-4. 包装函数对象
+### 包装lambda表达式
 
-   ```cpp
-   class Maye
-   {
-   public:
-   	int operator()(int a, int b)
-   	{
-   		return a * b;
-   	}
-   };
-   
-   {		
-   	Maye obj;
-   	std::function<int(int, int)> fun_functor(obj);
-   	cout << fun_functor(2,4);
-   }
-   ```
+```cpp
+{
+    std::function<int(int, int)> fun_lambda_add([](int a, int b)->int 
+                                                    {
+                                                        return a + b; 
+                                                    });
+	cout << fun_lambda_add(7, 8) << endl;
+}
+```
 
-#### reference_wrapper
+### 包装函数对象
 
-引用包装器，std::ref函数返回的对象。
+```cpp
+class Maye
+{
+public:
+	int operator()(int a, int b)
+	{
+		return a * b;
+	}
+};
 
-#### unary_negate
+{		
+	Maye obj;
+	std::function<int(int, int)> fun_functor(obj);
+	cout << fun_functor(2,4);
+}
+```
 
-否定一元函数(谓词)对象类，std::not1函数返回的对象
+## std::invoke
 
-#### binary_negate
+std::invoke 能以给定参数调用任何可调用 *(Callable)* 对象。
 
-否定二元函数(谓词)对象类，std::not2返回的对象
+### 调用全局函数
+
+```cpp
+std::string myName(){return std::string("顽石老师");}
+std::cout<< std::invoke(myName);
+```
+
+### 调用成员函数
+
+```cpp
+class Foo
+{
+public:
+	void show(){std::cout << __FUNCTION__ << std::endl;}
+};
+
+Foo foo;
+std::invoke(&Foo::show,&foo);
+```
+
+### 调用函数并传递参数
+
+```cpp
+void show(int number, const std::string& str)
+{
+	cout << number << " " << str << endl;
+}
+
+std::invoke(show,123,"world");
+```
+
+
 
 # 序列式容器
-
-## string
-
-#### string概念
-
-+ string是STL的字符串类型，通常用来表示字符串。而在使用string之前，字符串通常是用char*表示的。string与char*都可以用来表示字符串，那么二者有什么区别呢。
-
-**string和char*的比较**
-
-+ string是一个类, char*是一个指向字符的指针。
-
-  ​     *string封装了char\*，管理这个字符串，是一个char\*型的容器*
-
-+ string不用考虑内存释放和越界。
-
-  ​     *string管理char*所分配的内存。每一次string的复制，取值都由string类负责维护，不用担心复制越界和取值越界等。
-
-+ string提供了一系列的字符串操作函数（这个等下会详讲）
-
-  	*查找find，拷贝copy，删除erase，替换replace，插入insert*
-
-#### string的构造函数
-
-```cpp
-string();									//默认构造
-string(const char* ptr);					//char*指向的字符串
-string(const string& right);				//拷贝构造
-string(string&& right);						//移动构造
-string(iter first,iter last);				//以相同顺序复制[first，last)范围内的字符
-string(const size_t count,const char c);	//生成count个由字符c组成的序列
-string(const char *ptr,size_t count);		//char*指向的字符串，前count个字符
-```
-
-#### string的存取字符操作
-
-```cpp
-ostream& operator<<(ostream& out,string& right);	//直接输出string
-char& operator[](size_t off);						//获取off下标的字符(相对于首地址的偏移)
-char& at(size_t off);								//同上  但是越界会抛异常
-char& front();										//获取头部元素
-char& back();										//获取尾部元素
-```
-
-#### string容量相关
-
-```cpp
-size_t size();								//获取字符串长度
-size_t length();							//同上
-size_t max_size();							//字符串可以存储的最大长度
-size_t capacity();							//获取string内部存储字符串的内存大小，自动扩容
-void   reserve(size_t n);					//请求更改容量，如果n大于当前字符串的容量，则使容器将其容量增加到n个字符（或更大）,小于可能不予理会(与实现有关)	
-void   resize(size_t n,char c = '\0');		//调整字符串大小, 如果n小于当前字符串长度，则当前值将缩短为它的前n个字符，并删除第n个字符之外的字符。 如果n大于当前字符串的长度,则以c进行填充多余空间。
-void   clear();								//清空字符串，长度变为0
-bool   empty();								//判断是否为空串，即size == 0
-void   shrink_to_fit();						//请求sting减小其容量到合适大小(可能不予理会)
-```
-
-#### string修改
-
-```cpp
-string& operator+=(string& right);
-string& operator+=(char * str);
-string& operator+=(char c);
-//append
-string& append(string& right);
-string& append(string& right,size_t pos,size_t sublen = npos);	//从right pos位置开始，复制sublen长度到this
-string& append(char *str);
-string& append(char *str,size_t n);		//把str的前n个追加到当前string
-string& append(size_t n,char c);		//追加n个字符c
-string& append(iter first,iter last);	//以相同顺序追加[first，last)范围内的字符
-
-void push_back(char c);					//追加字符c
-//和构造函数差不多
-string& assign(...);					//为字符串分配一个新值，替换其当前内容
-//和append差不多，只是多了个插入位置
-string& insert(size_t pos,string& str);	//将str插入到pos所指示的字符之前
-
-string& erase(size_t pos = 0,size_t len = npos);	//删除从pos开始跨越len个字符的部分
-iterator erase(iter p);						//删除p指向的字符		
-iterator erase(iter first,iterator last);	//删除[first,last)范围内的字符
-
-
-string& replace(size_t pos,size_t len,string &str);
-string& replace(iter i1, iter i2, const string& str);	
-string& replace(size_t pos,  size_t len,  const string& str,
-                size_t subpos, size_t sublen);
-string& replace(size_t pos,  size_t len,  const char* s);
-string& replace(size_t pos,  size_t len,  const char* s, size_t n);
-string& replace(iter i1, iter i2, const char* s, size_t n);
-string& replace(size_t pos,  size_t len,  size_t n, char c);
-string& replace(iter i1, iter i2, size_t n, char c);
-
-template <class Inputiter>
-string& replace (iter i1, iter i2,Inputiter first, Inputiter last);
-
-
-void swap(string& str);					//交换两个string的内容
-void swap(string& left,string& right);	//全局重载
-
-void pop_back();						//删除最后一个字符
-```
-
-#### string操作
-
-```cpp
-const char* c_str();			//获取c风格字符串
-const char* data();				//同上
-size_t copy(char* s,size_t len,size_t pos = 0);//把当前串中以pos开始的len个字符拷贝到以s为起始位置的字符数组中，返回实际拷贝的数目。注意要保证s所指向的空间足够大以容纳当前字符串，不然会越界。
-
-//find:返回查找到的起始下标，找不到返回string::npos
-size_t find(const string& str, size_t pos = 0);	//从pos位置开始查找str
-size_t find(const char* s, size_t pos = 0);	//从pos位置开始查找s
-size_t find(const char* s, size_t pos, size_t n);//把s中的前n个字符，在string中的pos位置开始查找
-size_t find(char c, size_t pos = 0);	//从pos位置开始查找字符c
-size_t rfind(...);						//同上，只不过是反向查找
-size_t find_first_of(...);				//查找与参数中字符串任意一个字符匹配的第一个字符
-size_t find_last_of(...);				//同上，反向查找
-size_t find_first_of(...);				//查找与参数中字符串任意一个字符都不匹配的第一个字符
-size_t find_last_of(...);				//同上，反向查找
-string substr(size_t pos=0,size_t len=npos);//返回一个新构造的string对象，其值初始化为该对象的子字符串的副本。
-```
-
-#### string静态成员
-
-+ npos是一个静态成员常量值，被定义为-1，但是size_t是unsigned int，值是最大值(4294967295)
-+ 用作字符串成员函数中*len*（或*sublen*）参数的值时，此值表示*“直到字符串结尾”*。 
-+ 作为返回值，通常用于表示没有匹配项。
-
-
 
 ## array
 

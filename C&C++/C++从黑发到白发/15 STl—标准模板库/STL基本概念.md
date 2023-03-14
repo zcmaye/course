@@ -2177,7 +2177,7 @@ template <class... _Valty>
 
 ## set/multiset容器
 
-#### set/multiset的简介
+### set/multiset的简介
 
 set是一个***集合***容器，其中所包含的元素是***唯一***的，***集合中的元素按一定的顺序排列***。元素插入过程是按排序规则插入，所以不能指定插入位置。
 
@@ -2187,7 +2187,7 @@ set采用***红黑树***变体的数据结构实现，红黑树属于平衡二�
 
 <font style="color:blue">不可以直接修改set或multiset容器中的元素值</font>，因为该类容器是自动排序的。如果希望修改一个元素值，必须先删除原有的元素，再插入新的元素。
 
-#### set/multiset对象的默认构造
+### set/multiset对象的默认构造
 
 ```cpp
 set();
@@ -2199,7 +2199,7 @@ set(_Iter _First, _Iter _Last, const key_compare& _Pred);
 
 
 
-#### set/multiset存取
+### set/multiset存取
 
 ```cpp
  pair<iterator, bool> insert(const value_type& _Val);
@@ -2221,7 +2221,7 @@ template <class... _Valtys>
     iterator emplace_hint(const_iterator _Where, _Valtys&&... _Vals)
 ```
 
-#### set/multiset容量相关
+### set/multiset容量相关
 
 ```cpp
 bool empty();
@@ -2229,7 +2229,7 @@ size_t size();
 size_t max_size();
 ```
 
-#### set/multiset获取比较规则
+### set/multiset获取比较规则
 
 ```cpp
 //两个返回的都是一样的
@@ -2237,7 +2237,7 @@ key_compare key_comp（）const;
 value_compare value_comp（）const;
 ```
 
-#### set/multiset操作
+### set/multiset操作
 
 ```cpp
 iterator find(const key_type& _Keyval);//在容器中搜索与val等效的元素，如果找到则返回一个迭代器，否则返回end迭代器。
@@ -2246,7 +2246,7 @@ size_t count(const key_type& _Keyval);	//在容器中搜索与val等效的元素
 //与排序规则有关
 iterator lower_bound(const key_type& _Keyval);//找到第一个大于或者等于keyval的值
 iterator upper_bound(const key_type& _Keyval);//找到第一个大于keyval的值
-
+//上面两个函数的综合
 pair<iterator, iterator> equal_range(const key_type& _Keyval)
 ```
 
@@ -2254,7 +2254,7 @@ pair<iterator, iterator> equal_range(const key_type& _Keyval)
 
 ## map\multimap容器
 
-#### map/multimap的简介
+### map/multimap的简介
 
 map(映射)是关联容器，用于存储按特定顺序由*键值*和*映射值*的组合形成的元素，即(key,value)对。它提供基于key的快速检索能力。
 
@@ -2266,7 +2266,7 @@ map可以直接存取key所对应的value，支持[]操作符，如map[key]=valu
 
 <p style="color:red;">multimap与map的区别：set支持唯一键值，每个key只能出现一次；而multiset中同一key可以出现多次。map支持[]操作符，但是multmap不支持</p>
 
-#### map/multimap构造函数
+### map/multimap构造函数
 
 ```cpp
 map();
@@ -2276,7 +2276,7 @@ map(_Iter _First, _Iter _Last);
 map(_Iter _First, _Iter _Last, const key_compare& _Pred);
 ```
 
-####  map/multimap容量
+###  map/multimap容量
 
 ```cpp
 bool empty();
@@ -2284,14 +2284,14 @@ size_t size();
 size_t max_size();
 ```
 
-#### map/multimap元素访问
+### map/multimap元素访问
 
 ```cpp
 mapped_type& operator[](key_type&& keyval);	//根据key获取value
 mapped_type& at(const key_type& _Keyval);	
 ```
 
-#### map/multimap修改
+### map/multimap修改
 
 ##### insert
 
@@ -2377,7 +2377,7 @@ template <class... Args>
 //stu.emplace(12, "duck");	//key,mapped
 ```
 
-#### map操作
+### map操作
 
 ```cpp
 //查找键key是否存在，若存在，返回该键的元素的迭代器；若不存在，返回map.end();

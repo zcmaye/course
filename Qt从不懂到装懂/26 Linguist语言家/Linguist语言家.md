@@ -22,24 +22,70 @@ Qt提供了一款优秀的支持Qt C++和Qt Quick应用程序的翻译工具。�
 [static] QString QObject::tr(const char *sourceText, const char *disambiguation = nullptr, int n = -1)
 ```
 
-### **2，修改pro文件**
+### 2，生成翻译文件
 
-在.pro文件中添加翻译文件名称。
+Qt Linguist工具中有两个可执行文件，分别是lupdate与lrelease，前者用来生成ts文件，后者用来生成qm文件。
+
++ 运行lupdate生成第一组翻译源(TS)文件，其中包含所有用户可见的文本，但没有翻译。
++ 将TS文件交给使用Qt Linguist添加翻译的翻译人员。Qt Linguist负责任何更改或删除的源文本。
++ 运行lupdate以合并添加到应用程序中的任何新文本。lupdate将应用程序中用户可见的文本与翻译同步。它不会破坏任何数据。
++ 要发布应用程序，请运行lrelease来读取TS文件并生成应用程序在运行时使用的QM文件。
+
+#### TS文件
+
+##### QMake
+
+在QMake项目中，项目文件是pro文件，lupdate是可以直接通过pro文件获取到项目中所有的源文件的。lupdate接受一个pro文件的路径作为参数，然后接受-ts标记指定的输出文件。
+
+```cpp
+lupdate test.pro -ts test_zh_CN.ts
+```
+
+运行这行命令后，`lupdate`就会从`pro`文件中获取QMake项目的所有源文件并分析所有需要翻译的字符串然后生成`ts`文件。
+
+##### CMake
+
+但是我们现在是CMake项目，你不能把`CMakeLists.txt`当作工程文件传给它。
+
+```cpp
+lupdate CMakeLists.txt -ts test_zh_CN.ts	//error:lupdate看不懂CMakeLists.txt
+```
+
+此时，我们需要手动把项目中所有含有源文件的路径传给`lupdate`。
+
+```cpp
+lupdate main.cpp MainWindow.cpp MainWindow.h -ts test_zh_CN.ts
+```
+
+这样`lupdate`也能输出正确的`ts`文件，其实只需要把包含待翻译字符串的源文件传给它就行了。
+
+#### QM文件
+
+```cpp
+lrelease hello_zh_cn.ts hello_en.ts
+```
+
+
+这样就生成了qm文件，可以通过代码加载了！
+
+
+
+先在.pro文件中添加翻译文件名称。
 
 ```css
 TRANSLATIONS += translations/zh_CN.ts \   /*中文翻译文件*/
                 translations/en.ts        /*英文翻译文件*/
 ```
 
-### 3，生成翻译文件
+#### Qt Creator
 
 点击 菜单栏->工具->外部->Qt语言家->更新翻译(lupdae)，此时会在translations目录下面生成zh_CN.ts和en.ts两个文件。
 
 ![image-20211116154428437](assets/image-20211116154428437.png)
 
-### 4，打开翻译文件，并翻译
+### 3，打开翻译文件，并翻译
 
-#### 4.1 修改xml，翻译
+#### 3.1 修改xml，翻译
 
 ts文件实际上是一个xml文件，直接可以用文本编辑器打开。
 
@@ -145,7 +191,7 @@ ts文件实际上是一个xml文件，直接可以用文本编辑器打开。
 
 ![image-20220527163156154](assets/image-20220527163156154.png)
 
-### **5，发布翻译**
+### **4，发布翻译**
 
 翻译完成之后，就可以发布翻译了，为什么要发布呢？发布是什么意思？
 
@@ -168,7 +214,7 @@ ts文件实际上是一个xml文件，直接可以用文本编辑器打开。
 
 
 
-### **6，加载语言文件**
+### **5，加载语言文件**
 
 QTranslator类为文本输出提供国际化支持。
 
@@ -185,7 +231,7 @@ if(translator.load("linguist_en.qm","F:\\MyCode\\QtCode\\Lingguist\\translate"))
 
 **注意**：翻译文件加载的位置必须在界面实例化之前完成，否则是没有效果的.
 
-### **7，动态切换语言**
+### **6，动态切换语言**
 
 如果界面是通过Ui生成的，切换语言之后，可以通过调用函数retranslateUi翻译界面，否则需要重启程序.
 

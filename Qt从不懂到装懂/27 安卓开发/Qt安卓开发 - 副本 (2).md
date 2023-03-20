@@ -476,31 +476,19 @@ Qt 6.2支持以下开发环境和目标系统配置:
 
 #### sdkmanager
 
-`sdkmanager` 是一个命令行工具，您可以用它来查看、安装、更新和卸载 Android SDK 的软件包。如果使用 Android Studio，则无需使用此工具，而可以从 IDE 管理 SDK 软件包。
+首先，解压`commandlinetools-win-8512546_latest.zip` 得到sdkmanager命令行工具，您可以用它来查看、安装、更新和卸载 Android SDK 的软件包。如果您使用 Android Studio，则无需使用此工具，而是可以[从 IDE 管理 SDK 软件包](https://developer.android.google.cn/studio/intro/update#sdk-manager)。
 
-如需使用 SDK 管理器安装某个版本的命令行工具，请按以下步骤操作：
+请按以下步骤操作：
 
-1. 从 [Android Studio 下载页面](https://developer.android.google.cn/studio)中下载最新的“command line tools only”软件包。
+1. 从 [Android Studio 下载页面](https://developer.android.google.cn/studio)中下载最新的“command line tools only”软件包，然后将其解压缩。
 
-![image-20230320190336803](assets/image-20230320190336803.png)
+2. 将解压缩的 `cmdline-tools` 目录移至您选择的新目录，例如 android_sdk。这个新目录就是您的 Android SDK 目录。
 
-2. 然后将其解压缩，得到`cmdline-tools`目录。
+3. 在解压缩的 `cmdline-tools` 目录中，创建一个名为 `latest` 的子目录。
 
-![image-20230320190550766](assets/image-20230320190550766.png)
+4. 将原始 `cmdline-tools` 目录内容（包括 `lib` 目录、`bin` 目录、`NOTICE.txt` 文件和 `source.properties` 文件）移动到新创建的 `latest` 目录中。现在，您就可以从这个位置使用命令行工具了。
 
-3. 将解压缩的 `cmdline-tools` 目录移至您选择的新目录，例如 android_sdk。这个新目录就是您的 Android SDK 目录。
-
-![image-20230320190639505](assets/image-20230320190639505.png)
-
-4. 在解压缩的 `cmdline-tools` 目录中，创建一个名为 `latest` 的子目录。
-
-![image-20230320190709010](assets/image-20230320190709010.png)
-
-6. 将原始 `cmdline-tools` 目录内容（包括 `lib` 目录、`bin` 目录、`NOTICE.txt` 文件和 `source.properties` 文件）移动到新创建的 `latest` 目录中。现在，您就可以从这个位置使用命令行工具了。
-
-![image-20230320190738922](assets/image-20230320190738922.png)
-
-1. （可选）如需安装旧版命令行工具，请运行以下命令：
+5. （可选）如需安装旧版命令行工具，请运行以下命令：
 
    ```sh
    android_sdk/cmdline-tools/latest/bin/sdkmanager --install "cmdline-tools;version"
@@ -508,40 +496,28 @@ Qt 6.2支持以下开发环境和目标系统配置:
 
    将 `version` 替换为您要安装的版本，例如 `5.0`
 
-##### 列出所有软件包
+#### 用法
 
-进入bin目录，执行命令`sdkmanager --list`，列出已安装和可用的软件包。
+您可以使用 `sdkmanager` 执行以下任务。
 
-<font color='red'>出现错误：</font>
+##### 列出已安装和可用的软件包
 
+```sh
+sdkmanager --list
 ```
-ERROR: JAVA_HOME is set to an invalid directory: F:\Tools\Java\jdk-11.0.17\bin
-错误:JAVA_HOME被设置为无效目录:F:\Tools\Java\jdk-11.0.17\bin
-
-Please set the JAVA_HOME variable in your environment to match the location of your Java installation.
-请在您的环境中设置JAVA_HOME变量以匹配Java安装的位置。
-```
-
-<font color='red'>解决方法：</font>在系统变量里配置正确的`JAVA_HOME`值(配置好了记得重启终端哟)。
-
-![image-20230320191818232](assets/image-20230320191818232.png)
-
-
 
 ##### 安装软件包
 
-如需安装软件包，请使用以下语法：
-
-```css
-sdkmanager packages [options]
+```sh
+sdkmanager packages
 ```
 
-packages 参数是 `--list` 命令列出的 SDK 样式路径，该路径括在引号中。例如，`"build-tools;33.0.1"` 或 `"platforms;android-33"`。
+packages 参数是 `--list` 命令列出的 SDK 式的路径，这些路径括在引号中（例如 `"build-tools;30.0.2"` 或 `"platforms;android-28"`）。您可以传递多个软件包路径（用空格分隔），但各个路径必须括在各自的一组引号中。
 
-您可以传递多个软件包路径（用空格分隔），但各个路径必须括在各自的一组引号中。例如，下面展示了如何安装最新的平台工具以及适用于 API 级别 33 的 SDK 工具：
+例如，下面展示了如何安装最新的平台工具（包括 `adb` 和 `fastboot`）以及适用于 API 级别 28 的 SDK 工具：
 
 ```sh
-sdkmanager "platform-tools" "platforms;android-33"
+sdkmanager "platform-tools" "platforms;android-28"
 ```
 
 或者，您也可以传递一个指定了所有软件包的文本文件：
@@ -550,7 +526,7 @@ sdkmanager "platform-tools" "platforms;android-33"
 sdkmanager --package_file=package_file
 ```
 
-**package_file：**参数指定了文本文件所在的位置，该文件中的每一行都代表一个要安装的软件包的 SDK 样式路径（不带引号）。
+###### package_file
 
 若要卸载软件包，只需添加 `--uninstall` 标记：
 

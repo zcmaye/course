@@ -1,7 +1,3 @@
-[sss](#最后 a)
-
-[aaa](#hello world)
-
 ## MarkDown是什么？
 
 
@@ -12,6 +8,8 @@ Markdown 语言在 2004 由约翰·格鲁伯（英语：John Gruber）创建。
 Markdown 编写的文档可以导出 HTML 、Word、图像、PDF、Epub 等多种格式的文档。
 
 Markdown 编写的文档后缀为 **.md**, **.markdown**。
+
+[思维导图](https://www.processon.com/mindmap/63661050e0b34d524cc0b639)
 
 ## 标题
 
@@ -430,24 +428,3 @@ Markdown 制作表格使用 **|** 来分隔不同的单元格，使用 **-** 来
 |Ctrl+D	|选中某个单词|	Ctrl+F	|搜索|
 |Ctrl+E	|选中相同格式的文字|	Ctrl+H|	搜索并替换|
 |Alt+Shift+5	|删除线	|Ctrl+Shift+I|	插入图片|
-
-
-<style>p{text-indent:2em}</style>
-
-
-
-## 最后 a
-
-+ sdfs
-  + sjdkfsjlk
-  + dfsf
-
-- sdfs
-  - ds
-    - sdfs
-
-* sdfs
-  * fsd
-    * dfsd
-
-## hello world maye

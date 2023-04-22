@@ -225,12 +225,5 @@ int mainifÓï¾ä()
 		printf("µÈ¼¶ÎªE\n");
 	}
 
-
-
-
-
-
-	printf("--end--");
-	getchar();
 	return 0;
 }

@@ -80,3 +80,45 @@ npm init vite@latest
 成功！运行提示的三条指令，即可成功运行：
 
 ![image-20230424230831061](assets/image-20230424230831061.png)
+
+### 运行项目
+
+找到项目目录，并进入：
+
+![image-20230425022149082](assets/image-20230425022149082.png)
+
+执行如下命令下载依赖到当前项目：
+
+```css
+npm install
+```
+
+![image-20230425022345326](assets/image-20230425022345326.png)
+
+执行如下命令运行项目：
+
+```css
+npm run dev
+```
+
+然后点击出现的Local 后面的[链接](http://localhost:5173/)，访问即可！
+
+![image-20230425022431622](assets/image-20230425022431622.png)
+
+### 构建路由
+
+在src目录，创建一个router目录：
+
+![image-20230425022815239](assets/image-20230425022815239.png)
+
+然后执行如下命令安装路由：
+
+```css
+npm install vue-router@4 --save
+```
+
+然后再router目录中创建`index.js`:
+
+![image-20230425023241774](assets/image-20230425023241774.png)
+
+写入以下代码：

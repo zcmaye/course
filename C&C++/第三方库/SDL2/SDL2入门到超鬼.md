@@ -294,8 +294,6 @@ int main(int argc,char*argv[])
 
 如果有错误，SDL_CreateWindow 返回 NULL。我们将错误打印到控制台。
 
-
-
 如果窗口被成功创建，则会显示到桌面。 
 
 为了防止它消失，我们将调用SDL_Delay。 SDL_Delay将等待给定的毫秒数。 一毫秒是千分之一秒。 这意味着上面的代码将使窗口等待2000 /1000秒或2秒。  
@@ -315,7 +313,33 @@ int main(int argc,char*argv[])
 
 最后我们让程序延迟5秒再退出，否则窗口会一闪而过；退出之前需要调用SDL_DestroyWindow手动销毁窗口和调用SDL_Quit清理所有初始化的子系统。
 
-### 2.基本图形绘制
+### 2.图形渲染
+
+#### 渲染器
+
+
+
+#### 渲染图形
+
+
+
+#### 渲染纹理
+
+我们都知道游戏中最常用到的就是图形渲染，简单地说就是将图像显示到屏幕上。图像在 SDL 中被封装为一个叫做纹理的结构体 SDL_Texture，它代表了所有像素相关的内容数据。
+
+SDL 中提供了 SDL_CreateTexture 和 SDL_DestoryTexture 来创建和销毁纹理，但是在现实中，很少从头创建一个新纹理，一般情况都是从硬盘上直接加载相关的图片转换为纹理结构体。SDL 也提供了相关的函数：
+
+```c
+SDL_Texture*  IMG_LoadTexture(SDL_Renderer *renderer, const char *file);
+```
+
+这个函数可以从本地磁盘上加载一个位图图片，不过这里有两个重点需要提及：
+
+- 文件只能是位图图片，也就是常见以 bmp 后缀的图片文件。
+
+- 函数返回的并不是 SDL_Texture 结构体指针，而是另一种叫做 SDL_Surface 结构体的指针对象。
+
+  
 
 接下来我们来学习基本的图形绘制，SDL2支持的基本图形有：
 
@@ -345,19 +369,24 @@ int main(int argc,char*argv[])
 + 颜色混合模式
 
   ```cpp
-  void SDL_SetRenderDrawBlendMode()
+  int SDL_SetRenderDrawBlendMode()
+  //常用混合模式如下    
+  SDL_BLENDMODE_NONE = 0x00000000,     /**< 没有混合，即正常模式*/
+  SDL_BLENDMODE_BLEND = 0x00000001,    /**< 透明混合，透明度生效*/                  
+  SDL_BLENDMODE_ADD = 0x00000002,      /**< 叠加混合，即颜色叠加*/  
+  ...
   ```
 
 + 绘图操作的颜色
 
   ```cpp
-  void SDL_SetRenderDrawColor()
+  int SDL_SetRenderDrawColor()
   ```
 
 + 用颜色清楚整个屏幕
 
   ```cpp
-  SDL_RenderClear(render);
+  int SDL_RenderClear()
   ```
 
 + 渲染器出场(输出渲染结果)
@@ -369,67 +398,113 @@ void SDL_RenderPresent()
 + 自定义的绘制圆形的函数
 
 ```cpp
-void SDL_RenderDrawCircle(SDL_Renderer* pRender, float x, float y, float r)
+void DK_RenderDrawCircle(SDL_Renderer*renderer,int x, int y, int radius)
 {
-	float angle = 0;
-	for (angle = 0; angle < 360; angle += 0.1)
+	int xbase = 0, ybase = radius, pos = 0;
+	int d = (1 - radius) << 1;
+	while (ybase >= 0)
 	{
-		SDL_RenderDrawPoint(pRender, x + r * SDL_cos(angle), y + r * SDL_sin(angle));
-	}
-}
-void SDL_RenderFillCircle(SDL_Renderer* pRender, float x, float y, float r)
-{
-	register float angle = 0;
-	while (r > 0)
-	{
-		for (angle = 0; angle < 360; angle += 0.1)
+		if (d > 0)
 		{
-			SDL_RenderDrawPoint(pRender, x + r * SDL_cos(angle), y + r * SDL_sin(angle));
+			if (((d - xbase) << 1) - 1 <= 0)
+			{
+				d = d + ((xbase - ybase + 3) << 1);
+				xbase++;
+				ybase--;
+			}
+
+			else
+			{
+				d = d - (ybase << 1) + 3;
+				ybase--;
+			}
 		}
-		r -= 1;
+		else if (d < 0)
+		{
+			if (((d + ybase) << 1) - 1 <= 0) d = d + (xbase << 1) + 3, xbase++;
+			else d = d + ((xbase - ybase + 3) << 1), xbase++, ybase--;
+		}
+		else
+		{
+			d = d + ((xbase - ybase + 3) << 1);
+			xbase++;
+			ybase--;
+		}
+		SDL_RenderDrawPoint(renderer,x + xbase - 1, y + ybase);        //右下
+		SDL_RenderDrawPoint(renderer,x - xbase, y + ybase);                 //左下
+		SDL_RenderDrawPoint(renderer,x + xbase - 1, y - ybase);             //右上
+		SDL_RenderDrawPoint(renderer,x - xbase, y - ybase);                 //左上
 	}
 }
 
-void SDL_RenderDrawEllipse(SDL_Renderer* pRender, SDL_Rect* rect)
+void DK_RenderFillCircle(SDL_Renderer* renderer,int x, int y, int radius)
+{
+	float y0, y1;
+	float xx = 0;
+	float msin = 0;
+	for (float angle = 0; angle < 3.14; angle += 0.001)
+	{
+		xx = x + radius * SDL_cos(angle);
+
+		msin = SDL_sin(angle);
+
+		y0 = y + radius * msin;
+		y1 = y + radius * (-msin);
+
+		SDL_RenderDrawLineF(renderer, xx, y0, xx, y1);
+	}
+}
+
+void DK_RenderDrawArc(SDL_Renderer* pRender, SDL_Rect* rect, float startAngle, float endAngle)
+{
+	if (startAngle == endAngle)
+		return;
+
+	//计算开始弧度和结束弧度
+	float minA = SDL_min(startAngle, endAngle);
+	float maxA = SDL_max(startAngle, endAngle);
+
+	//半轴长
+	float aHalf = rect->w / 2;
+	float bHalf = rect->h / 2;
+
+	float x, y;													//本次计算的点
+	float prevx = (rect->x + aHalf) + aHalf * SDL_cos(minA);	//上一次计算出来的点
+	float prevy = (rect->y + bHalf) + bHalf * SDL_sin(minA);
+	//求出圆上每个坐标点
+	for (float angle = minA; angle <= maxA; angle += 0.05f)
+	{
+		x = (rect->x + aHalf) + aHalf * SDL_cos(angle);
+		y = (rect->y + bHalf) + bHalf * SDL_sin(angle);
+		SDL_RenderDrawPointF(pRender, x, y);
+		SDL_RenderDrawLineF(pRender, prevx, prevy, x, y);
+		prevx = x;
+		prevy = y;
+	}
+}
+
+void DK_RenderDrawEllipse(SDL_Renderer* pRender, SDL_Rect* rect)
 {
 	//半轴长
 	int aHalf = rect->w / 2;
 	int bHalf = rect->h / 2;
 
-	int x, y;
+	float x, y;
+	float prevx = (rect->x + aHalf *2);
+	float prevy = (rect->y + bHalf);
+	float firstx = prevx;
+	float firsty = prevy;
 	//求出圆上每个坐标点
-	for (float angle = 0; angle < 360; angle += 0.1f)
+	for (float angle = 0; angle < 2 * 3.14; angle += 0.05f)
 	{
 		x = (rect->x + aHalf) + aHalf * SDL_cos(angle);
 		y = (rect->y + bHalf) + bHalf * SDL_sin(angle);
-		SDL_RenderDrawPoint(pRender, x, y);
+		SDL_RenderDrawPointF(pRender, x, y);
+		SDL_RenderDrawLineF(pRender, prevx, prevy, x, y);
+		prevx = x;
+		prevy = y;
 	}
-}
-void SDL_RenderFillEllipse(SDL_Renderer* pRender, SDL_Rect* rect)
-{
-	SDL_Rect r = *rect;
-	//半轴长
-	float aHalf;
-	float bHalf;
-	//椭圆上每点坐标
-	float x, y;
-
-	while (r.w >= 0 && r.h >= 0)
-	{
-		aHalf = r.w / 2.f;
-		bHalf = r.h / 2.f;
-		//求出圆上每个坐标点
-		for (float angle = 0; angle < 360; angle += 0.1f)
-		{
-			x = (r.x + aHalf) + aHalf * SDL_cos(angle);
-			y = (r.y + bHalf) + bHalf * SDL_sin(angle);
-			SDL_RenderDrawPointF(pRender, x, y);
-		}
-		r.x++;
-		r.y++;
-		r.w -= 2;
-		r.h -= 2;
-	}
+	SDL_RenderDrawLineF(pRender, firstx, firsty, x, y);	//最后连上
 }
 ```
 
@@ -733,8 +808,6 @@ SDL_Surface* loadSurface(const char* filename)
 
 要记得最后要在clean函数中释放加载的表面哦~  
 
-
-
 ```c
     //加载图片
    gSfc = loadSurface("./assets/lesson02/hello_world.bmp");
@@ -796,8 +869,6 @@ SDL_Surface* loadSurface(const char* filename)
 ```
 
 这是我们的事件循环。如您所见，我们像在上一个教程中一样处理[关闭窗口](https://lazyfoo.net/tutorials/SDL/03_event_driven_programming/index.php)，然后处理 SDL_KEYDOWN 事件。当您按下键盘上的某个键时，就会发生此事件。[SDL 事件](http://wiki.libsdl.org/SDL_Event?highlight=(\bCategoryStruct\b)|(CategoryEvents))内部 是一个 [SDL 键盘事件](http://wiki.libsdl.org/SDL_KeyboardEvent)，它包含按键事件的信息。里面是一个 [SDL Keysym](http://wiki.libsdl.org/SDL_Keysym)，它包含有关按下的键的信息。该 Keysym 包含标识按下的键的 [SDL 键码](http://wiki.libsdl.org/SDL_Keycode)。 如您所见，此代码的作用是根据按下的键设置表面。如果您想了解其他键的其他键码是什么，请查看 SDL 文档。
-
-
 
 #### 鼠标事件
 

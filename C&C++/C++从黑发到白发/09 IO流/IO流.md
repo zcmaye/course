@@ -438,3 +438,31 @@ stringstream stream(buf,ios::app | ios::in | ios::out);
 ## 重定向流
 
 https://blog.csdn.net/SCHOLAR_II/article/details/115520548
+
+
+
+```cpp
+#include <iostream>
+#include <fstream>
+
+using namespace std;
+int main() {
+
+    // cout
+    ofstream fout("out.txt");
+    //用 rdbuf() 重新定向，返回旧输出流缓冲区指针
+     streambuf * originalOutBuf = cout.rdbuf(fout.rdbuf());
+
+    cout << "cout output test" << endl;
+
+    //恢复cout
+    cout.rdbuf(originalOutBuf);
+    fout.close();
+
+    cout << "cout output test 2" << endl;
+
+    return 0;
+}
+
+```
+

@@ -189,13 +189,19 @@ Microsoft Visual Studio是VS的全称。 是微软公司的开发工具包系列
 
 ![net farmework](assets/.net%20farmework.png)
 
+#### 安装拓展
 
+[插件商店](https://marketplace.visualstudio.com/vs)
 
-#### 4.1.2 上号
++ Microsoft visual studio installer projects [创建安装程序]
++ Doxygen Comments [自动创建Doxygen注释]
++ Force UTF-8(With BOM) [保存文件时自动转换为UTF-8 with bom]
 
 安装完成之后，可能桌面没有快捷方式，那么请打开开始菜单栏，进行寻找。
 
 ![image-20220620190836181](assets/image-20220620190836181.png)
+
+
 
 ### 4.2 向日葵
 

@@ -76,7 +76,7 @@ STL的从广义上讲分为三类：algorithm（算法）、container（容器�
 
 ### 迭代器
 
-迭代器(iterator)是一种抽象的设计概念，现实程序语言中并没有直接对应于这个概念的实物。
+迭代器(iterator)是一种抽象的设计概念，在容器中指出一个位置、或成对使用以划定一个区域，用来限定操作所涉及到的数据范围。
 
 iterator模式定义如下：提供一种方法，使之能够依序寻访某个容器所含的各个元素，而又无需暴露该容器的内部表示方式。(实际上是封装了指针的类中类)
 
@@ -741,7 +741,23 @@ int main()
 }
 ```
 
+## 迭代器操作函数
 
+begin/cbegin/rbegin/crbegin
+
+end/cend/rend/crend
+
+size
+
+empty
+
+advance
+
+distance
+
+next
+
+prev
 
 # 可调用对象(Callable object)
 

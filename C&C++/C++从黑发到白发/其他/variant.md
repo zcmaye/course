@@ -1,3 +1,54 @@
+# std::initializer_list
+
+为了编写能够处理不同数量实参（但是类型相同），C++11新标准提供了std::initializer_list的方法。
+
++ 普通函数使用
+
+```cpp
+void showMsg(const std::initializer_list<std::string>& list)
+{
+	for (auto& n : list)
+	{
+		cout << n << " ";
+	}
+	cout << endl;
+}
+showMsg({ "hello","world","嘿嘿"});
+```
+
++ 构造函数使用
+
+```cpp
+template<typename T,size_t _size>
+class Array
+{
+public:
+	Array() {}
+	Array(const std::initializer_list<T>& list) 
+	{
+		size_t i = 0;
+		for (auto& v : list)
+		{
+			_arr[i++] = v;
+		}
+	}
+	constexpr size_t size()const { return _size; }
+	T& operator[](int index)
+	{
+		return _arr[index];
+	}
+	T _arr[_size]{ T() };
+};
+
+Array<int, 10> arr = { 1,2,3,4,5,6 };
+for (int i = 0; i < arr.size(); i++)
+{
+	cout << arr[i] << " ";
+}
+```
+
+前面我们使用数组时，能直接使用聚合初始化参数列表的方式，指定多个初始值，非常方便！现在有了`std::initializer_list`我们也可以让我们的类支持这种方式了！欧耶~
+
 # std::pair
 
 pair 类模板定义在`<utility>`头文件中，所以在使用该类模板之前，需引入此头文件。

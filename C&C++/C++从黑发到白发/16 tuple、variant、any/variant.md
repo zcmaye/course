@@ -261,7 +261,7 @@ int main()
 
 
 
-# std::variant
+# std::variant(C++17)
 
 `std::variant` 是c++17 引入的一个类型，其作用类似于union，但是比union的功能强大的多。
 
@@ -495,7 +495,7 @@ monostate实际上是一个空类，定义如下：
 struct monostate {};
 ```
 
-# std::any
+# std::any(C++17)
 
  一般来说，C++是一种具有类型绑定和类型安全性的语言。值对象声明为具有特定类型，该类型定义哪些操作是可能的以及它们的行为方式。值对象不能改变它们的类型。
 
@@ -732,11 +732,9 @@ operator>>
 
 
 
-# 结构化绑定(Structured Bindings)
+# Structured Bindings(C++17)
 
-[结构化绑定](https://www.freesion.com/article/36971357457/)
-
-C++17引入了结构化绑定（Structured Bindings）的特性，它允许将一个结构体或元组的成员绑定到命名的变量上，从而可以方便地访问结构体或元组的成员。
+结构化绑定（Structured Bindings）是C++17加入的特性，它允许将一个结构体或元组的成员绑定到命名的变量上，从而可以方便地访问结构体或元组的成员。
 
 ## 简单使用
 
@@ -1019,14 +1017,174 @@ int main()
 
 数组长度已知的情况下，可以结构化绑定到多个变量上。
 
-C++允许我们返回带长度的数组引用：
-
 ```cpp
 int arr[2] = { 1,2 };
 auto [x, y] = arr;
 ```
 
+同样可以对std::array进行结构化绑定。
+
+#### std::array
+
+```cpp
+std::array<int, 4> getArray();
+auto [i,j,k,l] = getArray();
+```
+
+同样，如果需要更改原生数组里面的值可以改为：
+
+```cpp
+std::array<int, 4> stdarr{1, 2, 3, 4};
+auto& [i, j, k, l] = stdarr;
+i += 10;
+```
+
+#### std::tuple
+
+```cpp
+std::tuple<char, float, std::string> getTuple() 
+{
+  return std::make_tuple('1', 6.6, "hello");
+}
+auto [a, b, c] = getTuple();
+```
+
+#### std::pair
+
+处理关联/无序容器的insert()调用的返回值，使用结构化绑定使代码可读性更强，可以更加清晰的表达自己的一图，而不是依赖与std::pair的first与second。
+
+C++ 17之前写法：
+
+```cpp
+std::map<std::string, int> coll;
+auto ret = coll.insert({"new",42});
+if (!ret.second) {
+  // if insert failed, handle error using iterator pos:
+}
+```
 
 
-[(111条消息) 【C++新特性】C++17结构化绑定_guangcheng0312q的博客-CSDN博客](https://blog.csdn.net/guangcheng0312q/article/details/109108472)
+C++17之后：
+
+```cpp
+std::map<std::string, int> coll;
+if (auto [pos, ok] = coll.insert({ "new",42 }); !ok) {
+	// if insert failed, handle error using iterator pos:
+}
+```
+
+可以看到C++17提供了一种表达力更强的带初始化的if。
+
+
+
+# std::span(C++20)
+
+std::span是一个模板类，在头文件`<span>`中定义。
+
+`std::span` 是一个提供对象的相接序列的非拥有视图，简单来说就是一个不拥有所有权的包装器，通过它可以操作顺序容器(数组、array、vector、deque、string)。
+
+```cpp
+template<
+    class T,								//元素类型；必须是完整对象类型且非抽象类
+    std::size_t Extent = std::dynamic_extent//	序列中的元素数，或若它为动态则为 std::dynamic_extent
+> class span;
+```
+
+定义一个数组，用span进行观察。
+
+```cpp
+int nums[] = { 1,2,3,4,5 };
+std::span sn_nums(nums);
+```
+
+它提供了前向迭代器和反向迭代器，意味着可以正反遍历。
+
+```cpp
+for (auto& v : sn_nums)
+{
+	std::cout << v << " ";
+}
+std::cout << std::endl;
+for (auto it = sn_nums.rbegin(); it != sn_nums.rend(); it++)
+{
+	std::cout << *it << " ";
+}
+std::cout << std::endl;
+```
+
+当然，既然是顺序容器，那么下标操作是不能少的，也就是[]
+
+```cpp
+for (size_t i = 0; i < sn_nums.size(); i++)
+{
+	std::cout << sn_nums[i] << " ";
+}
+std::cout << std::endl;
+```
+
+还可以通过`front`和`back`方法访问，第一个和最后一个元素；通过`data`获取数据指针。
+
+除了上面用过的`size`方法之外，还有一个`size_bytes`方法可以获取以字节表示的序列大小。
+
+```cpp
+std::cout << "size is " << sn_nums.size() << std::endl;
+std::cout << "size_bytes is " << sn_nums.size_bytes() << std::endl;
+```
+
+运行结果为：
+
+```cpp
+size is 5
+size_bytes is 20
+```
+
+如果你需要检查序列是否为空，则可以调用`empty`方法。
+
+## 子视图
+
+除了基本的操作之外，还可以很方便的获取子视图。
+
+比如，要把`nums`数组中的前三个元素作为一个单独的视图，可以使用`first`方法。
+
+```cpp
+auto newSpan = sn_nums.first<3>(); //<==>	sn_nums.first(3);
+std::cout << newSpan.size() << std::endl;	//3
+for (auto& v : newSpan)
+{
+	std::cout << v << " ";					//1 2 3
+}
+```
+
+如果要获取末尾N个元素组成的子序列，则可以使用`last`方法。
+
+如果要获取中间N个元素组成的子序列，则可以使用`subspan`方法。
+
+```cpp
+auto newSpan = sn_nums.subspan<1,3>();	//2 3 4
+```
+
+## 底层字节视图
+
+如果还想以字节的方式观察序列，也给我们提供了两个非成员函数，`as_bytes`和`as_writable_bytes`，`as_bytes`返回的字节视图是不能修改的，而`as_writable_bytes`是可以修改的。
+
+```cpp
+auto bytes =  std::as_bytes(sn_nums);
+for (auto& v : bytes)
+{
+	std::cout << std::hex 
+		<< std::to_underlying(v)<<","		//把枚举转到其底层类型(枚举底层都是整数 char、short、int...)
+		<<std::to_integer<int>(v) << " ";	//把byte转为指定的整型
+	//int n = std::to_integer<int>(v);
+	//std::cout << std::hex <<"\\x" << n;
+}
+```
+
++ as_writable_bytes修改
+
+```cpp
+auto bytes_w = std::as_writable_bytes(sn_nums);
+bytes_w[0] = std::byte{ 9 };
+```
+
+# std::expected(C++23)
 

@@ -87,7 +87,9 @@ maye>windeployqt F:\MyCode\QtTest.exe
 
 ![image-20220903205052744](assets/image-20220903205052744.png)
 
+### 把发布包打包成安装程序
 
+https://jrsoftware.org/isinfo.php
 
 # 4. 资源文件 .qrc
 

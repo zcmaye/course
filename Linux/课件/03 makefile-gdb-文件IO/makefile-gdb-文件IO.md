@@ -609,6 +609,12 @@ gdb调试主要有三种方式：
 
 ### 常用命令示例
 
+#### help
+
+通过 **help** 命令可以查看目标命令的具体用法。
+
+如：`help run`
+
 #### run
 
 默认情况下，以 `gdb ./filename` 方式启用GDB调试只是附加了一个调试文件，并没有启动这个程序，需要输入run命令（简写为r）启动这个程序：
@@ -785,7 +791,7 @@ Num     Type           Disp Enb Address            What
 
 ##### delete
 
-删除断点
+删除断点，简写为`d`
 
 + delete 删除所有断点
 + delete num1 num2... 删除指定编号的断点
@@ -834,22 +840,71 @@ Num     Type           Disp Enb Address            What
 - **show listsize**，查看 **list** 命令显示的代码行数；
 - **set listsize [count]**，设置 **list** 命令显示的代码行数为 **count**;
 
-#### print/ptype
+#### print
 
-print用来查看/修改变量的值，ptype用来查看变量的类型。
+print(简写为p)用来查看/修改变量的值，
 
 + `print param` 查看指定的变量；
 + `print param=value` 在调试过程中修改变量的值；
 + `print a+b+c` 可以进行一定的表达式计算，这里是计算a、b、c之和；
-+ `print func()` 输出func函数执行的结果，常见的用途是打印系统函数执行失败的原因：`print strerror(errno)`
++ `print func()` 输出func函数执行的结果，常见的用途是打印系统函数执行失败的原因：`print strerror(errno)`；与之相同的还有`call`命令
 + `print *this` 在c++对象中，可以输出当前对象的各个成员变量的值
 
-#### thread命令
+##### 美化打印
 
- 命令格式及作用：
+```c
+#include<stdio.h>
+typedef struct Person
+{
+	int age;
+	char name[20];
+	char desc[128];
+}Person;
+int main(int argc,char*argv[])
+{
+	int arr[]={1,2,3,4,5,6,7};
+	Person per[]={{12,"maye","I' maye,like girl"},{18,"xuxu","I love maye"}};
+	printf("game over");
+	return 0;
+}
+```
 
-- **info thread**，查看当前进程的所有线程运行情况；
-- **thread 线程编号**，切换到具体编号的线程上去；
+在12行`printf("game over");`处加上断点，并中断在此处。
+
+```c
+(gdb) p arr
+$1 = {1, 2, 3, 4, 5, 6, 7}
+(gdb) p per
+$2 = {{age = 12, name = "maye", '\000' <repeats 15 times>, desc = "I' maye,like girl", '\000' <repeats 110 times>}, {
+    age = 18, name = "xuxu", '\000' <repeats 15 times>, desc = "I love maye", '\000' <repeats 116 times>}}
+
+```
+
+可以看到打印的数据比较乱，`set print pretty`命令可以美化gdb的打印；`set print array-indexes on`打印数组的下标。
+
+```c
+(gdb) set print pretty
+(gdb) set print array-indexes on
+(gdb) p arr
+$5 = {[0] = 1, [1] = 2, [2] = 3, [3] = 4, [4] = 5, [5] = 6, [6] = 7}
+(gdb) p per
+$6 = {[0] = {
+    age = 12,
+    name = "maye", '\000' <repeats 15 times>,
+    desc = "I' maye,like girl", '\000' <repeats 110 times>
+  }, [1] = {
+    age = 18,
+    name = "xuxu", '\000' <repeats 15 times>,
+    desc = "I love maye", '\000' <repeats 116 times>
+  }}
+
+```
+
+这样的话，输出就看的比较清晰了~
+
+#### whatis/ptype
+
+whatis用来查看变量的类型，ptype和whatis类似，但功能更强大，可以查看复合数据类型，会打印出该类型的成员变量。
 
 #### watch
 
@@ -874,9 +929,99 @@ Old value = 1234
 New value = 123
 ```
 
+删除、禁用监视点，和断点相同。
 
+#### jump
+
+命令格式及作用：
+
+- **jump LineNo**，跳转到代码的 **LineNo** 行的位置；
+- **jump +10**，跳转到距离当前代码下10行的位置；
+- **jump \*0x12345678**，跳转到 **0x12345678** 地址的代码处，地址前要加星号；
+
+ **jump** 命令有两点需要注意的：
+
+1. 中间跳过的代码是不会执行的。`由于一些代码可能会对系统做持久性操作，例如删除文件，写数据库等操作，我们希望跳过一些函数或者代码段的执行，此时就可以使用jump指令来完成该功能。`
+2. 跳到的位置后如果没有断点，那么GDB会自动继续往后执行；
+
+#### disassemble
+
+查看某段代码的汇编指令
+
++ `disassemble funName` 显示函数的汇编指令
+
++ `disassemble /m main` 显示汇编指令的同时把源代码也显示出来，对照显示
+
+#### set args/show args
+
+ 很多程序启动需要我们传递参数，**set args** 就是用来设置程序启动参数的，**show args** 命令用来查询通过 **set args** 设置的参数，命令格式：
+
+- **set args args1**，设置单个启动参数 **args1**；
+- **set args "-p" "password"**，如果单个参数之间有空格，可以使用引号将参数包裹起来；
+- **set args args1 args2 args3**，设置多个启动参数，参数之间用空格隔开；
+- **set args**，不带参数，则清除之前设置的参数；
 
 ### layout
+
+layout用于分割窗口，可以边调试边看代码。
+
+#### 命令
+
+| 命令         | 描述                        |
+| ------------ | --------------------------- |
+| layout src   | 显示源代码窗口              |
+| layout asm   | 显示汇编窗口                |
+| layout regs  | 显示源代码/汇编和寄存器窗口 |
+| layout split | 显示源代码和汇编窗口        |
+| layout next  | 显示下一个layout            |
+| layout prev  | 显示上一个layout            |
+
+#### 快捷键
+
+| 快捷键       | 描述                       |
+| ------------ | -------------------------- |
+| Ctrl + `l`   | 刷新窗口                   |
+| Ctrl + x + 1 | 单窗口模式，显示一个窗口   |
+| Ctrl + x + 2 | 双窗口模式，显示两个窗口   |
+| Ctrl + x + a | 回到传统模式，即退出layout |
+
+#### 使用流程
+
+在gdb中输入`layout src`命令，进入布局窗口，然后在main函数入口处加上断点。
+
+![image-20230830163151455](assets/image-20230830163151455.png)
+
+执行`run`命令开始调试，源代码窗口会高亮显示当前调试的行
+
+![image-20230830163313814](assets/image-20230830163313814.png)
+
+接下来就可以使用`next`、`step`、`continue`等命令调试代码了，源代码窗口也会同步更新。
+
+但是当我们调试完成之后，会发现源代码窗口错乱了，窗口没有及时更新，这个时候按下快捷键`Ctrl+l(小写L)`即可刷新窗口
+
+![image-20230830163543289](assets/image-20230830163543289.png)
+
+刷新窗口后，显示没有有效源，当你重新执行run命令时，会自动出现。想要关闭src窗口，按下`ctrl+x+a`即可
+
+![image-20230830163820667](assets/image-20230830163820667.png)
+
+
+
+#### 窗口焦点
+
+在调试时，按上、下、左、右键是滚动src窗口的代码，而不是切换历史命令，这是因为焦点默认在src窗口上。
+
+可以使用`fs cmd`把焦点切换到控制台窗口。
+
+![image-20230830164812828](assets/image-20230830164812828.png)
+
+上图中，左边是焦点在cmd窗口，右边是焦点在src窗口。
+
+> fs即focus焦点的意思，除了使用`fs windowName`之外，还可以使用`fs next`和`fs prev`命令切换到写一个和上一个窗口。
+
+当焦点切换到cmd窗口之后，就可以按上下键切换历史命令了。
+
+
 
 [gdb调试的layout使用_gdb layout_zhangjs0322的博客-CSDN博客](https://blog.csdn.net/zhangjs0322/article/details/10152279)
 
@@ -887,3 +1032,190 @@ New value = 123
 [你可能不知道的GDB命令 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/363973508)
 
 [GDB使用详解 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/297925056#概述)
+
+
+
+### 线程
+
+#### thread命令
+
+ 命令格式及作用：
+
+- **info thread**，查看当前进程的所有线程运行情况；
+- **thread 线程编号**，切换到具体编号的线程上去；
+
+#### 6.1 概述
+
+ 多线程程序的编写更容易产生异常或 Bug（例如线程之间因竞争同一资源发生了死锁、多个线程同时对同一资源进行读和写等等）。GDB调试器不仅仅支持调试单线程程序，还支持调试多线程程序。本质上讲，使用GDB调试多线程程序的过程和调试单线程程序类似，不同之处在于，调试多线程程序需要监控多个线程的执行过程。
+
+ 用GDB调试多线程程序时，该程序的编译需要添加 **`-lpthread`** 参数。
+
+#### 6.2 一些命令
+
+1. **info thread**，查看当前调试程序启动了多少个线程，并打印出各个线程信息；
+2. **thread 线程编号**，将该编号的线程切换为当前线程；
+3. **thread apply 线程编号1 线程编号2 ... command**，将GDB命令作用指定对应编号的线程，可以指定多个线程，若要指定所有线程，用 **all** 替换线程编号；
+4. **break location thread 线程编号**，在 **location** 位置设置普通断点，该断点只作用在特定编号的线程上；
+
+#### 6.3 一些术语
+
+- **all-stop mode**，全停模式，当程序由于任何原因在GDB下停止时，不止当前的线程停止，所有的执行线程都停止。这样允许你检查程序的整体状态，包括线程切换，不用担心当下会有什么改变。
+- **non-stop mode**，不停模式，调试器（如VS2008和老版本的GDB）往往只支持 **all-stop** 模式，但在某些场景中，我们可能需要调试个别的线程，并且不想在调试过程中影响其他线程的运行，这样可以把GDB的调式模式由 **all-stop** 改成 **non-stop**，**7.0** 版本的GDB引入了 **non-stop** 模式。在 **non-stop** 模式下 **continue、next、step** 命令只针对当前线程。
+- **record mode**，记录模式；
+- **replay mode**，回放模式；
+- **scheduler-locking** ，调度锁；
+
+> (gdb) help set scheduler-locking Set mode for locking scheduler during execution. off == no locking (threads may preempt at any time) on == full locking (no thread except the current thread may run) This applies to both normal execution and replay mode. step == scheduler locked during stepping commands (step, next, stepi, nexti). In this mode, other threads may run during other commands. This applies to both normal execution and replay mode. replay == scheduler locked in replay mode and unlocked during normal execution.
+
+- **schedule-multiple**，多进程调度；
+
+> (gdb) help set schedule-multiple Set mode for resuming threads of all processes. When on, execution commands (such as 'continue' or 'next') resume all threads of all processes. When off (which is the default), execution commands only resume the threads of the current process. The set of threads that are resumed is further refined by the scheduler-locking mode (see help set scheduler-locking).
+
+#### 6.4 设置线程锁
+
+ 使用GDB调试多线程程序时，默认的调试模式是：**一个线程暂停运行，其他线程也随即暂停；一个线程启动运行，其他线程也随即启动**。但在一些场景中，我们希望只让特定线程运行，其他线程都维持在暂停状态，即要防止**线程切换**，要达到这种效果，需要借助 **set scheduler-locking** 命令。
+
+ 命令格式及作用：
+
+- **set scheduler-locking on**，锁定线程，只有当前或指定线程可以运行；
+- **set scheduler-locking off**，不锁定线程，会有线程切换；
+- **set scheduler-locking step**，当单步执行某一线程时，其他线程不会执行，同时保证在调试过程中当前线程不会发生改变。但如果在该模式下执行 **continue、until、finish** 命令，则其他线程也会执行；
+- **show scheduler-locking**，查看线程锁定状态；
+
+### 配置文件
+
+#### 保存/加载断点
+
+调试程序的时候，往往会设置很多断点，如果需要多次调试,来回敲这些断点信息，也是很烦的，可以通过`save breakpoints filename`的方法，将断点设置信息保存到`filename`文件中：
+
+```css
+(gdb) i b
+Num     Type           Disp Enb Address            What
+1       breakpoint     keep y   0x0000555555555185 in main at cmdline.c:9
+	breakpoint already hit 1 time
+3       breakpoint     keep y   0x00005555555551da in main at cmdline.c:11
+(gdb) save breakpoints break.bp /*把所有断点保存到指定文件*/
+Saved to file 'break.bp'.
+(gdb) 
+```
+
+gdb 启动后,在通过`source filename`方式加载：
+
+```css
+(gdb) i b
+No breakpoints or watchpoints.
+(gdb) source break.bp 		/*从指定的文件加载断点信息*/
+Breakpoint 1 at 0x1185: file cmdline.c, line 9.
+Breakpoint 2 at 0x11da: file cmdline.c, line 11.
+(gdb) i b
+Num     Type           Disp Enb Address            What
+1       breakpoint     keep y   0x0000000000001185 in main at cmdline.c:9
+2       breakpoint     keep y   0x00000000000011da in main at cmdline.c:11
+(gdb) 
+```
+
+#### .gdbinit
+
+在使用gdb时，经常指令命令`set print pertty on`以及其他配置命令。
+
+但是每次打开gdb都要配置，比较麻烦，因此gdb也提供了一个使用配置文件的方法。
+
+首先，在`~/`用户目录创建`.gdbinit`文件，内容如下(通用配置)：
+
+```css
+# 保存历史命令
+set history filename ./.gdb_history
+set history save on
+ 
+ 
+# 记录执行gdb的过程
+set logging file ./.log.txt
+set logging enabled on
+ 
+ 
+# 退出时不显示提示信息
+#set confirm off
+ 
+ 
+# 打印数组的索引下标
+set print array-indexes on
+ 
+ 
+# 每行打印一个结构体成员
+set print pretty on
+ 
+ 
+# 退出并保留断点
+# 自定义命令，在gdb中输入qbp，退出并保存所有断点
+define qbp
+save breakpoints ./.gdb_bp
+quit
+end
+#自定义帮助命令，在gdb中输入help qbp 显示提示信息
+document qbp
+Exit and save the breakpoint
+end
+ 
+ 
+# 保留历史工作断点
+# 自定义命令，在gdb中输入downbp，保存所有断点
+define downbp
+save breakpoints ./.gdb_bp
+end
+document downbp
+Save the historical work breakpoint
+end
+ 
+ 
+# 加载历史工作断点
+# 自定义命令，在gdb中输入laodbp，加载所有断点
+define loadbp
+source ./.gdb_bp
+end
+document loadbp
+Load the historical work breakpoint
+end
+```
+
+然后，重新进入gdb即可。
+
+##### 配色方案
+
+```css
+set style textType attr value
+```
+
++ textType：要设置的字符类型
+  + address 地址
+  + filename 文件名
+  + function 函数
+  + sources 源码
+  + variable 变量
++ attr：属性
+  + background 背景颜色
+  + foreground  前景(文字)颜色
+  + intensity (控制粗细)
+
++ value：属性对应的值
+  + 颜色：black red green yellow blue magenta cyan white
+  + 粗细：normal bold dim
+
+示例：
+
+```css
+set style function foreground magenta
+```
+
+![image-20230831134006320](assets/image-20230831134006320.png)
+
+![image-20230831134149852](assets/image-20230831134149852.png)
+
+sources设置不一样，没有属性，只有值(on|off)。
+
+```css
+set style sources off
+```
+
+![image-20230831134451094](assets/image-20230831134451094.png)
+
+默认情况下，代码是高亮的，关掉之后，代码显示的颜色就比较单一了。

@@ -1,6 +1,12 @@
-## Vim
+## vim
 
+[vim 修改注释颜色](https://www.cnblogs.com/0820LL/p/10820385.html)
 
+[vim完全配置](https://blog.csdn.net/abcamus/article/details/72858462)
+
+[vim配置入门后](http://www.ruanyifeng.com/blog/2018/09/vimrc.html)
+
+[网道](https://wangdoc.com/)
 
 ## gcc/g++编译器
 
@@ -326,11 +332,13 @@ gcc -o test_add_so main.c -L./ -ladd -Iinclude
 ##### 如何让系统找到共享库
 
 + 拷贝自己制作的共享库到/lib或者/usr/lib
-  + `sudo cp libadd.so usr/lib`
-
+  
++ `sudo cp libadd.so usr/lib`
+  
 + 临时设置LD_LIBRARY_PATH:
-  + 中断输入`export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./ `命令
-
+  
++ 中断输入`export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./ `命令
+  
 + 永久设置, 把`export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:库路径`, 设置到∼/.bashrc文件中。
 
   ![image-20230817202541581](assets/image-20230817202541581.png)

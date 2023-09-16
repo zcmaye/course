@@ -8,6 +8,8 @@
 
 [网道](https://wangdoc.com/)
 
+[极客笔记](https://deepinout.com/vim/vim-tutorials/t_lib_100_vim_index.html)
+
 ## gcc/g++编译器
 
 ### 编译流程

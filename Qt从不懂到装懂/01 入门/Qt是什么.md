@@ -77,6 +77,8 @@ Qt 最早是 1991 年由挪威的 Eirik Chambe-Eng 和 Haavard Nord 开发的，
 
 Qt从5.15开始，不再提供离线安装包，必须在线安装，so，先下载[在线安装程序](https://download.qt.io/archive/online_installers/4.3/)
 
+[Qt安装程序 网页界面版](https://www.qt.io/download-qt-installer-oss)
+
 根据不同的平台下载不同的版本，这里下载windows版本。
 
 ![image-20220610025357605](assets/image-20220610025357605.png)

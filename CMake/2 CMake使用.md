@@ -61,7 +61,8 @@ cmake -G "NMake Makefiles" -B build
 **生成**可执行程序
 
 ```shell
-cmake --build build
+cmake --build build	#默认Debug版本
+cmake --build build --config Release #生成Release版本
 ```
 
 + --build  指定要构建的项目二进制目录
@@ -613,6 +614,10 @@ target_compile_definitions(<target>）
 
 ```cmake
 install(TARGETS targets... [DESTINATION <dir>])
+```
+
+```cmake
+cmake --build . --target INSTALL
 ```
 
 

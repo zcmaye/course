@@ -310,3 +310,45 @@ http://www.rply.cn/news/141749.html
 https://www.python100.com/html/108536.html
 
 [右键菜单](https://www.cnblogs.com/Banner13/p/16709944.html)
+
+[MSYS2 介绍与使用 (ngui.cc)](https://www.ngui.cc/el/2771820.html?action=onClick)
+
+### 包管理
+
++ pacman -Ss  <package>   搜索包
+
++ pacman -S <package>      安装包
+
+
+
+安装mingw64
+
+```bash
+ pacman -S ucrt64/mingw-w64-ucrt-x86_64-gcc
+```
+
+安装make
+
+```bash
+pacman -S make
+```
+
+
+
+### 设置环境变量
+
+打开用户目录下面的`.bashrc`文件。
+
+```bash
+vim ~/.bashrc
+```
+
+添加如下行，即可把指定的路径设置到环境变量。
+
+```bash
+export PATH=/e/MySoftware/Qt/Tools/mingw1120_64/bin:$PATH
+```
+
+保存退出之后，执行命令`source ~/.bashrc`或者重启终端即可应用成功！
+
+执行命令` echo $PATH`可以查看环境变量。

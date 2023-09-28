@@ -529,3 +529,33 @@ QToolTip
 }
 ```
 
+## 4、细节、注意事项
+
+### 4.1 继承自QWidget的类，设置qss样式表没有效果
+
+定义一个类STitleBar，继承自QWidget，使用样式表设置背景颜色之后，发现没有任何效果...
+
+```css
+QWidget#titleBar{
+    background-color:rgb(52,52,52);
+}
+```
+
+![image-20230919221513657](assets/image-20230919221513657.png)
+
+解决方法也很简单，使用style()->drawPrimitive(QStyle::PE_Widget...)，也就是画一个最简单最原始的QWidget，不要牵扯其它这么多东西。
+
+```cpp
+void STitleBar::paintEvent(QPaintEvent* ev)
+{
+	QStyleOption op;
+	op.initFrom(this);
+
+	QPainter painter(this);
+	style()->drawPrimitive(QStyle::PE_Widget, &op, &painter,this);
+}
+```
+
+![image-20230919221910609](assets/image-20230919221910609.png)
+
+OK~大功告成！

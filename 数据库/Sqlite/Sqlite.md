@@ -452,3 +452,8 @@ sqlite3_reset(stmt);
 
 ```
 
+
+
+## 加密拓展
+
+[GitHub - utelle/SQLite3MultipleCiphers at v1.7.0](https://github.com/utelle/SQLite3MultipleCiphers/tree/v1.7.0)

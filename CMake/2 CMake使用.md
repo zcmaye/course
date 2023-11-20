@@ -62,6 +62,7 @@ cmake -G "NMake Makefiles" -B build
 
 ```shell
 cmake --build build
+cmake --build . --target INSTALL	//安装
 ```
 
 + --build  指定要构建的项目二进制目录

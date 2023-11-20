@@ -1,0 +1,59 @@
+#
+# AppVetor
+#
+# QXlsx
+# https://github.com/j2doll/QXlsx
+#
+
+image: Visual Studio 2015
+
+environment:
+  DEPLOY_DIR: Quaternion-%APPVEYOR_BUILD_VERSION%
+  matrix:
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+    QTDIR: C:\Qt\5.9\msvc2017_64
+    VCVARS: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat"
+    PLATFORM:
+  - QTDIR: C:\Qt\5.9\msvc2015
+    VCVARS: "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat"
+    PLATFORM: x86
+
+init:
+  - call "%QTDIR%\bin\qtenv2.bat"
+  - set PATH=C:\Qt\Tools\QtCreator\bin;%PATH%
+  - call "%VCVARS%" %platform%
+  - cd /D "%APPVEYOR_BUILD_FOLDER%"
+
+before_build:
+
+build_script:
+
+  # Get version of Windows
+  - ver # Microsoft Windows [Version 10.0.14393]
+  - wmic os get osarchitecture # OSArchitecture  64-bit
+
+  # Build QXlsx library
+  - cd QXlsx
+  - qmake QXlsx.pro
+  - nmake
+
+  # Build HelloWorld
+  - cd ../HelloWorld
+  - qmake HelloWorld.pro
+  - nmake
+  # Execute HelloWorld
+  - cd release
+  - HelloWorld
+  - cd ..
+
+  # Build TestExcel
+  - cd ../TestExcel
+  - qmake TestExcel.pro
+  - nmake
+  # Execute TestExcel
+  - cd release
+  - TestExcel
+  - cd ..  
+
+after_build:
+

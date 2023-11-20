@@ -1,0 +1,130 @@
+静态库的制作过程:
+1 将.c文件生成.o文件
+	gcc -c add.c divd.c mul.c sub.c
+2 使用ar命令将.o文件打包成静态库文件
+	ar rcs libtest1.a add.o divd.o mul.o sub.o
+静态库的使用:
+	gcc -o main1 main.c -I./ -L./ -ltest1
+	
+动态库的制作:
+1 将.c文件生成.o文件
+	gcc -fpic -c add.c divd.c mul.c sub.c
+2 使用gcc将.o文件编译成动态库文件
+	gcc -shared add.o divd.o mul.o sub.o -o libtest2.so
+	
+makefile:
+	makefile文件是用来管理项目工程文件, 通过执行make命令, make
+	就会解析并执行makefile文件.
+	
+	makefile命名: makefile或者Makefile
+	
+makefile的编写:
+规则:
+
+目标: 依赖
+(tab)命令
+第一个版本:
+main: main.c fun1.c fun2.c sum.c
+	gcc -o main main.c fun1.c fun2.c sum.c
+	
+第二个版本:
+检查规则:
+	要想生成目标文件, 先要检查依赖条件是否都存在:
+		若都存在, 则比较目标时间和依赖的时间, 如果依赖的时候比目标的时间新,
+		则重新生成目标; 否则不重新生成
+		若不存在, 则往下找有没有生成依赖的规则, 有则生成, 如果没有则报错.
+		
+第三个版本:
+	变量: 
+		自定义变量: var = hello, $(var)
+		自带变量: CC CPPFLAGS CFLAGS LDFLAGS
+		自动变量: $@ $< $^
+	模式规则:
+		%.o:%.c------> 前后的%必须是相同 
+
+第四个版本:		
+	1.wildcard – 查找指定目录下的指定类型的文件
+	src=$(wildcard *.c)  //找到当前目录下所有后缀为.c的文件,赋值给src
+	2.patsubst – 匹配替换
+	obj=$(patsubst %.c,%.o, $(src)) //把src变量里所有后缀为.c的文件替换成.o
+
+	如: 当前目录下有a.c b.c c.c
+	    src=$(wildcard *.c) -----> src=a.c b.c c.c
+		obj=$(patsubst %.c,%.o, $(src)) -----> obj=a.o b.o c.o
+	
+第五个版本:
+	增加清理功能.
+	终极目标: makefile文件中第一次出现的目标叫做终极目标
+	.PHONY:clean
+	clean:
+		rm -f ....
+		
+	使用-f可以指定makefile文件, 如: make -f mainmak
+	
+gdb调试 :
+	gdb是在程序运行的结果与预期不符合的时候, 可以使用gdb进行调试,
+	特别注意的是: 使用gdb调试需要在编译的时候加-g参数.
+	
+	gcc -g -c hello.c
+	gcc -o hello hello.o
+
+启动gdb:
+	gdb program
+	set args hello world
+	show args
+执行程序:
+	run
+	start
+	
+list:
+	list
+	list -
+	list func
+	list linenum
+	list file:func
+	list file:linenum
+	set listsize n
+	show listsize
+	
+断点操作:
+	b linenum
+	b func
+	b file:linenum
+	b file:func
+	
+	info break
+	
+	disable m n | m-n
+	enable  m n | m-n
+	
+	delete m n | m-n 
+
+调试命令:
+	run
+	start	
+	next
+	step
+	finish
+	until
+	continue
+	
+	print var
+	
+自动显示:
+	display var
+	
+	info display
+	
+	disable display m n | m-n
+	enable display m n | m-n
+	
+	delete display m n | m-n
+	undisplay m n | m-n
+	
+库函数与系统函数的关系:
+	库函数和系统函数的关系是: 调用和被调用的关系;库函数是对系统函数的进一步封装.
+
+虚拟地址空间:
+	进程的虚拟地址空间分为用户区和内核区, 其中内核区是受保护的, 用户是不能够对其进行读写操作的;
+	内核区中很重要的一个就是进程管理, 进程管理中有一个区域就是PCB(本质是一个结构体);
+	PCB中有文件描述符表, 文件描述符表中存放着打开的文件描述符, 涉及到文件的IO操作都会用到这个文件描述符.

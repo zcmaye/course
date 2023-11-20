@@ -1,0 +1,14 @@
+main:main.o fun1.o fun2.o sum.o
+	gcc -o main main.o fun1.o fun2.o sum.o
+
+main.o:main.c
+	gcc -o main.o -c main.c -I./
+
+fun1.o:fun1.c
+	gcc -o fun1.o -c fun1.c
+
+fun2.o:fun2.c
+	gcc -o fun2.o -c fun2.c
+
+sum.o:sum.c
+	gcc -o sum.o -c sum.c

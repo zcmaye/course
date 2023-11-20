@@ -1,0 +1,182 @@
+########################################################
+第9天讲课记录
+########################################################
+
+1 互斥量(也叫互斥锁)
+	第1步：创建一把互斥锁
+	pthread_mutex_t mutex;
+	初始化互斥锁
+	pthread_mutex_init(&mutex);---相当于mutex=1
+	在代码中寻找共享资源（也称为临界区）
+	pthread_mutex_lock(&mutex);  -- mutex = 0
+	[临界区代码]
+	pthread_mutex_unlock(&mutex); -- mutex = 1
+	释放互斥锁资源
+	pthread_mutex_destroy(&mutex);
+	注意：必须在所有操作共享资源的线程上都加上锁否则不能起到同步的效果。
+
+
+2 死锁: 死锁不是linux提供给开发者的一种机制, 而是由于开发者操作不当引起的.
+	1 自己锁自己.
+		注意点: 线程在异常退出的时候也需要解锁.
+	2 A线程占用着A锁, 又想去获得B锁; B线程占用着B锁, 又想去获得A锁, 
+	  两个线程都不释放自己的锁, 又想去获得对方的锁, 从而造成了死锁.
+	  解决方法:
+	  	1 需要先释放自己的锁再去获得其他锁
+	  	2 避免使用嵌套的锁, 让线程按照一定的顺序加锁
+	  	3 可以调用pthread_mutex_trylock函数加锁, 该函数不阻塞, 所以不会产生死锁.
+
+
+3 读写锁:读写锁是一把锁
+	读写锁场景练习:
+	线程A加写锁成功, 线程B请求读锁
+		线程B阻塞, 
+		当线程A解锁之后, 线程B加锁成功
+	
+	线程A持有读锁, 线程B请求写锁
+		线程B会阻塞;
+		当线程A解锁之后, 线程B加锁成功
+	
+	线程A拥有读锁, 线程B请求读锁
+		线程B请求锁成功
+	
+	线程A持有读锁, 然后线程B请求写锁, 然后线程C请求读锁
+		线程B和C都阻塞;
+		当A释放锁之后, B先获得锁, C阻塞
+		当B释放锁之后, C获得锁	
+	
+	线程A持有写锁, 然后线程B请求读锁, 然后线程C请求写锁
+		线程B和C都阻塞;
+		当线程A解锁之后, C先获得锁, B阻塞;
+		当C解锁之后, B获得锁
+	
+读写锁总结
+	写独占, 读共享, 当读和写一起等待锁的时候, 写的优先级高
+
+读写锁使用步骤:
+	1 先定义一把读写锁:
+		pthread_rwlock_t rwlock;
+	2 初始化读写锁
+		pthread_rwlock_init(&rwlock, NULL);
+	3 加锁
+		pthread_rwlock_rdlock(&rwlock);---->加读锁
+		pthread_rwlock_wrlock(&rwlock);---->加写锁
+		////////////////////////
+		共享资源出现的位置
+		/////////////////////////
+	4 解锁
+		pthread_rwlock_unlock(&rwlock);
+	5 释放锁
+		pthread_rwlock_destroy(&rwlock);
+
+
+
+
+4 条件变量:
+	1 定义条件变量
+		pthread_cont_t cond;
+	2 初始化条件变量
+		pthread_cond_init(&cond, NULL);
+	3 在生成者线程中调用:
+		pthread_cond_signal(&cond);
+	4 在消费者线程中调用:
+		pthread_cond_wait(&cond, &mutex);
+	5 释放条件变量
+		pthread_cond_destroy(&cond);	
+	
+多个生成者和多个消费者程序在执行的时候core掉的原因分析:
+	假若只有一个生产者生产了一个节点, 此时会调用pthread_cond_signal通知
+	消费者线程, 此时若有多个消费者被唤醒了, 则最终只有消费者获得锁, 然后进行
+	消费, 此时会将head置为NULL, 然后其余的几个消费者线程只会有一个线程获得锁, 
+	然后读取head的内容就会core掉.
+
+	在使用条件变量的线程中, 能够引起线程的阻塞的地方有两个:
+		1 在条件变量处引起阻塞---->这个阻塞会被pthread_cond_signal解除阻塞
+		2 互斥锁也会使线程引起阻塞----->其他线程解锁会使该线程解除阻塞.
+
+
+信号量:
+	1 定义信号量变量
+		sem_t sem1;
+		sem_t sem2;
+	2 初始化信号量
+		sem_init(&sem1, 0, 5);
+		sem_init(&sem2, 0, 5);
+	3 加锁
+		sem_wait(&sem1);
+		//共享资源
+		sem_post(&sem2);
+		
+		sem_wait(&sem2);
+		//共享资源
+		sem_post(&sem1);
+	4 释放资源
+		sem_destroy(sem1);
+		sem_destroy(sem2);
+
+////////////////////////////////////////////////////////
+回顾linux系统编程课程
+////////////////////////////////////////////////////////
+1 linux常用命令
+	linux目录结构以及常见目录的作用
+	ls cp mv rm rmdir mkdir touch chmod  chgrp chown which whoami
+	tar zip rar find grep 
+2 vim的使用: 命令模式 编辑模式 末行模式
+  gcc的工作流程
+  库的制作和使用: 
+  动态库加载的时候报错问题的处理:export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./
+  
+3 makefile和gdb调试
+	目标:依赖
+	(tab)命令
+	函数  变量 伪目标
+	
+	编译的时候加-g, 否则不能用gdb调试
+	
+	理解什么是文件描述符
+4 文件IO
+	open read write close lseek  
+	lstat stat
+	dup dup2 fcntl
+	opendir readdir closedir
+
+5 进程相关
+	进程和程序的概念
+	fork函数
+	execl execlp函数
+	wait和waitpid]
+	
+6 进程间通信
+	pipe fifo mmap
+
+7 信号
+	信号的基本概念
+	信号的处理机制:
+	信号的特点
+	信号的四要素
+	信号相关函数: kill alarm setitimer raise abort
+	信号注册函数: signal sigaction
+		信号不支持排队
+	信号的处理过程: 
+	SIGCHLD信号: 该信号产生的条件及作用
+	信号集相关: 
+		阻塞信号集和未决信号集的关系
+		sigset_t set
+		sigemptyset sigaddset sigfillset sigdelset sigprocmask sigismember sigpending
+		
+8 守护进程和线程
+	创建守护进程的模型:	
+	线程:
+		线程的基本概念
+		线程和进程的比较	
+		线程相关函数:
+			pthread_create pthread_exit pthread_join
+			pthread_detach pthread_cancel pthread_testcancel 
+9
+	线程同步:
+		互斥锁的使用步骤
+		读写锁的使用步骤
+		条件变量的使用步骤
+		信号量的使用步骤
+	
+	

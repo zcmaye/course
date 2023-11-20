@@ -233,3 +233,227 @@ CREATE TABLE sqlite_master (
 
 > 查询基本MySql一致，不再赘述，[菜鸟教程](https://www.runoob.com/sqlite/sqlite-tutorial.html)里有详细使用。
 
+
+
+## C API
+
+### 配置
+
+前面我们使用的都是命令行工具，要在C语言中使用sqlite3，需要下载源代码。
+
++ 进入[SQLite Download Page](https://www.sqlite.org/download.html)，下载源码包
+
+![image-20230829140533454](assets/image-20230829140533454.png)
+
++ 下载完成之后解压，得到两个头文件和两个源文件
+
+![image-20230829140607499](assets/image-20230829140607499.png)
+
++ 只需要其中的sqlite3.c、sqlite.h即可！放到自己项目中即可使用。
+
+### 打开和关闭
+
+```c
+#include"sqlite3/sqlite3.h"
+#include<stdio.h>
+int main()
+{
+```
+
+先包含头文件，为了方便管理源代码，我将`sqlite3.h`和`sqlite3.c`放入了sqlite3文件夹。
+
+```c
+	sqlite3* db = NULL;
+	sqlite3_open("student.db", &db);
+```
+
+使用`sqlite3_open`函数打开数据库文件，如果不存在会创建。第一个参数指定数据库名，一般以.db作为拓展名。第二个参数需要数据库连接句柄，在使用之前先定义，这是一个传出参数，所以需要传递二级指针。
+
+```c
+	sqlite3_close(db);
+	return 0;
+}
+```
+
+使用完毕之后需要使用`sqlite3_close`函数来关闭数据库连接。
+
+### 执行SQL
+
+#### 基本增删查改
+
+打开sqlite数据库之后，可以执行SQL语句，进行增删查改。
+
+```c
+	int ret = 0;
+	ret = sqlite3_exec(db, "CREATE TABLE students(id INT PRIMARY KEY,name VARCHAR(20),dept VARCHAR(30),chinese REAL,math REAL,english REAL)",
+		NULL, NULL, NULL);
+	if (ret != SQLITE_OK)
+	{
+		printf("%s\n", sqlite3_errmsg(db));
+	}
+```
+
+使用`sqlite3_exec`在指定的连接上执行SQL语句，第二个参数是需要执行的SQL语句；第三个参数是执行SQL语句的回调，对于创建语句没有作用；第四个参数是用户自定义的数据；第五个参数是当执行语句发送错误时传出的错误字符串。
+
+返回0表示成功，否则失败；失败后可以通过`sqlite3_errmsg`函数获取错误字符串。
+
+查询、修改、删除案例代码如下：
+
+```c
+	//查询数据
+	printf("SELECT\n");
+	int number = 999;
+	ret = sqlite3_exec(db, "SELECT * FROM students", callback, &number, NULL);
+	if (ret != SQLITE_OK)
+	{
+		printf("%s\n", sqlite3_errmsg(db));
+		return -1;
+	}
+	//修改数据
+	printf("UPDATE\n");
+	ret = sqlite3_exec(db, "UPDATE students SET name='maye' WHERE id=100",NULL, NULL, NULL);
+	if (ret != SQLITE_OK) 
+	{
+		printf("%s\n", sqlite3_errmsg(db));
+		return -1;
+	}
+	//删除数据
+	printf("DELETE\n");
+	ret = sqlite3_exec(db, "DELETE FROM students WHERE id=100",NULL, NULL, NULL);
+	if (ret != SQLITE_OK)
+	{
+		printf("%s\n", sqlite3_errmsg(db));
+		return -1;
+	}
+```
+
+callback回调函数如下：
+
+```c
+int callback(void* arg, int colums, char** fileds, char** filedNames)
+{
+	//输出用户自定的数据以及查询到的列数
+	printf("arg:%d colums：%d\n",*(int*)arg, colums);
+	//输出字段名
+	for (size_t i = 0; i < colums; i++)
+	{
+		printf("%s ", filedNames[i]);
+	}
+	printf("\n");
+	//输出字段对应的值
+	for (size_t i = 0; i < colums; i++)
+	{
+		printf("%s ", fileds[i]);
+	}
+	printf("\n");
+	return 0;
+}
+```
+
+#### 查询数据
+
+SQLite还提供了另一种查询表的方式，即通过`sqlite3_get_table`函数。
+
+```c
+	char** result;	//结果集，字符串一维数组，先放字段，接着存放数据
+	int rows;		//记录条数(不包含字段) 
+	int columns;	//列数(字段数)
+	char* errMsg;	//错误字符串
+	rc = sqlite3_get_table(db, "SELECT * FROM students", &result, &rows, &columns, &errMsg);
+	if (rc == SQLITE_OK)
+	{
+		//输出表头
+		int idx = 0;
+		for (; idx < columns; idx++)
+		{
+			printf("%s ", result[idx]);
+		}
+		//输出数据
+		for (; idx < columns*(rows +1) ;idx++)
+		{
+			if (idx % columns == 0)
+			{
+				printf("\n");
+			}
+			printf("%s ", result[idx]);
+		}
+		sqlite3_free_table(result);
+		sqlite3_free(errMsg);
+	}
+
+```
+
+#### 插入数据
+
+为此解决sqlite3_exec函数执行效率低的问题，就出现了其它更加高效的解决方式：**将sqlite3_exec的功能进行分解，由多个函数共同完成**。这就是本篇要介绍的：
+
+- **sqlite3_prepare_v2()**函数：实现对sql语句(模板)的解析和编译，生成了可以被执行的 sql语句实例
+- **sqlite3_stmt()**数据结构：可以理解为一种“准备语句对象”，它可以结合变量使用，进而实现相同操作的循环
+- **sqlite3_bind_\*()** 函数：用于绑定赋值变量
+- **sqlite3_step()** 函数：用于执行sql语句
+
+相比较使用sqlite3_exec函数，现在这种方式，sql语句的解析和编译只执行了一次，而sqlite3_step执行多次，整体的效率势必大大提升。
+
+```c
+	const char* sql = "INSERT INTO students(id,name,dept,chinese,math,english) VALUES(?,?,?,?,?,?)";
+	sqlite3_stmt* stmt;
+	char* pzTail;
+	int rc = sqlite3_prepare_v2(db, sql, strlen(sql), &stmt, &pzTail);
+	if (rc == SQLITE_OK)
+	{
+```
+
+先定义好要执行的SQL语句，要动态绑定的数据用`?`进行占位；
+
+然后定义`sqlite3_stmt`准备语句代码块指针，下面会交给`sqlite3_prepare_v2`函数初始化。
+
+`pzTail`是指向错误的sql语句位置，当发送错误时。
+
+```c
+		sqlite3_bind_int(stmt, 1, 103);
+		sqlite3_bind_text(stmt, 2, "moying", 6, NULL);
+		sqlite3_bind_text(stmt, 3, "土木工程", 12, NULL);
+		sqlite3_bind_double(stmt, 4, 59.2);
+		sqlite3_bind_double(stmt, 5, 98.5);
+		sqlite3_bind_double(stmt, 6, 34);
+```
+
+接下来使用绑定语句对数据进行绑定，下标从1开始。
+
+```c
+		rc = sqlite3_step(stmt);
+		if (SQLITE_DONE == rc)
+		{
+			printf("stmt 执行完毕~ %s\n", sqlite3_errmsg(db) );
+		}
+		else 
+		{
+			printf("stmt 执行失败~ %s\n", sqlite3_errmsg(db));
+		}
+```
+
+`sqlite3_step`用来执行编译后的语句
+
+```c
+sqlite3_reset(stmt);
+```
+
+
+
+```c
+
+		
+		sqlite3_finalize(stmt);
+	}
+	else
+	{
+		printf("prepare failed:%s %s\n", sqlite3_errmsg(db),pzTail);
+	}
+
+```
+
+
+
+## 加密拓展
+
+[GitHub - utelle/SQLite3MultipleCiphers at v1.7.0](https://github.com/utelle/SQLite3MultipleCiphers/tree/v1.7.0)

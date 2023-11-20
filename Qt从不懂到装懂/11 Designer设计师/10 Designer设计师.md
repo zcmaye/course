@@ -138,26 +138,29 @@ void SCheckBox::mousePressEvent(QMouseEvent *event)
 
 1. 新建设计师自定义控件项目
 
-![image-20230106165455496](assets/image-20230106165455496.png)
+![image-20231024184152281](assets/image-20231024184152281.png)
 
-2. 一直点击下一步，直到如下界面，添加一个类名(这里用前面讲过的水波纹进度条)
+2. 给项目取个名字，我这里叫**SWaterProgressBarPlugn**
+3. ![image-20231024184420812](assets/image-20231024184420812.png)
 
-![image-20230106165938595](assets/image-20230106165938595.png)
+3. 一直点击下一步，直到如下界面，添加一个类名 **SWaterProgressBar**
 
-3. 然后一直下一步，直到完成
+![image-20231024185224527](assets/image-20231024185224527.png)
 
-![image-20230106174313306](assets/image-20230106174313306.png)
+4. 然后一直下一步，直到完成
+
+![image-20231024190832540](assets/image-20231024190832540.png)
 
 ##### 2. 添加代码
 
-1. 在SWaterProgressBar.h中添加如下代码
+1. 创建SWaterProgressBar.h头文件并添加如下代码。
 
 ```cpp
 #ifndef _SWATERPROGRESSBAR_H_
 #define _SWATERPROGRESSBAR_H_
 
 #include <QWidget>
-#include "CustomAnimation/SineWave.h"
+
 struct SWaterProgressBarPrivate
 {
 	int value = 0;			//当前值
@@ -209,7 +212,7 @@ private:
 
 ```
 
-2. 在SWaterProgressBar.h中添加如下代码
+2. 在SWaterProgressBar.cpp中添加如下代码
 
 ```cpp
 #include "SWaterProgressBar.h"
@@ -419,7 +422,7 @@ void SWaterProgressBar::updaterWater()
 + MinGW 32bit/64bit Debug/Release
 + MSVC 32bit/64bit Debug/Release
 
-![image-20230106183817688](assets/image-20230106183817688.png)
+![image-20231024191223462](assets/image-20231024191223462.png)
 
 + 这里选择MSVC 64bit Debug/Release都生成一下，生成的文件夹里大概就是这些文件，我们需要用的就是选择的两个（对比Debug和Release生成的文件有细微差别，Degbug文件后面多了一个d)，再加上源文件夹里的swaterprogressbar.h文件
 
@@ -443,7 +446,7 @@ Qt6自带的QtCreator是64bit，所以要在QC中使用插件，只能使用64bi
 >
 > MSVC 如果在Debug模式下，使用了Release模式编译的DLL，则会警告：QWidget: Must construct a QApplication before a QWidget
 
-1. 赋值64bit/Release版本的 **swaterprogressbarplugin.dll** 到`\Qt\Tools\QtCreator\bin\plugins\designer`
+1. 复制64bit/Release版本的 **swaterprogressbarplugin.dll** 到`\Qt\Tools\QtCreator\bin\plugins\designer`
 
 ![image-20230106184810749](assets/image-20230106184810749.png)
 

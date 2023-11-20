@@ -1,6 +1,14 @@
-# 异常
+# 错误处理
 
-## 简介
+错误处理在所有编程语言中，都是一件棘手的问题，也是一个备受争议的话题。这个问题在 C++ 这里尤其严重：因为历史的原因，C++ 并没有统一的错误处理方式。
+
+目前，**关于错误处理的方式，C++ 社区基本分裂为异常和非异常（返回值）两个阵营**。
+
+
+
+## 异常
+
+### 简介
 
 异常是程序在执行期间产生的问题。C++ 异常是指在程序运行时发生的特殊情况，比如尝试除以零的操作。
 
@@ -33,7 +41,7 @@ try
 
 如果 **try** 块在不同的情境下会抛出不同的异常，这个时候可以尝试罗列多个 **catch** 语句，用于捕获不同类型的异常。
 
-## 抛出异常
+### 抛出异常
 
 可以使用 **throw** 语句在代码块中的任何地方抛出异常。throw 语句的操作数可以是任意的表达式，表达式的结果的类型决定了抛出的异常的类型。
 
@@ -50,7 +58,7 @@ double division(int a, int b)
 }
 ```
 
-## 捕获异常
+### 捕获异常
 
 **catch** 块跟在 **try** 块后面，用于捕获异常。您可以指定想要捕捉的异常类型，这是由 catch 关键字后的括号内的异常声明决定的。
 
@@ -114,7 +122,7 @@ int main ()
 Division by zero condition!
 ```
 
-## C++ 标准的异常
+### C++ 标准的异常
 
 C++ 提供了一系列标准的异常，定义在 **<exception>** 中，我们可以在程序中使用这些标准的异常。它们是以父子类层次结构组织起来的，如下所示：
 
@@ -139,7 +147,7 @@ C++ 提供了一系列标准的异常，定义在 **<exception>** 中，我们�
 | std::range_error       | 当尝试存储超出范围的值时，会抛出该异常。                     |
 | std::underflow_error   | 当发生数学下溢时，会抛出该异常。                             |
 
-## 定义新的异常
+### 定义新的异常
 
 您可以通过继承和重载 **exception** 类来定义新的异常。下面的实例演示了如何使用 std::exception 类来实现自己的异常：
 
@@ -181,7 +189,7 @@ MyException caught
 C++ Exception
 ```
 
-## 抑制new抛异常
+### 抑制new抛异常
 
 当使用new申请内存时，如果内存申请失败，会抛出std::bad_alloc异常，需要如下处理：
 
@@ -208,6 +216,178 @@ do
 	 p = new(std::nothrow) double[1024];
 } while (p);
 ```
+
+## 非异常
+
+为了保证与 C 语言的兼容性，C++ 从 C 语言那里继承了各种基于错误返回码的机制，常见的有两种：
+
+1. 返回各种特殊值用于表示各种不同的错误原因（通常返回 0 表示成功）。
+2. 返回 0 值表示成功；返回非 0 表示错误（大部分情况返回 -1），并通过设置全局状态（errno）来表示具体错误原因。
+
+```cpp
+int getchar(); // 遇到文件结尾返回 -1
+char* malloc(int); // 如果分配出错，返回 0
+```
+
+基于错误返回码的错误处理机制，存在一些天然的缺陷：
+
+1. 繁琐且重复的错误检查使代码变得混乱。
+2. 构造函数没有返回值，错误返回码无法处理构造函数出错的情形。类似的，重载的运算符执行出错也没法返回错误码。
+3. 还有，最令人头疼的是，开发者可能会忘记检查错误或者没有正确处理返回码。
+
+关于基于返回值的错误处理方式，C++ 也进行了一些增强：
+
+### std::error_code
+
+- C++11 引入了 `std::error_code` 增强了错误码的概念。
+
+  ```cpp
+  class maye_category : public std::error_category
+  {
+  	const char* error_msg[100] = {"one","two","three","four"};
+  	const char* mapStr(int errval) const
+  	{ 
+  		if (errval == 0)
+  		{
+  			return "No Error";
+  		}
+  		if (errval < 255 || errval > 255 + 100)
+  		{
+  			return "unknown Error";
+  		}
+  		return error_msg[errval - 255]; 
+  	}
+  public:
+  	virtual const char* name() const noexcept override
+  	{
+  		return "maye_category";
+  	}
+  	virtual std::string message(int _Errval) const override
+  	{
+  		return std::string(mapStr(_Errval));
+  	}
+  };
+  
+  void sendMsg(const std::string& msg, std::error_code& code)
+  {
+  	//code =  std::make_error_code(std::errc::invalid_argument);
+  
+  	static maye_category cate;
+  	code.assign(257, cate);
+  
+  	//code.assign(255,)
+  }
+  
+  int main()
+  {
+  	std::error_code error;
+  	sendMsg("hello", error);
+  	if (error)
+  	{
+  		std::cout << "has erro " << error.value() << " " << error.message() << " " << error.category().name() << std::endl;
+  	}
+  
+  	std::cout << sqrt(-1) << std::endl;
+  	struct ss
+  	{
+  		ss(int a, int b) {}
+  		int a; 
+  		int b;
+  	};
+  	std::optional<ss> v({ 2,3 });
+  	//std::cout << v.has_value() <<"  "<<v.value() << std::endl;
+  
+  	return 0;
+  }
+  ```
+
+### std::optional
+
+#### 一、前言
+
+  有时我们会用一个值来表示一种“没有什么意义”的状态，这就是C++17的std::optional的用处，允许函数返回“空值（nothing）“，增强了函数接口的表达能力。
+
+  在编写程序时，我们常常遇到一种情况，那就是我们不总是有一个固定值来表示一个事物。例如，找出文本中的第一个偶数（如果存在的话）。在以前的代码中，这些情况一般使用魔术值（magic value）或者空指针（null pointers）来表示。一个魔术值可以是一个空的字符串、0、-1或者一个最大的非负值（例如std::string::npos）。
+
+  这两个方法都有他们的缺点。魔术值人为地限制了可获得的值得范围，它也仅仅按照惯例与那些合法、正常的值分开来。对于一些类型，没有明显的魔术值，或者无法用常规手段创建魔术值。用空指针表示没有意义的值意味着其他合法的值必须被分配一个地址空间，这是一个代价高昂的操作并且难以实现。
+
+  另一种方法是提供两次查询：首先询问是否有一个有意义的值，如果答案是真的，就查找这个值。实现这个会导致查找代码的不必要的重复，并且他的使用也不够安全。如果要查找的值不存在，第二次查询的实现就必须要做点什么，例如返回一个容易被误解的值，这个值会引起未定义的行为，或者直接抛出一个异常，后者通常是唯一明智的行为。
+
+#### 二、介绍
+
+C++17引入了std::optional，类似于std::variant，std:optional是一个和类型（译者注：和类型即sum type，如果你熟悉C++中的union，那么就不难理解这里的sum。如果一个union包含两个类型，一个bool类型和一个uint8_t类型，那么这个union一共会有2+2^8 = 258种值，所以我们称之为和类型，因为它们的类型数量是用各个类型的类型数量累加求得的。如果换成struct，那么这里的类型数量就是2*2^8=512种），它是类型T 的所有值和一个单独的“什么都没有”的状态的和。
+	后者有专门的名字：它的类型是std::nullopt_t，并且它有一个值std::nullopt。那听上去很熟悉，它和nullptr 的概念相同，不同的是后者是C++内置的关键词。
+
+#### 三、使用
+
+std::optional具有我们所期望的所有特性：我们可以用任何可以被转化为T的类型来构造和赋值，我们也可用std::nullopt和默认构造函数来构造和赋值。我们还能从其他类型的std::optional初始化一个另外类型的std::optional，只要这两个类型可以相互转化。结果会包含被转换的值或者会为空，跟我们的预期相符。
+
+我们可以像上面描述的那样查询std::optional，has_value()告诉我们是否有一个值，value()则返回这个值。如果没有值并且我们还调用了value()，会抛出一个类型为std::bad_optional_access的异常。或者我们可以使用value_or(U&& default)来得到值，如果std::optional为空，则得到default。
+
+```cpp
+#include<iostream>
+#include<optional>
+//从字符串中找到第一个能被n整除的数
+std::optional<int> firstNumberDivisible(const std::string& str, int n)
+{
+	//0不能做除数
+	if (n == 0)
+	{
+		return std::optional<int>();
+	}
+	for (size_t i = 0; i < str.size(); i++)
+	{
+		if (std::isdigit(str[i]))
+		{
+			if ((str[i] - '0') % n == 0)
+			{
+				return std::make_optional<int>(str[i] - '0');
+			}
+			//std::cout << str[i] - '0' << " ";
+		}
+	}
+
+	return std::optional<int>();
+}
+
+int main()
+{
+	std::string text = "876543210";
+	std::optional<int> opt = firstNumberDivisible(text, 10);
+    //如果找到返回找到的值，没有找到返回999
+	int v = opt.value_or(999);
+   	std::cout << "first number is " << v << std::endl;
+    
+	if (opt.has_value())
+	{
+		std::cout << "first number is " << opt.value() << std::endl;
+	}
+	else
+	{
+		std::cout << "not found" << std::endl;
+	}
+
+	return 0;
+}
+```
+
+除了这些显式的方法，std::optional还重载了bool类型转换，它可以显式转化为bool来表示std::optional是否有一个值。指针的解引用操作符*和->都实现了，但是没有std::bad_optional_access异常，用这种方式访问一个空的std::optional是一个未定义的行为。最后，reset()清除std::optional包含的对象，让它为空。
+  上面的代码因此可以写成这样：
+
+```cpp
+if (opt)
+{
+	std::cout << "first number is " << *opt << std::endl;
+}
+```
+
+为了方便构造std::optional，提供了std::make_optional函数模板；emplace(Args..)可以对std::optional对象重新构造值。
+
+```cpp
+auto optNums = std::make_optional<std::vector<int>>({ 1,3,5,7,9,3,4,56 });
+```
+
+
 
 # 类型转换
 

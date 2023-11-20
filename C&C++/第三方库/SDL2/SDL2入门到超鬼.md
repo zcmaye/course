@@ -294,8 +294,6 @@ int main(int argc,char*argv[])
 
 如果有错误，SDL_CreateWindow 返回 NULL。我们将错误打印到控制台。
 
-
-
 如果窗口被成功创建，则会显示到桌面。 
 
 为了防止它消失，我们将调用SDL_Delay。 SDL_Delay将等待给定的毫秒数。 一毫秒是千分之一秒。 这意味着上面的代码将使窗口等待2000 /1000秒或2秒。  
@@ -315,9 +313,42 @@ int main(int argc,char*argv[])
 
 最后我们让程序延迟5秒再退出，否则窗口会一闪而过；退出之前需要调用SDL_DestroyWindow手动销毁窗口和调用SDL_Quit清理所有初始化的子系统。
 
-### 2.基本图形绘制
+### 2.图形渲染
 
-接下来我们来学习基本的图形绘制，SDL2支持的基本图形有：
+#### 渲染器
+
+渲染器是负责从模型生成图像的工具，主要是将场景中的模型，按照设定好的环境、灯光、材质及渲染参数，投影成数字图像。
+
+模型是用严格定义的语言或者数据结构对于物体的描述，它包括几何、视点、纹理以及照明信息。
+
+```c
+	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
+	if (!renderer)
+	{
+		SDL_Log("Renderer could not be created!%s", SDL_GetError());
+	}
+	else{
+        SDL_SetRenderDrawColor(renderer,255,255,255,255);
+```
+
+创建窗口后，我们必须为窗口创建一个渲染器，以便我们可以在其上渲染纹理。幸运的是，这可以通过调用[SDL_CreateRenderer](http://wiki.libsdl.org/SDL_CreateRenderer)轻松完成。
+
+创建渲染器后，可以使用 [SDL_SetRenderDrawColor](http://wiki.libsdl.org/SDL_SetRenderDrawColor) 初始化渲染颜色。这用于控制各种渲染操作的颜色。
+
+```c
+	SDL_RenderClear(renderer);
+
+	SDL_RenderPresent(renderer);
+}
+```
+
+然后调用SDL_RenderClear清除渲染目标，它会使用前面设置的颜色进行清除，此时还不能让窗口变为白色背景，必须调用SDL_RenderPresent让渲染结果呈现出来。
+
+最后，记得调用SDL_DestroyRenderer销毁掉渲染器。
+
+#### 渲染图形
+
+接下来我们来使用渲染器绘制基本的几何图形，SDL2支持的基本图形有：
 
 + 点
 
@@ -345,286 +376,290 @@ int main(int argc,char*argv[])
 + 颜色混合模式
 
   ```cpp
-  void SDL_SetRenderDrawBlendMode()
+  int SDL_SetRenderDrawBlendMode()
+  //常用混合模式如下    
+  SDL_BLENDMODE_NONE = 0x00000000,     /**< 没有混合，即正常模式*/
+  SDL_BLENDMODE_BLEND = 0x00000001,    /**< 透明混合，透明度生效*/                  
+  SDL_BLENDMODE_ADD = 0x00000002,      /**< 叠加混合，即颜色叠加*/  
+  ...
   ```
 
-+ 绘图操作的颜色
-
-  ```cpp
-  void SDL_SetRenderDrawColor()
-  ```
-
-+ 用颜色清楚整个屏幕
-
-  ```cpp
-  SDL_RenderClear(render);
-  ```
-
-+ 渲染器出场(输出渲染结果)
-
-```cpp
-void SDL_RenderPresent()
-```
 
 + 自定义的绘制圆形的函数
 
 ```cpp
-void SDL_RenderDrawCircle(SDL_Renderer* pRender, float x, float y, float r)
+void DK_RenderDrawCircle(SDL_Renderer*renderer,int x, int y, int radius)
 {
-	float angle = 0;
-	for (angle = 0; angle < 360; angle += 0.1)
+	int xbase = 0, ybase = radius, pos = 0;
+	int d = (1 - radius) << 1;
+	while (ybase >= 0)
 	{
-		SDL_RenderDrawPoint(pRender, x + r * SDL_cos(angle), y + r * SDL_sin(angle));
-	}
-}
-void SDL_RenderFillCircle(SDL_Renderer* pRender, float x, float y, float r)
-{
-	register float angle = 0;
-	while (r > 0)
-	{
-		for (angle = 0; angle < 360; angle += 0.1)
+		if (d > 0)
 		{
-			SDL_RenderDrawPoint(pRender, x + r * SDL_cos(angle), y + r * SDL_sin(angle));
+			if (((d - xbase) << 1) - 1 <= 0)
+			{
+				d = d + ((xbase - ybase + 3) << 1);
+				xbase++;
+				ybase--;
+			}
+
+			else
+			{
+				d = d - (ybase << 1) + 3;
+				ybase--;
+			}
 		}
-		r -= 1;
+		else if (d < 0)
+		{
+			if (((d + ybase) << 1) - 1 <= 0) d = d + (xbase << 1) + 3, xbase++;
+			else d = d + ((xbase - ybase + 3) << 1), xbase++, ybase--;
+		}
+		else
+		{
+			d = d + ((xbase - ybase + 3) << 1);
+			xbase++;
+			ybase--;
+		}
+		SDL_RenderDrawPoint(renderer,x + xbase - 1, y + ybase);        //右下
+		SDL_RenderDrawPoint(renderer,x - xbase, y + ybase);                 //左下
+		SDL_RenderDrawPoint(renderer,x + xbase - 1, y - ybase);             //右上
+		SDL_RenderDrawPoint(renderer,x - xbase, y - ybase);                 //左上
 	}
 }
 
-void SDL_RenderDrawEllipse(SDL_Renderer* pRender, SDL_Rect* rect)
+void DK_RenderFillCircle(SDL_Renderer* renderer,int x, int y, int radius)
+{
+	float y0, y1;
+	float xx = 0;
+	float msin = 0;
+	for (float angle = 0; angle < 3.14; angle += 0.001)
+	{
+		xx = x + radius * SDL_cos(angle);
+
+		msin = SDL_sin(angle);
+
+		y0 = y + radius * msin;
+		y1 = y + radius * (-msin);
+
+		SDL_RenderDrawLineF(renderer, xx, y0, xx, y1);
+	}
+}
+
+void DK_RenderDrawArc(SDL_Renderer* pRender, SDL_Rect* rect, float startAngle, float endAngle)
+{
+	if (startAngle == endAngle)
+		return;
+
+	//计算开始弧度和结束弧度
+	float minA = SDL_min(startAngle, endAngle);
+	float maxA = SDL_max(startAngle, endAngle);
+
+	//半轴长
+	float aHalf = rect->w / 2;
+	float bHalf = rect->h / 2;
+
+	float x, y;													//本次计算的点
+	float prevx = (rect->x + aHalf) + aHalf * SDL_cos(minA);	//上一次计算出来的点
+	float prevy = (rect->y + bHalf) + bHalf * SDL_sin(minA);
+	//求出圆上每个坐标点
+	for (float angle = minA; angle <= maxA; angle += 0.05f)
+	{
+		x = (rect->x + aHalf) + aHalf * SDL_cos(angle);
+		y = (rect->y + bHalf) + bHalf * SDL_sin(angle);
+		SDL_RenderDrawPointF(pRender, x, y);
+		SDL_RenderDrawLineF(pRender, prevx, prevy, x, y);
+		prevx = x;
+		prevy = y;
+	}
+}
+
+void DK_RenderDrawEllipse(SDL_Renderer* pRender, SDL_Rect* rect)
 {
 	//半轴长
 	int aHalf = rect->w / 2;
 	int bHalf = rect->h / 2;
 
-	int x, y;
+	float x, y;
+	float prevx = (rect->x + aHalf *2);
+	float prevy = (rect->y + bHalf);
+	float firstx = prevx;
+	float firsty = prevy;
 	//求出圆上每个坐标点
-	for (float angle = 0; angle < 360; angle += 0.1f)
+	for (float angle = 0; angle < 2 * 3.14; angle += 0.05f)
 	{
 		x = (rect->x + aHalf) + aHalf * SDL_cos(angle);
 		y = (rect->y + bHalf) + bHalf * SDL_sin(angle);
-		SDL_RenderDrawPoint(pRender, x, y);
+		SDL_RenderDrawPointF(pRender, x, y);
+		SDL_RenderDrawLineF(pRender, prevx, prevy, x, y);
+		prevx = x;
+		prevy = y;
 	}
-}
-void SDL_RenderFillEllipse(SDL_Renderer* pRender, SDL_Rect* rect)
-{
-	SDL_Rect r = *rect;
-	//半轴长
-	float aHalf;
-	float bHalf;
-	//椭圆上每点坐标
-	float x, y;
-
-	while (r.w >= 0 && r.h >= 0)
-	{
-		aHalf = r.w / 2.f;
-		bHalf = r.h / 2.f;
-		//求出圆上每个坐标点
-		for (float angle = 0; angle < 360; angle += 0.1f)
-		{
-			x = (r.x + aHalf) + aHalf * SDL_cos(angle);
-			y = (r.y + bHalf) + bHalf * SDL_sin(angle);
-			SDL_RenderDrawPointF(pRender, x, y);
-		}
-		r.x++;
-		r.y++;
-		r.w -= 2;
-		r.h -= 2;
-	}
+	SDL_RenderDrawLineF(pRender, firstx, firsty, x, y);	//最后连上
 }
 ```
 
 
 
-### 2.在屏幕上显示一张图片
+#### 渲染纹理
 
-![img](assets/hello_world.bmp)
+我们都知道游戏中最常用到的就是图形渲染，简单地说就是将图像显示到屏幕上。图像在 SDL 中被封装为一个叫做纹理的结构体 SDL_Texture，它代表了所有像素相关的内容数据。
 
-
-
-既然你已经配置好了SDL， 是时候来建立一个能加载并显示一张图片的基本图形程序了。
+SDL 中提供了 SDL_CreateTexture 和 SDL_DestoryTexture 来创建和销毁纹理，但是在现实中，很少从头创建一个新纹理，一般情况都是从硬盘上直接加载相关的图片转换为纹理结构体。SDL 也提供了相关的函数：
 
 ```c
-//启动SDL并创建窗口
-bool init(const char*title,int width,int height);
-
-//释放媒体并关闭SDL
-void clean();
+SDL_Surface *SDL_LoadBMP(const char* file);
 ```
 
-在第一个教程中，我们将所有内容都放在 main 函数中。由于它是一个小程序，我们可以这样，但在实际程序中，代码尽可能模块化。这意味着你的代码是整齐的块，每个块都易于调试和重用。
+这个函数可以从本地磁盘上加载一个位图图片，不过这里有两个重点需要提及：
 
-这意味着我们有处理初始化和关闭 SDL 应用程序的函数。我们在源文件的顶部附近声明这些函数。
+- 文件只能是位图图片，也就是常见以 bmp 后缀的图片文件。
 
-```c
-//要渲染的窗口指针
-SDL_Window* gWindow = NULL;
-    
-//窗口包含的表面
-SDL_Surface* gWinSfc = NULL;
-```
+- 函数返回的并不是 SDL_Texture 结构体指针，而是另一种叫做 SDL_Surface 结构体的指针对象。
 
-这里我们声明了一些全局变量。通常，你应该避免在大型程序中使用全局变量。我们在这里这样做的原因是因为我们希望源代码尽可能简单，但是在大型项目中全局变量会使事情变得更加复杂。由于这是一个单一的源文件程序，我们不必太担心。
-
-这是一种称为 SDL 表面的新数据类型。SDL 表面只是一种图像数据类型，它包含图像的像素以及渲染它所需的所有数据。SDL 表面使用软件渲染，这意味着它使用 CPU 进行渲染。可以渲染硬件图像，但它有点困难，所以我们将首先通过简单的方法学习它。在以后的教程中，我们将介绍如何渲染 GPU 加速图像。
-
-我们将在这里处理的图像是屏幕图像（您在窗口内看到的）和我们将从文件加载的图像。
-
-请注意，这些是指向 SDL 表面的指针。原因是 :
-
-1. 我们将动态分配内存来加载图像
-2. 最好按内存位置引用图像。想象一下，你有一个砖墙游戏，由多次渲染的相同砖块图像组成（如超级马里奥兄弟）。当您可以拥有图像的一个副本并一遍又一遍地渲染它时，在内存中拥有数十个图像副本是很浪费的。
-
-另外，请始终记住初始化您的指针。我们在声明它们时立即将它们设置为 NULL。
+> 之所以该接口只支持位图是因为位图图像的格式比较简单，并不涉及图片压缩编码之类的操作，图片数据只是按照一定格式对像素的简单排列，这也是为什么位图图片相比于其它图片要大上很多的原因。
 
 ```c
-bool init(const char*title,int width,int height)
+SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* filename)
 {
-	//初始化SDL
-	if (SDL_Init(SDL_INIT_VIDEO) != 0)
-	{
-		return false;
-	}
-	//创建窗口
-	gWindow = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
-	if (!gWindow)
-	{
-		return false;
-	}
-	//获取窗口表面
-	gWinSfc = SDL_GetWindowSurface(gWindow);
-	if (!gWinSfc)
-	{
-		return false;
-	}
-	return true;
-}
-```
-
-在上面的代码中，我们已经获取了SDL初始化和窗口创建代码，并将其放在自己的函数中。 
-
-我们想在窗口内显示图像，为了做到这一点，我们需要获得窗口内的图像。 因此，我们调用SDL_GetWindowSurface来获取窗口所包含的表面。  
-
-```c
-void clean()
-{
-	SDL_DestroyWindow(gWindow);
-	SDL_Quit();
-}
-```
-
-在我们的清理代码中，我们像以前一样销毁窗口并退出SDL。
-
-```c
-int main(int argc, char* argv[])
-{
-	if (!init(u8"SDL2教程", 640, 480))
-	{
-		SDL_Log("Failed to initialize!\n");
-	}
-
-	//加载图片
-	SDL_Surface* sfc = SDL_LoadBMP("./assets/lesson02/hello_world.bmp");
+	SDL_Surface* sfc = SDL_LoadBMP(filename);
 	if (!sfc)
 	{
-		SDL_Log("surface load failed,%s\n", SDL_GetError());
+		SDL_Log("<%s> load failed:%s", filename, SDL_GetError());
+		return NULL;
 	}
-	else
+
+	SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, sfc);
+	if (!tex)
 	{
-		//把图片显示到窗口上
-		SDL_BlitSurface(sfc, NULL, gWinSfc, NULL);
-```
-
-在我们的主函数中，我们初始化 SDL 并加载图像。如果成功，我们使用 SDL_BlitSurface 将加载的表面 blit 到屏幕表面上。
-
-块传输的作用是获取源表面并将其副本标记到目标表面上。SDL_BlitSurface 的第一个参数是源图像。第三个参数是目的地。我们将在以后的教程中学习第二个和第四个参数。
-
-现在，如果这是我们唯一的绘图代码，我们仍然不会在屏幕上看到我们加载的图像。还差一步。
-
-```c
-        //更新窗口表面
-        SDL_UpdateWindowSurface( gWindow );
-```
-
-在屏幕上绘制了我们想要为该帧显示的所有内容后，我们必须使用 SDL_UpdateWindowSurface 更新屏幕。当你在屏幕上绘图时，你通常不会在屏幕上看到你看到的图像。默认情况下，大多数渲染系统都是双缓冲的。这两个缓冲区是前缓冲区和后缓冲区。
-
-当你进行像 SDL_BlitSurface 这样的绘制调用时，你渲染到后台缓冲区。您在屏幕上看到的是前端缓冲区。我们这样做的原因是因为大多数框架需要在屏幕上绘制多个对象。如果我们只有一个前端缓冲区，我们将能够看到正在绘制的帧，这意味着我们会看到未完成的帧。所以我们要做的是首先将所有内容绘制到后台缓冲区，完成后我们交换后台缓冲区和前台缓冲区，这样现在用户就可以看到完成的帧了。
-
-这也意味着您不会在每个 blit 之后调用 SDL_UpdateWindowSurface，只有在当前帧的所有 blit 都完成之后才会调用。
-
-```c
-            //等待2秒
-			SDL_Delay( 2000 );
-			//释放表面
-			SDL_FreeSurface(sfc);
-        }
-    }
-
-    //释放资源和关闭SDL
-    clean();
-
-    return 0;
+		SDL_FreeSurface(sfc);
+		return NULL;
+	}
+	SDL_FreeSurface(sfc);
+	return tex;
 }
 ```
 
-现在我们已经把所有东西都渲染到了窗口上，我们延迟了两秒钟，这样窗口就不会消失了。等待完成后，我们关闭我们的程序。
-
-![image-20211231165816824](assets/image-20211231165816824.png)
-
-
-
-#### Surface直接修改像素
+首先使用SDL_LoadBMP函数把bmp图像加载到内存，然后使用SDL_CreateTextureFromSurface函数从surface创建一个texture，最后吧surface释放掉。
 
 ```c
-//输出像素格式
-SDL_Log("%d\n", sfc->format->format);
-//输出人看得懂的像素格式
-SDL_Log("%s\n", SDL_GetPixelFormatName(sfc->format->format));
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
+	SDL_RenderClear(renderer);
+
+	SDL_Rect drect = { 0,0};
+	SDL_QueryTexture(tex, NULL, NULL, &drect.w, &drect.h);
+	SDL_RenderCopy(renderer, tex, NULL, &drect);
+
+	SDL_RenderPresent(renderer);
 ```
 
-先输出sfc的像素格式，像素格式是由枚举`SDL_PixelFormatEnum`定义的，如果输出的是318769153，即对应的枚举是SDL_PIXELFORMAT_INDEX8，说明一个像素由八位表示(也就是图片是一张黑白图)。
+接着使用 SDL_RenderCopy 将纹理拷贝到后台缓冲中，最后在使用完毕后释放相关资源。
 
-如果要修改图片，让他能够呈现彩色，必须先对图片的格式进行转换。
+函数原型如下：
 
 ```c
-sfc = SDL_ConvertSurface(sfc, gWinSfc->format, 0);
+int SDL_RenderCopy(SDL_Renderer*   renderer,
+                   SDL_Texture*    texture,
+                   const SDL_Rect* srcrect,
+                   const SDL_Rect* dstrect)
 ```
 
-通过SDL_ConvertSurface可以把sfc的像素格式转为指定的像素格式(这里是窗口的)，然后进行修改像素
++ renderer 渲染器
++ texture 纹理
++ srcrect 表示纹理的那部分绘制出来，如果为NULL，则全部绘制
++ dsrrect 表示要绘制到屏幕上的目标矩形，如果和srcrect不同，则会自动进行缩放
+
+#### SDL_image
+
+如果想要加载其他格式的图片，需要使用SDL_image拓展库。
 
 ```c
-//修改图片的像素
-Uint32* pixels = sfc->pixels;
-for (int i = 0; i < 100; i++)
+SDL_Texture* loadTexture(SDL_Renderer* renderer, const char* filename)
 {
-	   pixels[i] = 0xff00ff;//SDL_MapRGBA(sfc->format,255,0,0,255);
+	SDL_Surface* sfc = IMG_Load(filename);
+    ...
+```
+
+把loadTexture中的SDL_LoadBMP改为IMG_Load即可支持海量格式的图片。
+
+```c
+//SDL_Texture* tex = loadTexture(renderer, "Resource/pig.bmp");
+SDL_Texture* tex = IMG_LoadTexture(renderer, "Resource/pig.bmp");
+```
+
+或者直接把loadTexture改为IMG_LoadTexture即可直接加载纹理，不需要先加载成Sruface再转成Texture，非常方便。
+
+#### 加载动画(GIF)
+
+SDL_image还提供了IMG_LoadAnimation用来加载GIF动画。
+
+```c
+	//加载GIF
+	IMG_Animation* anima = IMG_LoadAnimation("Resource/wantLearn.gif");
+	if (!anima)
+	{
+		SDL_Log("animation load failed:%s", SDL_GetError());
+	}
+```
+
+IMG_Animation里保存了有关GIF动画的所有信息：
+
+```c
+typedef struct
+{
+	int w, h;				//每帧的大小
+	int count;				//总帧数
+	SDL_Surface **frames;	//每帧图像数组
+	int *delays;			//每帧之间的间隔数组(可能每帧切换时，间隔不一样)
+} IMG_Animation;
+```
+
+加载之后图像时Surface格式的，我们必须转成Texture才能进行渲染。
+
+```c
+	//把GIF的Surface转成Texture
+	int w = anima->w;
+	int h = anima->h;
+	int delay = *anima->delays;
+	int size = anima->count;
+	SDL_Texture** texs = SDL_calloc(anima->count, sizeof(SDL_Texture*));
+	for (int i = 0; i < anima->count; i++)
+	{
+		texs[i] = SDL_CreateTextureFromSurface(renderer, anima->frames[i]);
+		SDL_Log("%d %d",i, anima->delays[i]);
+	}
+	IMG_FreeAnimation(anima);
+```
+
+定义变量，把IMG_Animation的信息保存下来，然后把anima释放掉。
+
+```c
+int index = 0;		
+while(true)
+{
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
+	SDL_RenderClear(renderer);
+    
+	SDL_Rect rect = { 0,100,w,h };
+	SDL_RenderCopy(renderer, texs[index], NULL, &rect);
+	//index = (index + 1) % size;
+	index = SDL_GetTicks() / delay % size;
+    
+    //...
+    SDL_RenderPresent(renderer);
 }
 ```
 
-上面的代码在图片上画了一条品红色的线条。
-
-![image-20220731234023404](assets/image-20220731234023404.png)
-
-
-
-#### **指定输出坐标**
+定义index表示当前正在渲染的帧，然后使用`index = (index + 1) % size;`让index进行变化，这样就动起来了，当然，这种方式会让动画的播放变得非常快。可以把delay进入进来，使用`index = SDL_GetTicks() / delay % size;`既可以做到以指定的间隔进行播放。
 
 ```c
-SDL_Rect  rect = { 50,50,0,0 };
-//把图片显示到窗口上
-SDL_BlitSurface(sfc, NULL, gWinSfc, &rect);
+for (int i = 0; i < size; i++)
+{
+	SDL_DestroyTexture(texs[i]);
+}
+SDL_free(texs);
 ```
 
-SDL_BlitSurface可以将sfc输出到gWinSfc，那么如何指定输出坐标呢，这个可以通过最后一个参数指定，这个参数需要一个SDL_Rect结构，而且只有x，y有效，w，h将被忽略，所以置为0即可！
-
-#### **输出部分图片**
-
-```c
-SDL_Rect scaleRect = { 10,156,50,50 };
-//把图片显示到窗口上
-SDL_BlitSurface(sfc, &scaleRect, gWinSfc, NULL);
-```
-
-如果不想把整张图片都输出，则可以指定输出的图片中的某个矩形区域。
+最后记得释放掉相关资源。
 
 ### 3.事件处理
 
@@ -634,7 +669,7 @@ SDL_BlitSurface(sfc, &scaleRect, gWinSfc, NULL);
 
 ```c
             //主循环标志
-            bool isDone = false;
+            bool isRunning = true;
 ```
 
 在输出表面和更新窗口表面之后，我们声明了一个退出标志，用于跟踪用户是否已退出。由于此时我们刚刚启动了应用程序，显然它被初始化为false。
@@ -643,7 +678,7 @@ SDL_BlitSurface(sfc, &scaleRect, gWinSfc, NULL);
 
 ```c
             //应用程序主循环
-            while( !isDone )
+            while( !isRunning )
             {
 ```
 
@@ -661,7 +696,7 @@ SDL_BlitSurface(sfc, &scaleRect, gWinSfc, NULL);
                     //用户请求退出
                     if( ev.type == SDL_QUIT )
                     {
-                       isDone = true;
+                       isRunning = false;
                     }
                 }
 ```
@@ -680,85 +715,42 @@ SDL_PollEvent 将不断从队列中取出事件，直到队列为空。当队列
 
 ```c
                 //输出图片
-                SDL_BlitSurface( gXOut, NULL, gScreenSurface, NULL );
+                SDL_RenderCopy(renderer,tex, NULL,&rect );
             
-                //更新窗口表面
-                SDL_UpdateWindowSurface( gWindow );
+                SDL_RenderPresent(renderer);
             }
 ```
 
-在我们处理完一帧的事件后，我们绘制到屏幕并更新它（如上[一教程中所述](https://lazyfoo.net/tutorials/SDL/02_getting_an_image_on_the_screen/index.php)）。如果退出标志设置为真，应用程序将在循环结束时退出。如果它仍然是假的，它将一直持续到用户 X 掉窗口。
+在我们处理完一帧的事件后，我们绘制到屏幕并更新它。如果退出标志设置为真，应用程序将在循环结束时退出。如果它仍然是假的，它将一直持续到用户 X 掉窗口。
 
 #### 键盘事件
 
-退出事件只是 SDL 能够处理的事件之一。在游戏中大量使用的另一种输入是键盘。在本教程中，我们将根据您按下的键对图像进行移动
-
-在源代码的顶部，我们声明了不同表面的枚举。  
-
-```c
-//要渲染的窗口指针
-SDL_Window* gWindow = NULL;
-
-//窗口包含的表面
-SDL_Surface* gWinSfc = NULL;
-
-//启动SDL并创建窗口
-bool init(const char* title, int width, int height);
-
-//释放媒体并关闭SDL
-void clean();
-
-//加载图片
-SDL_Surface* loadSurface(const char* filename)
-```
-
- 除了常用的函数原型之外，我们还有一个名为loadSurface的新函数。 专门用来加载图片，以及在出错时能快速定位。  
-
-对于这个程序来说，我们有一个指向SDL表面的指针，叫做gSfc，它指向了我们将要使用的图像。 根据用户按下的按键，我们将把gSfc进行移动。  
-
-```c
-SDL_Surface* loadSurface(const char* filename)
-{
-    SDL_Surface * surface = SDL_LoadBMP(filename);
-    if (surface == NULL)
-    {
-        SDL_Log("Unable to load image %s! SDL Error: %s\n", filename, SDL_GetError());
-        return NULL;
-    }
-    return surface;
-}
-```
-
-上面是loadSurface函数，它加载图像并在出现错误时报告错误。 它与以前的方法基本相同，但是将图像加载和错误报告包含在一个函数中可以很容易地添加和调试图像加载。  
-
-要记得最后要在clean函数中释放加载的表面哦~  
-
-
+退出事件只是 SDL 能够处理的事件之一。在游戏中大量使用的另一种输入是键盘。在本教程中，我们将根据您按下的键对图像进行移动  。  
 
 ```c
     //加载图片
-   gSfc = loadSurface("./assets/lesson02/hello_world.bmp");
+    SDL_Texture* tex = loadTexture("./assets/lesson02/hello_world.bmp");
 	//定义坐标点
 	int x = 0;
 	int y = 0;
 
 
 	//主循环标志
-    bool quit = false;
-    while (!quit)
+    bool isRunning = true;
+    while (isRunning)
     {
 ```
 
 在main函数中，在进入主循环之前，我们先将图片进行加载，并且定义坐标点x和y。  
 
 ```c
-   static SDL_Event ev;
+   		static SDL_Event ev;
         //处理队列中的事件
         while (SDL_PollEvent(&ev))
         {
             if (ev.type == SDL_QUIT)
             {
-                quit = true;
+                isRunning = false;
             }
             //按键按下
             else if (ev.type == SDL_KEYDOWN)
@@ -784,27 +776,444 @@ SDL_Surface* loadSurface(const char* filename)
                 }
             }
         }
-
+	
+		SDL_SetRenderDrawColor(renderer,255,255,255,255);
 		//清屏
-        SDL_FillRect(gWinSfc, NULL, 0xffff);
+        SDL_RenderClear(renderer);
 
         SDL_Rect posRect = { x,y,0,0 };
+		SDL_QueryTexture(tex,NULL,NULL,&posRect.w,&posRect.h);
         //在窗口上显示图片
-        SDL_BlitSurface(gSfc, NULL, gWinSfc, &posRect);
-        SDL_UpdateWindowSurface(gWindow);
+        SDL_RenderCopy(renderer,tex, NULL, &posRect);
+        SDL_RenderPresent(renderer);
     }
 ```
 
 这是我们的事件循环。如您所见，我们像在上一个教程中一样处理[关闭窗口](https://lazyfoo.net/tutorials/SDL/03_event_driven_programming/index.php)，然后处理 SDL_KEYDOWN 事件。当您按下键盘上的某个键时，就会发生此事件。[SDL 事件](http://wiki.libsdl.org/SDL_Event?highlight=(\bCategoryStruct\b)|(CategoryEvents))内部 是一个 [SDL 键盘事件](http://wiki.libsdl.org/SDL_KeyboardEvent)，它包含按键事件的信息。里面是一个 [SDL Keysym](http://wiki.libsdl.org/SDL_Keysym)，它包含有关按下的键的信息。该 Keysym 包含标识按下的键的 [SDL 键码](http://wiki.libsdl.org/SDL_Keycode)。 如您所见，此代码的作用是根据按下的键设置表面。如果您想了解其他键的其他键码是什么，请查看 SDL 文档。
 
-
-
 #### 鼠标事件
 
+```c
+		static SDL_Event ev;
+		//处理队列中的事件
+		while (SDL_PollEvent(&ev))
+		{
+			if (ev.type == SDL_QUIT)
+			{
+				isRunning = false;
+			}
+			//鼠标移动
+			else if (ev.type == SDL_MOUSEMOTION)
+			{
+				x = ev.motion.x;
+				y = ev.motion.y;
+			}
+			//鼠标按键按下
+			else if (ev.type == SDL_MOUSEBUTTONDOWN)
+			{
+				if (ev.button.button == SDL_BUTTON_LEFT)		//左键
+				{
+					//判断左键是否双击了
+					if (ev.button.clicks == 2)
+					{
+						SDL_Log(u8"双击666");
+					}
+					else
+						SDL_Log(u8"左键按下");
+				}
+				else if (ev.button.button == SDL_BUTTON_RIGHT)	//右键
+				{
+					SDL_Log(u8"右键按下");
+				}
+				else if (ev.button.button == SDL_BUTTON_MIDDLE)	//中键
+				{
+					SDL_Log(u8"中键按下");
+				}
 
 
-### 4.输出文字
+			}
+			//鼠标按键弹起
+			else if (ev.type == SDL_MOUSEBUTTONUP)
+			{
+				if (ev.button.button == SDL_BUTTON_LEFT)		//左键
+				{
+					SDL_Log(u8"左键弹起");
+				}
+				else if (ev.button.button == SDL_BUTTON_RIGHT)	//右键
+				{
+					SDL_Log(u8"右键弹起");
+				}
+				else if (ev.button.button == SDL_BUTTON_MIDDLE)	//中键
+				{
+					SDL_Log(u8"中键弹起");
+				}
+			}
+			//滚轮
+			else if (ev.type == SDL_MOUSEWHEEL)
+			{
+				SDL_Log("xy(%d %d)  perXY(%f %f)  mxy(%d %d)",
+					ev.wheel.x, ev.wheel.y,					//滚轮滚动方向 -1 为远离自己方向滚动 1 为向自己滚动
+					ev.wheel.preciseX, ev.wheel.preciseY,	//同上（浮点数版本的）
+					ev.wheel.mouseX, ev.wheel.mouseY);		//滚轮滚动时鼠标的坐标
+			}
+		}
+```
 
+### 4.文本渲染
 
+文本渲染和图像渲染本质上是一样的，渲染文字之前先将文字转化为纹理，然后在通过绘制图片的方式绘制文字。SDL 默认是不支持文字渲染的，但是官方的扩展库 [SDL_ttf](https://meishizaolunzi.com/sdl_ttf-jing-tai-bian-yi-jiao-cheng/) 支持文字的渲染。该库支持 TrueType 字体渲染，TrueType 字体就是我们常用的 ttf 为后缀的字体，直接在 Windows 的字体文件夹下就可以找到。
+
+找到合适的字体之后，接下来先用 TTF_OpenFont 打开字体，接着用 TTF_RenderText_Blended 函数将文字转换为 SDL_Surface 结构体，后面的步骤就和显示图片步骤完全一致了。
+
+```c
+if (TTF_Init() != 0)
+{
+	SDL_Log("can not init SDL ttf:%s", SDL_GetError());
+	return -1;
+}
+...
+TTF_Quit();    
+```
+
+首先，调用TTF_Init初始化SDL_ttf库，最后，调用TTF_Quit退出。
+
+```c
+//打开字体
+TTF_Font* font = TTF_OpenFont("C:\\Windows\\Fonts\\simkai.ttf",20);
+if (!font)
+{
+	SDL_Log("load font fialed:%s", SDL_GetError());
+}
+//渲染文本
+SDL_Color c = { 255,0,0,255 };
+SDL_Surface* sfc =  TTF_RenderText_Blended(font, "hello wrold", c);
+if (!sfc)
+{
+	SDL_Log("renderText failed,%s", SDL_GetError());
+}
+SDL_Texture* textTex =  SDL_CreateTextureFromSurface(renderer, sfc);
+if (!textTex)
+{
+	return -1;
+}
+SDL_FreeSurface(sfc);
+```
+
+在正式渲染文本之前，需要使用TTF_OpenFont打开一个字体。
+
+接着使用TTF_RenderText_Blended把文本按照指定的字体和颜色渲染成图片，再转为纹理，转为纹理之后就可以使用SDL_FreeSurface把图片释放掉了。
+
+> 使用const char * SDLCALL TTF_FontFaceFamilyName(const TTF_Font *font);获取字体名
+
+#### 中文乱码
+
+```c
+TTF_RenderText_Blended(font, "hello wrold 顽石", c);
+```
+
+如果你渲染中文，会乱码。
+
+![image-20230530182850378](assets/image-20230530182850378.png)
+
+把TTF_RenderText_Blended改成TTF_RenderUTF8_Blended即可！
+
+```c
+TTF_RenderUTF8_Blended(font, u8"hello wrold 顽石", c);
+```
+
+![image-20230530183025256](assets/image-20230530183025256.png)
+
+值得注意的是，在字符串前面加了u8， 加上u8可以把字符串转为utf8编码。这是因为windows编码默认为ansi，即gbk，而SDL内部使用utf8编码，如果不把字符串转成utf8就会产生乱码。
+
+#### 文本大小
+
+```c
+int  TTF_SizeText(TTF_Font *font, const char *text, int *w, int *h);
+int  TTF_SizeUTF8(TTF_Font *font, const char *text, int *w, int *h);
+```
+
+SDL_ttf提供了获取文本大小的函数，TTF_SizeText用来获取Latin1文本尺寸，如果有中文必须使用TTF_SizeUTF8才能计算出正确大小。
+
+```c
+int  TTF_SetFontSize(TTF_Font *font, int ptsize);
+```
+
+使用`TTF_SetFontSize`可以设置font的大小。
+
+```c
+int  TTF_FontHeight(const TTF_Font *font);
+```
+
+使用TTF_FontHeight可以获取文本高度，这通常是字体pointSize。
+
+```c
+int  TTF_FontAscent(const TTF_Font *font);
+int  TTF_FontDescent(const TTF_Font *font);
+int  TTF_FontLineSkip(const TTF_Font *font);
+```
+
+`baseline`是文字绘制基准线，一般情况下 `Ascent` 及 `Descent` 分别表示字形绘制区域的上下限。
+
+`LineSkip`用于控制行间距的大小。
+
+![img](assets/20211117140012_a94ouuc45m.image)
+
+#### 字体样式
+
+```c
+#define TTF_STYLE_NORMAL        0x00	//正常字体
+#define TTF_STYLE_BOLD          0x01	//加粗
+#define TTF_STYLE_ITALIC        0x02	//斜体
+#define TTF_STYLE_UNDERLINE     0x04	//下划线
+#define TTF_STYLE_STRIKETHROUGH 0x08	//删除线
+```
+
+以上的几个宏是字体的样式，可以下面两个函数可以对字体设置样式/获取样式。
+
+```c
+int  TTF_GetFontStyle(const TTF_Font *font);
+void TTF_SetFontStyle(TTF_Font *font, int style);
+```
+
+```c
+const char *  TTF_FontFaceStyleName(const TTF_Font *font);
+```
+
+使用TTF_FontFaceStyleName可以获取字体样式名。
+
+如果你想让你的字体有一个轮廓，这也是可以的的。轮廓线是围绕字体的附加边框。这里有一个例子:
+
+![image-20230601151620562](assets/image-20230601151620562.png)
+
+就像大多数这些函数一样，字体轮廓也有一个set/get函数对:(字体设置大一点，小了可能看不出来)
+
+```c
+int SDLCALL TTF_GetFontOutline(const TTF_Font *font);
+void SDLCALL TTF_SetFontOutline(TTF_Font *font, int outline);
+```
+
+[SDL TTF](http://www.sdltutorials.com/sdl-ttf)
 
 ### 5.播放音乐
+
+先配置好SDL_mixer拓展库，然后初始化库，结束时反初始化！
+
+```c
+int  Mix_Init(int flags);
+void  Mix_Quit(void);
+```
+
+接着，打开音频设备。
+
+```c
+int Mix_OpenAudio(int frequency, Uint16 format, int channels, int chunksize);
+void Mix_CloseAudio();
+
+if (0 == Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT,
+                       MIX_DEFAULT_CHANNELS, 2048))
+{
+	SDL_Log("audioDevice open succeed~");
+}
+```
+
+其中：
+
++ frequency ：播放音频的频率(单位为Hz)。
+  + 填写默认值 `MIX_DEFAULT_FREQUENCY` 即可。
+
++ format：音频格式，SDL的AUDIO_*值之一。
+  + 填写默认格式 MIX_DEFAULT_FORMAT 即可
+
++ channels：通道数(1是单声道，2是立体声，等等)。
+  + 填写默认值 MIX_DEFAULT_CHANNELS 即可。
+
++ chunksize：以采样帧为单位的音频缓冲区大小(总采样数除以通道数)。
+
+#### 播放音乐
+
+##### 基本使用
+
+```c
+//1.1 先加载
+Mix_Music* mus = Mix_LoadMUS("Resource/music/That Girl - Olly Murs.mp3");
+if (!mus)
+{
+	SDL_Log("mus load faild,%s", SDL_GetError());
+}
+//1.2 播放
+Mix_PlayMusic(mus, 0);
+```
+
+使用`Mix_LoadMUS`把音乐加载到内存，然后使用`Mix_PlayMusic`播放音乐。
+
+```c
+case SDLK_SPACE:
+	//判断是否有音乐正在播放（无论音乐是在播放中还是暂停中，都返回非零值）
+	if (Mix_PlayingMusic())
+	{
+		//如果音乐没有暂停，则暂停
+		if (!Mix_PausedMusic())
+		{
+			//暂停当前播放的音乐（因为同一时间只能播放一个，所以不需要参数）
+			Mix_PauseMusic();
+			SDL_Log("pause");
+		}
+		//如果已经暂停了，则恢复播放
+		else
+		{
+			//如果有音乐已经暂停了，则恢复播放
+			Mix_ResumeMusic();
+			SDL_Log("resume");
+		}
+	}
+	break;
+```
+
+在主循环里面，进行事件处理，当按下空格键时，实现暂停和播放功能！
+
+如果需要彻底停止音乐的播放，可以使用`Mix_HaltMusic`，比如当按下s键时停止，应该这样写代码
+
+```c
+case SDLK_s:
+	//停止播放音乐
+	Mix_HaltMusic();
+	break;
+```
+
+如果你想从头重新播放当前音乐，代码如下：
+
+```c
+case SDLK_r:
+	//从头开始播放当前音乐(记得切换到英文输入法哟)
+	Mix_RewindMusic();
+	break;
+```
+
+当音量太大或太小时，还需要对音量进行设置，使用`Mix_VolumeMusic`函数即可实现。
+
+```c
+case SDLK_UP:
+{
+	//音量+
+	int volume = Mix_VolumeMusic(-1);
+	if (volume < MIX_MAX_VOLUME)
+	{
+		Mix_VolumeMusic(volume + 1);
+	}
+	SDL_Log("volume : %d", volume);
+	break;
+}
+case SDLK_DOWN:
+{
+	//音量-
+	int volume = Mix_VolumeMusic(-1);
+	if (volume > 0)
+	{
+		Mix_VolumeMusic(volume - 1);
+	}
+	SDL_Log("volume : %d", volume);
+	break;
+}
+```
+
+`Mix_VolumeMusic`函数传入需要设置的音量，返回上一次的音量，音量范围在[0~MIX_MAX_VOLUME(128)]之间，超过128将被限定在128。值得注意的是，如果传递的是负数，则不会对音量进行修改，但是会返回当前音量。因此可以通过传递一个负数来获取当前音量。
+
+当音乐播放完成时，我们经常回去干一些事情，那么如何知晓音乐是否播放完成呢？答案是使用回调函数，在当前音乐播放完成时，会自动帮我们调用指定的函数。
+
+```c
+void playFnishend(void)
+{
+	SDL_Log("%s", __FUNCTION__);
+}
+
+Mix_HookMusicFinished(playFnishend);
+```
+
+使用完毕后，记得使用`Mix_FreeMusic`把音乐释放掉哦~
+
+##### 获取音乐信息
+
+在某些时候，我们还需要知道音乐的时长、当前播放位置、标题等信息，SDL_mixer也提供了一些函数来获取。
+
+```c
+//获取音乐时长 返回double类型的秒数
+SDL_Log("%lf", Mix_MusicDuration(mus));
+//设置音乐播放位置
+	//int  Mix_SetMusicPosition(double position);
+	//double  Mix_GetMusicPosition(Mix_Music *music);
+//获取音乐信息
+//获取音乐类型
+SDL_Log("%d", Mix_GetMusicType(mus));
+//获取音乐标题
+SDL_Log("%s", Mix_GetMusicTitle(mus));
+//获取音乐对象标题
+SDL_Log("%s", Mix_GetMusicTitleTag(mus));
+//获取专辑名
+SDL_Log("%s", Mix_GetMusicAlbumTag(mus));
+//获取艺术家名
+SDL_Log("%s", Mix_GetMusicArtistTag(mus));
+//获取音乐版权
+SDL_Log("%s", Mix_GetMusicCopyrightTag(mus));
+```
+
+这些函数都可以传递一个音乐，当然也可以传NULL，这样就是获取正在播放的音乐的信息了。
+
+如果你需要对音乐快进快递，则可以这样用：
+
+```c
+case SDLK_LEFT:		//快退
+{
+	//获取当前播放位置
+ 	double pos =  Mix_GetMusicPosition(NULL);
+	//设置当前播放位置
+	Mix_SetMusicPosition(pos - 2);
+	SDL_Log("pos %lf" , pos);
+	break;
+}
+case SDLK_RIGHT:	//快进
+{
+	//获取当前播放位置
+	double pos = Mix_GetMusicPosition(NULL);
+	//设置当前播放位置
+	Mix_SetMusicPosition(pos + 3);
+	SDL_Log("pos %lf", pos);
+	break;
+}
+```
+
+
+
+#### 播放音效
+
+当你需要以较低的延迟方式播放**未压缩**的音频文件(通常是WAV文件)，并且适用于响应用户操作的“反馈”类型的声音(例如虚拟键盘声音，弹出对话框的积极或消极反馈，或游戏声音)。如果低延迟不是很重要，可以考虑使用Mix_Music，因为它支持更广泛的媒体格式，而且资源较少。
+
+```c
+Mix_Chunk* chunk = Mix_LoadWAV("Resource/sound/video_call.wav");
+if (!chunk)
+{
+	SDL_Log("chunk load faild,%s", SDL_GetError());
+}
+Mix_PlayChannel(-1, chunk, 0);
+```
+
+使用`Mix_LoadWAV`加载音效，然后使用`Mix_PlayChannel`播放音效。
+
+Mix_PlayChannel函数原型如下：
+
+```c
+int  Mix_PlayChannel(int channel, Mix_Chunk *chunk, int loops);
+int  Mix_PlayChannelTimed(int channel, Mix_Chunk *chunk, int loops, int ticks);
+```
+
++ channel：音效播放的通道
+  + 如果指定的通道为-1，则播放第一个空闲通道；如果没有播放成功，返回-1。
+  + 如果一个特定的通道被请求，并且已经有一个块正在播放在那里，那个块将停止，新的块将取代它的位置。
++ chunk：要播放的音效
++ loops：播放次数
+  + 如果' loops '大于零，则循环该声音多次。如果“循环”为-1，循环“无限”(~65000次)。
+
+> Mix_PlayChannelTimed 最后一个参数ticks指定播放该块的最大毫秒数，超过这个时间则会暂停。如果您想让数据块一直播放，直到所有数据都被删除混合，指定-1。
+
+不在使用音效时，使用`Mix_FreeChunk`将音效释放掉。
+
+### 6. IMGUI

@@ -1,0 +1,145 @@
+linux系统编程:
+9天课:
+1 linux基础--基础命令
+2 vi的使用和gcc编译器
+3 gdb调试和makefile的编写
+4 文件IO操作
+5 进程相关
+6 进程间通信
+7 信号相关
+8 守护进程和线程
+9 线程同步
+
+1 shell相关:
+  概念: shell就是命令解析器, shell将用户输入的命令解释成内核能够识别的指令;
+        shell就相当于翻译.
+  查看当前系统使用的shell:
+  		echo $SHELL
+  当前系统支持的shell:
+  		cat /etc/shells
+2 linux目录结构:
+	是一个倒立的树状结构;
+  /bin: ls cp mv 
+  /sbin: ifconfig halt shutdown
+  /lib: 库目录
+  /root: root用户的家目录
+  /dev: 字符设备和块设备.  在linux下, 一切皆是文件.
+  /home: 用户的家目录
+  /usr: 相当于windows的program files
+  /etc: 系统级别的配置文件
+  /mnt:
+  /media
+  /tmp
+  /opt
+        
+3: 相对路径和绝对路径     
+	相对路径: 从当前目录开始表示的目录.
+	绝对路径: 从/目录开始表示的目录.
+	
+4 ls命令
+	ls -la
+	ls -ltr
+	
+5 touch file: 若file不存在,则创建一个空文件, 否则, 则更新文件的最后修改时间.
+  mkdir file:
+  mkdir dir:
+  mkdir -p aa/bb/cc
+  rmdir: 只能删除空目录
+  rm file: 删除文件
+  rm -r dir: 删除目录
+  
+6 cp命令: cp 源文件  目标文件
+	1 cp file1 file2 (不存在)
+	2 cp file1 file2 (存在) 
+	3 cp file dir(必须存在)
+	4 cp -r dir1 dir2(不存在)
+	5 cp -r dir1 dir2(存在)
+	
+    cp -a file1 file2
+7 mv命令: mv 源文件  目标文件
+ 	改名:
+		1 mv file1 file2(不存在)  
+		2 mv file1 file2(存在)
+		3 mv dir1 dir2(不存在)
+	
+	移动:
+		4 mv file dir (必须存在)
+		5 mv dir1 dir2(存在) 
+8 查看文件内容:
+	cat more less head tail 
+	tail -f test.log: 实时显示文件内容
+	
+9 软连接: 相当于windows下的快捷方式
+  ln -s 源文件  连接文件
+  注意点: 创建软连接源文件一定要使用绝对路径, 否则, 当软连接文件
+  		  移动位置之后, 就会找不到指向的文件了.
+  
+10 硬链接:
+	ln soucefile  desfile
+	硬链接不能建立在目录上
+	创建一个硬链接文件, 硬链接计数+1, 删除一个则-1;
+	
+	ls -li: 可以查看文件的inode
+	
+	作用: 
+		1 可以起到同步文件的作用
+		2 可以起到保护文件的作用
+
+11 chmod
+	   	文字设定法: chmod ug+wx file.log
+	   	数字设定法: chmod 777  file.log
+   
+   chown:
+   		sudo chown mytest:mytest aa.log
+   		sudo chown mytest.mytest aa.log
+   		sudo chown :mytest aa.log
+   		sudo chown .mytest aa.log
+   		
+   chgrp:
+   		sudo chgrp mytest aa.log
+   		
+12 find:
+	 -name:
+	 -type:
+	 -size
+	 -maxdepth/mindepth
+	 -ctime/atime/mtime
+	 
+	 find path -name "*.c" -exec shell命令 {} \;  
+	 find path -name "*.c" | xargs shell命令 		
+13 grep:
+	-n: 
+	-i:
+	-v:
+	-r:
+	
+	find和grep结合使用:
+		find . -name "*.sh" | xargs grep -n "while" 
+14 软件安装和卸载
+	在线安装
+	软件安装：sudo apt-get install 软件名
+	软件卸载：sudo apt-get remove 软件名
+	更新软件列表：sudo apt-get update
+	清理安装包：sudo apt-get clean
+	清理的是缓存路径：/var/cache/apt/archives
+	软件包安装
+	在Ubuntu系统下必须有deb格式的安装包
+	软件安装
+	sudo dpkg -i xxx.deb
+	软件卸载
+	sudo dpkg -r 软件名	
+	
+15 压缩和解压缩
+  tar -cvf my.tar file dir
+  tar -xvf my.tar -C mydir
+  
+  tar -zcvf my.tar.gz file dir
+  tar -zxvf my.tar.gz -C mydir
+  
+  tar -jcvf my.tar.bz2 file dir	  	
+  tar -jxvf my.tar.bz2 	-C mydir
+  
+  zip: 
+  	zip -r xxx file dir 
+  unzip:
+  	unzip xxx.zip -d /home/itcast/test/day1

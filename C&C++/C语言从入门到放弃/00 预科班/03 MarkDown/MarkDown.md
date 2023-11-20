@@ -402,6 +402,10 @@ Markdown 制作表格使用 **|** 来分隔不同的单元格，使用 **-** 来
 
 &#x23eb;
 
+## 数学公式
+
+[typora之数学公式](https://blog.csdn.net/qq_43713303/article/details/105711878)
+
 ## HTML语法
 
 #### 文字相关

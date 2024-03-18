@@ -12,7 +12,7 @@ void printText(int x, int y, const char* fmt, ...);
 void printTextWithCSI(int x, int y,const char*csi, const char* fmt, ...);
 void format(const char* fmt, va_list list);
 
-void printText(int x, int y, const char* fmt, ...)
+static void printText(int x, int y, const char* fmt, ...)
 {
 	printf("\033[%d;%dH", y, x);
 	va_list list;
@@ -23,7 +23,7 @@ void printText(int x, int y, const char* fmt, ...)
 	printf("\033[0m");
 }
 
-void printTextWithCSI(int x, int y, const char*csi, const char* fmt, ...)
+static void printTextWithCSI(int x, int y, const char*csi, const char* fmt, ...)
 {
 	printf("\033[%d;%dH %s ", y, x,csi);
 	va_list list;
@@ -35,7 +35,7 @@ void printTextWithCSI(int x, int y, const char*csi, const char* fmt, ...)
 
 }
 
-void format(const char* fmt, va_list list)
+static void format(const char* fmt, va_list list)
 {
 	static	char buf[1024*10] = { 0 };
 	vsnprintf(buf, 1024, fmt, list);

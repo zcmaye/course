@@ -778,6 +778,8 @@ std::cout << row.deptno << "\t" << row.dept_dno << std::endl;
         select(emp.ename,emp.sal)
         .from(emp)
         .where(emp.sal > select(e1.sal).from(e1).where(e1.ename == "ALLEN"))
+        //使用verbatim也可以
+        //.where(sqlpp::verbatim<sqlpp::floating_point>("emp.sal") > subquery)
     ))
     {
         std::cout << row.ename << "\t" << row.sal << std::endl;
@@ -812,6 +814,92 @@ std::cout << row.deptno << "\t" << row.dept_dno << std::endl;
         ))
         {
             std::cout << row.ename << "\t" << row.sal << std::endl;
+        }
+```
+
+###### 在HAVING子句中使用子查询
+
++ 查询部门编号、员工人数、平均工资，并且要求这些部门的平均工资高于公司平均薪资。
+
+```mysql
+//有bug
+SELECT deptno,COUNT(deptno) cnt,AVG(sal) avgsal 
+FROM emp 
+GROUP BY deptno
+HAVING avgsal>
+(
+	SELECT AVG(sal) FROM emp
+);
+
+   auto subquery = sqlpp::select(sqlpp::avg(emp.sal))
+                        .from(emp)
+                        .unconditionally();
+
+    for (auto &row : db(
+             sqlpp::select(emp.deptno, sqlpp::count('*'), sqlpp::avg(emp.sal))
+                 .from(emp)
+                 .unconditionally()
+                 .group_by(emp.deptno)
+                 //.having(sqlpp::avg(emp.sal) > 100)
+                 .having(sqlpp::verbatim<sqlpp::boolean>("(SELECT AVG(sal) FROM emp )"))
+                 ))
+    { 
+        std::cout << "deptno:" << row.deptno << " count:" << row.count << " avg:" << row.avg << std::endl;
+    }
+```
+
++ 查询出所有部门中平均工资最高的部门名称及平均工资
+
+```mysql
+SELECT e.deptno,d.dname,ROUND(AVG(sal),2) avgsal
+FROM emp e,dept d
+WHERE e.deptno=d.deptno
+GROUP BY e.deptno
+HAVING avgsal>
+(
+    #查询出所有部门平均工资中最高的薪资
+	 SELECT MAX(avgsal) FROM 
+		(SELECT AVG(sal) avgsal FROM emp GROUP BY deptno) AS temp
+)
+```
+
+
+
+###### 在SELECT字句中使用子查询
+
++ 查询出公司每个部门的编号、名称、位置、部门人数、平均工资
+
+```mysql
+#1多表查询
+SELECT d.deptno,d.dname,d.loc,COUNT(e.deptno),AVG(e.sal)
+FROM emp e,dept d
+WHERE e.deptno=d.deptno
+GROUP BY e.deptno;
+#2
+SELECT d.deptno,d.dname,d.loc,temp.cnt,temp.avgsal
+FROM dept d,(SELECT deptno,COUNT(deptno) cnt,AVG(sal) avgsal FROM emp GROUP BY deptno) temp
+WHERE d.deptno=temp.deptno;
+#3 关联子查询
+SELECT d.deptno,d.dname,d.loc,
+(SELECT COUNT(deptno) FROM emp WHERE deptno=d.deptno) cnt,
+(SELECT AVG(sal) FROM emp WHERE deptno=d.deptno) avgsal
+FROM dept d;
+```
+
+sqlpp
+
+```cpp
+ //3 关联子查询
+	for (auto &row : db(sqlpp::select(dept.deptno, dept.dname, dept.loc,
+                                    sqlpp::select(sqlpp::count(emp.deptno))
+                                    .from(emp).where(emp.deptno == dept.deptno),
+                                    sqlpp::select(sqlpp::avg(emp.sal))
+                                    .from(emp).where(emp.deptno == dept.deptno))
+                                .from(dept)
+                                .unconditionally()))
+        {
+            std::cout << row.deptno << "\t" << row.dname << "\t" 
+            << row.loc << "\t" << row.avg << "\t" << row.count << std::endl;
         }
 ```
 

@@ -192,6 +192,13 @@ sqlpp11支持**mysql、sqlite3、postgresql**三种数据库，所以连接的�
 #include "sqlpp11/mysql/mysql.h"
 ```
 
+如果在多线程环境中使用，则需要初始化mysql库：
+
+```cpp
+//定义在全局就好
+const auto library_raii = sqlpp::mysql::scoped_library_initializer_t{0, nullptr, nullptr};
+```
+
 接着就可以通过连接配置对象来配置连接相关信息：
 
 ```cpp
@@ -901,5 +908,139 @@ sqlpp
             std::cout << row.deptno << "\t" << row.dname << "\t" 
             << row.loc << "\t" << row.avg << "\t" << row.count << std::endl;
         }
+```
+
+### 3. 插入
+
+向emp中插入数据，`set()`函数中没有指定的字段，将被设置为默认值。
+
+```cpp
+db(insert_into(emp).set(emp.ename="sqlpp",emp.empno =3333,emp.sal=10000.26));
+```
+
+同时插入多条记录，<font color='red'>请注意，`add()`中每个字段都必须传递精确的类型，比如emp.sal需要浮点数，就不能传递整型，否则会报错。</font>
+
+```cpp
+    auto multi_insert = insert_into(emp).columns(emp.empno, emp.ename, emp.job, emp.sal);
+    multi_insert.values.add(emp.empno = 5201, emp.ename = "name1", emp.job = "dev1", emp.sal = 8848.0);
+    multi_insert.values.add(emp.empno = 5202, emp.ename = "name2", emp.job = default_value, emp.sal = null);
+    multi_insert.values.add(emp.empno = 5203, emp.ename = value_or_null("name3"), emp.job = value_or_null("dev"), emp.sal = value_or_null<double>(10000));
+
+    db(multi_insert);
+```
+
+
+
+### 4. 删除
+
+```cpp
+db(remove_from(emp).where(emp.ename.like("name%")));
+```
+
+USING语法：`DELETE FROM table_name USING table_name,... WHERE  `
+
+```cpp
+db(remove_from(emp).using_(emp, dept).where(emp.deptno == dept.deptno && dept.dname == "SALES"));
+```
+
+### 5. 更新
+
+```cpp
+//设置客户端字符集
+db.execute("set character_set_client ='gbk'");
+//执行更新
+db(update(emp).set(emp.ename = "maye").where(emp.ename == "顽石"));
+```
+
+### 6. 准备语句
+
+#### 插入
+
+```cpp
+    auto prepared_insert = db.prepare(
+        insert_into(emp).set(
+            emp.empno = parameter(emp.empno),
+            emp.ename = parameter(emp.ename),
+            emp.job = parameter(emp.job),
+            emp.sal = parameter(emp.sal)));
+
+    prepared_insert.params.empno = 74040;
+    prepared_insert.params.ename = "74040";
+    db(prepared_insert);
+
+    prepared_insert.params.empno = 7403;
+    prepared_insert.params.ename = "7403";
+    prepared_insert.params.job = "7403";
+    prepared_insert.params.sal = 7403;
+    db(prepared_insert);
+```
+
+#### 删除
+
+```cpp
+    auto prepared_remove = db.prepare(
+        remove_from(emp).where(emp.ename == parameter(emp.ename))
+    );
+
+    prepared_remove.params.ename = "7404";
+    db(prepared_remove);
+```
+
+另一种，给参数命名的方式：
+
+```cpp
+SQLPP_ALIAS_PROVIDER(emp_no)
+...
+auto prepared_remove = db.prepare(
+       remove_from(emp).where(
+           emp.empno == parameter(sqlpp::integer(),emp_no));
+       
+   prepared_remove.params.emp_no = 7403;
+   db(prepared_remove);
+```
+
+#### 更新
+
+```cpp
+    auto prepared_update = db.prepare(
+        update(emp).set(emp.ename = "顽石").where(emp.ename == parameter(emp.ename))
+    );
+    prepared_update.params.ename = "maye";
+    db(prepared_update);
+```
+
+#### 查询
+
+```cpp
+    db.execute("set character_set_client ='gbk'");
+
+    auto prepared_select = db.prepare(
+        select(all_of(emp)).from(emp).where(emp.deptno == parameter(emp.deptno))
+    );
+    prepared_select.params.deptno = 20;
+    for(auto& row : db(prepared_select))
+    {
+        std::cout << row.empno << " " << row.ename << " " << row.job << " " << row.sal << std::endl;
+    }
+```
+
+取别名
+
+```cpp
+SQLPP_ALIAS_PROVIDER(dept_no)
+void test_prepare_select(sql::connection_pool &pool)
+{
+    ...
+    db.execute("set character_set_client ='gbk'");
+
+    auto prepared_select = db.prepare(
+        select(all_of(emp)).from(emp).where(emp.deptno >= parameter(sqlpp::integer(),dept_no))
+    );
+    prepared_select.params.dept_no = 10;
+    for(auto& row : db(prepared_select))
+    {
+        std::cout << row.empno << " " << row.ename << " " << row.job << " " << row.sal <<" "<<row.deptno<< std::endl;
+    }
+}
 ```
 

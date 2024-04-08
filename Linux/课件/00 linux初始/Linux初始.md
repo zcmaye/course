@@ -296,6 +296,8 @@ apt 命令执行需要超级管理员权限(root)。
   + 然后把文件中所有的tencentyun改为指定的源名(如：aliyun，tencentyun)
 
   + 最后执行命令更新软件包列表`sudo apt update`
+  
+  > 可以按照清华大学镜像站来配置`https://mirrors.tuna.tsinghua.edu.cn/help/ubuntu/`
 
 ## 用户管理
 
@@ -352,3 +354,59 @@ export PATH=/e/MySoftware/Qt/Tools/mingw1120_64/bin:$PATH
 保存退出之后，执行命令`source ~/.bashrc`或者重启终端即可应用成功！
 
 执行命令` echo $PATH`可以查看环境变量。
+
+## WSL
+
+WSL 的全称是 Windows Subsystem for Linux，是一个在 Windows 上能够运行原生 Linux 二进制可执行文件的兼容层。 
+
+### windwos设置
+
+在安装WSL前，需要对windows进行一些基本的设置。
+
+`win+r`进入搜索，输入控制面板并打开。
+
+![image-20240406141851927](assets/image-20240406141851927.png)
+
+点击`程序`。
+
+![image-20240406141930718](assets/image-20240406141930718.png)
+
+然后点击`启用或关闭windows功能`。
+
+![image-20240406141948383](assets/image-20240406141948383.png)
+
+确保`适用于LINUX的Windows子系统`和`虚拟机平台`已经勾选上。
+
+![image-20240406142111870](assets/image-20240406142111870.png)
+
+点击确定之后，会自动配置，然后要求重启！
+
+![image-20240406142249938](assets/image-20240406142249938.png)
+
+### 安装WSL
+
+`win+r`打开powershell。
+
+![image-20240406142752884](assets/image-20240406142752884.png)
+
+输入如下命令：
+
+```powershell
+wsl --install
+```
+
+此命令将启用运行 WSL 并安装 Linux 的 Ubuntu 发行版所需的功能。
+
+如果你运行的是旧版，或只是不想使用 install 命令并希望获得分步指引，请参阅[旧版 WSL 手动安装步骤](https://learn.microsoft.com/zh-cn/windows/wsl/install-manual)。
+
+#### 错误
+
+如果执行`wsl --install`，报错**无法解析服务器的名称或地址**，则需要修改DNS。
+
+进入`控制面板/网络和Internet/网络共享中心/更改适配器设置`，然后如下图操作。
+
+![image-20240406143548203](assets/image-20240406143548203.png)
+
+
+
+![image-20240406143643540](assets/image-20240406143643540.png)

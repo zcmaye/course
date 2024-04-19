@@ -439,8 +439,6 @@ stringstream stream(buf,ios::app | ios::in | ios::out);
 
 https://blog.csdn.net/SCHOLAR_II/article/details/115520548
 
-
-
 ```cpp
 #include <iostream>
 #include <fstream>

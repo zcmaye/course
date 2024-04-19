@@ -410,3 +410,5 @@ wsl --install
 
 
 ![image-20240406143643540](assets/image-20240406143643540.png)
+
+[windows WSL2避坑指南 - 菩提树下的杨过 - 博客园 (cnblogs.com)](https://www.cnblogs.com/yjmyzz/p/wsl2-tutorial-1.html)

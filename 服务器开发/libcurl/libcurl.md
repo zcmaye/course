@@ -2,6 +2,11 @@
 
 libcurl是一个跨平台的网络协议库，支持http、 https、 ftp等多种协议。libcurl同样支持HTTPS证书授权，HTTP POST、 HTTP PUT、FTP 上传、HTTP基本表单上传、代理、cookies和用户认证。
 
+### 先决条件
+
++ [zlib](https://www.zlib.net/) 用于数据解压缩
++ [openssl](https://slproweb.com/products/Win32OpenSSL.html) 用于加密的安全传输
+
 ### 库下载编译
 
  1）进入官网[curl - Download](https://curl.se/download.html)，下载最新版本的压缩包，自己编译的好处是可以随时掌握最新库，感受前沿技术。
@@ -88,8 +93,8 @@ Stop.
 |VC12.0|	1800|	VS2013|	120|
 |VC14.0|	1900|	VS2015|	140|
 |VC15.0|	[ 1910 , 1916 ]| 	VS2017|	141|
-|VC16.0|	[ 1920 , 1929 ]|	VS2019|	142|
 |VC17.0|	[1930,)	|VS2022|	143|
+|VC16.0|	[ 1920 , 1929 ]|	VS2019|	142|
 
 6）编译完成后，回到`curl-8.8.0`目录，找到**builds**目录，如下所示。可以找到头文件和库文件。
 
@@ -186,7 +191,7 @@ int main() {
 
 #### 注意
 
-CMakeLists.txt中连接了很多需要的库。
+CMakeLists.txt中链接了很多需要的库。
 
 ```cmake
 target_link_libraries(${PROJECT_NAME} libcurl_a ws2_32 zlibstatic Crypt32 wldap32 normaliz libssl_static libcrypto_static)

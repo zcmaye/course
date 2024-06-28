@@ -18,6 +18,7 @@ int main()
 + `#include<stdio.h>` #include为头文件包含指令；stdio.h为标准输入输出头文件。
 + `int main()` 为入口函数原型，程序中有且只能有一个
 + `printf` 为标准输出函数
++ 每条语句都以分号结尾
 + `return 0` 表示主函数正常退出
 
 ## 2. 注释

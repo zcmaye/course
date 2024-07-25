@@ -165,16 +165,18 @@ int main() {
 	chunk.size = 0;
 
 	/* 2. 发送请求 */
-	curl_easy_setopt(curl, CURLOPT_URL, "https://www.baidu.com");
+    curl_easy_setopt(curl, CURLOPT_URL, "https://www.tukuppt.com/yuansu/");
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&chunk);
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYSTATUS, 0L);
-	curl_easy_perform(curl);
-
-	/* 3. 查看请求返回结果 */
-	printf("%s\n", chunk.response);
+    CURLcode code = curl_easy_perform(curl);
+     /* 3. 查看请求返回结果 */
+	if (code != CURLE_OK) {
+		printf("error: %s\n", curl_easy_strerror(code));
+	}
+    else
+    {
+		printf("%s\n", chunk.response);
+    }
 
 	/* 4. 清理 */
 	if (chunk.response) {
@@ -223,3 +225,43 @@ error LNK2019: 无法解析的外部符号 __imp_curl_easy_perform，函数 main
 error LNK2019: 无法解析的外部符号 __imp_curl_easy_cleanup，函数 main 中引用了该符号
 ```
 
+#### CA证书
+
+运行上述代码，发现并没有出现网页，而是有一个报错：
+
+```css
+error: SSL peer certificate or SSH remote key was not OK
+-- SSL对端证书或SSH远程密钥不正确
+```
+
+这个时候，我们需要去[libcurl官网](https://curl.se/)下载一个证书，然后设置到代码中。
+
+1. 鼠标移动到Documentation菜单上，然后点击SSL Certs，进入页面
+
+![image-20240722163823942](assets/image-20240722163823942.png)
+
+2. 在进入后的页面中找到如下所示，点击蓝色链接进入。
+
+![image-20240722163953387](assets/image-20240722163953387.png)
+
+3. 下载第一个即可![image-20240722165142363](assets/image-20240722165142363.png)
+
+4. 下载下来是一个以.pem格式结尾的文件
+
+![image-20240722165157960](assets/image-20240722165157960.png)
+
+5. 把这个文件拷贝到你的项目工程中，并在`curl_easy_perform`之前加上如下代码
+
+```cpp
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 1L);			//是否要求服务器与连接的服务器
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);			//不验证对方证书的真实性，协商 TLS 或 SSL 连接时，服务器会发送指示其身份的证书
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYSTATUS, 0L);
+	curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem");		//请填写你的文件(路径要正确)
+	curl_easy_setopt(curl, CURLOPT_HEADER, "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0");		//模拟浏览器
+```
+
+> 如果出现错误:error: Problem with the SSL CA cert (path? access rights?)，则表示你的路径有问题，请检查
+
+再次运行程序，即可拿到网页代码。
+
+![image-20240722165613229](assets/image-20240722165613229.png)

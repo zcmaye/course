@@ -36,6 +36,41 @@ ORM，即Object-Relational Mapping（对象关系映射），它的作用是在�
 
 世上没有驴是不吃草的(又想好又想巧,买个老驴不吃草)，任何优势的背后都隐藏着缺点，这是不可避免的。问题在于，我们是否能容忍缺点。
 
+## ormpp
+
+ormpp是modern c++(c++11/14/17)开发的ORM库，目前支持了三种数据库：mysql, postgresql和sqlite，ormpp主要有以下几个特点：
+
+1. header only
+2. cross platform
+3. unified interface
+4. easy to use
+5. easy to change database
+
+你通过ormpp可以很容易地实现数据库的各种操作了，大部情况下甚至都不需要写sql语句。ormpp是基于编译期反射的，会帮你实现自动化的实体映射，你再也不用写对象到数据表相互赋值的繁琐易出错的代码了，更酷的是你可以很方便地切换数据库，如果需要从mysql切换到postgresql或sqlite只需要修改一下数据库类型就可以了，无需修改其他代码。
+
+### 下载构建配置
+
+从[ormpp](https://github.com/qicosmos/ormpp)下载并解压最新版本。
+
++ git拉取
+
+```css
+git clone https://github.com/qicosmos/ormpp.git
+```
+
++ 进入ormpp目录
+
+```css
+cd ormpp
+
+cmake -B build -DENABLE_MYSQL=ON -DCMAKE_BUILD_TYPE=Debug -DMYSQL_INCLUDE_DIR="F:\MySQL\MySQL8.4\include"
+```
+
+> 如果出现错误则需要配置mysql库目录： Found relative path while evaluating include directories of "ZERO_CHECK":"MYSQL_INCLUDE_DIR-NOTFOUND"
+>
+
+
+
 ## sqlpp11
 
 [sqlpp11](https://github.com/rbock/sqlpp11) 是 C++ 的类型安全 SQL 模版库，是一个挺好用的ORM框架。

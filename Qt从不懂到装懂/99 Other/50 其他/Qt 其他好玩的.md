@@ -375,3 +375,9 @@ QClipboard类可以通过其datachhanged()信号将其包含的数据的更改�
 在X11上，使用公共XDND协议，而在Windows上Qt使用OLE标准，Qt for macOS使用Cocoa Drag Manager。在X11上，XDND使用MIME，因此不需要翻译。Qt API在任何平台上都是一样的。在Windows上，支持MIME的应用程序可以通过使用MIME类型的剪贴板格式名进行通信。已经有一些Windows应用程序为它们的剪贴板格式使用MIME命名约定。
 
 可以通过在Windows上重新实现QWinMime或在macOS上重新实现QMacPasteboardMime来注册用于转换专有剪贴板格式的自定义类。
+
+
+
+[一些QT开源项目 - lsgxeva - 博客园](https://www.cnblogs.com/lsgxeva/p/12577456.html)
+
+[Qt与Web混合开发(一) - lsgxeva - 博客园](https://www.cnblogs.com/lsgxeva/p/12418553.html)

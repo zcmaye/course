@@ -164,6 +164,13 @@ cd build
 
 ```sh
 cmake -B build -DOATPP_BUILD_TESTS=OFF -DCMAKE_PREFIX_PATH="F:\Tools\oatpp" -DOATPP_SQLITE_AMALGAMATION=ON
+
+if(OATPP_SQLITE_AMALGAMATION)
+    list(APPEND OATPP_THIS_MODULE_LIBRARIES sqlite)
+    list(APPEND OATPP_THIS_MODULE_TARGETS sqlite)
+    list(APPEND OATPP_THIS_MODULE_DIRECTORIES sqlite)
+    add_compile_definitions(SQLITE_ENABLE_MATH_FUNCTIONS)	#打开CMakeLists.txt添加这一行
+endif()
 ```
 
 编译并安装(必须以管理员权限打开终端哟~)
@@ -175,3 +182,10 @@ cmake --build . --target INSTALL --config [Debug|Release]
 > 编译时间稍微有点长，请耐心等待！
 
 库的安装位置如下图所示，可以自己把oatpp目录剪切到其他位置。
+
+
+
+```sh
+
+```
+

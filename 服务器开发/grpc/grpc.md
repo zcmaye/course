@@ -20,8 +20,9 @@ git submodule update --init
 + 然后执行cmake命令，进行构建
 
 ```sh
+#用这个
 cmake -B build_grpc -DgRPC_SSL_PROVIDER=package -DOPENSSL_ROOT_DIR=F:\Tools\OpenSSL-Win64 -DCMAKE_CXX_STANDARD=17
-
+#这个不行
 cmake -B build_grpc -DgRPC_SSL_PROVIDER=package -Dprotobuf_BUILD_SHARED_LIBS=OFF -DOPENSSL_ROOT_DIR=F:\Tools\OpenSSL-Win64 -DCMAKE_CXX_STANDARD=17
 ```
 
@@ -30,7 +31,7 @@ cmake -B build_grpc -DgRPC_SSL_PROVIDER=package -Dprotobuf_BUILD_SHARED_LIBS=OFF
 + 然后执行cmake命令，执行编译与安装
 
 ```sh
-cmake --build build_grpc --target INSTALL -j4
+cmake --build build_grpc --target INSTALL -j10
 ```
 
 > 编译时间较久(我编译了1小时20分钟)，请耐心等待~

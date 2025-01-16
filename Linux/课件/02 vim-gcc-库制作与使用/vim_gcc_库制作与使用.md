@@ -12,6 +12,10 @@
 
 ## gcc/g++编译器
 
+> sudo apt update
+>
+> sudo apt install build-essential #安装构建必备
+
 ### 编译流程
 
 gcc编译器将c源文件到生成一个可执行程序，中间一共经历了四个步骤：

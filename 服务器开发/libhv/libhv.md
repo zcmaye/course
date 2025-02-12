@@ -30,7 +30,7 @@ cd libhv
 > openssl需要安装，[下载安装包](https://slproweb.com/download/Win64OpenSSL-3_3_1.exe)安装即可，在安装目录就有头文件和库文件目录
 
 ```sh
-cmake -B build -DWITH_OPENSSL=ON -DOPENSSL_ROOT_DIR=F:\Tools\OpenSSL-Win64\lib\VC\x64\MTd
+cmake -B build -DWITH_OPENSSL=ON -DOPENSSL_ROOT_DIR=F:\Tools\OpenSSL-Win64
 ```
 
 编译并安装(必须以管理员权限打开终端哟~)

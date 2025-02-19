@@ -59,6 +59,18 @@ int main()
 
 
 
+### 解析地址
+
+```cpp
+		asio::io_context ioc;
+		asio::ip::tcp::resolver resolver(ioc);
+		resolver.resolve("localhost",7);
+```
+
+`resolve(host,service)`函数用于解析端点，host是主机名或 IP 地址，service服务名称或端口号；可以是服务名称（例如 `"http"`、`"ftp"`）或直接的端口号（例如 `"80"`、`"21"`），服务名称需要系统中存在对应的服务名称到端口的映射（通常在windows：`%SystemRoot%\system32\drivers\etc\services`;linux：`/etc/services` 文件中定义）。
+
+
+
 ## 其他
 
 + [W3Cschool](https://www.w3cschool.cn/nlzbw/nlzbw-rs6a25yc.html)

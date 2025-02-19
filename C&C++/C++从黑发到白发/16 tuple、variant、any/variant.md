@@ -1188,3 +1188,119 @@ bytes_w[0] = std::byte{ 9 };
 
 # std::expected(C++23)
 
+`std::expected` 是 C++23 引入的一个新特性，旨在提供一种类型安全的方式来表示可能成功或失败的计算结果。它是 `std::optional` 的一个补充，专门用于处理那些可能失败的操作，例如文件读取、网络请求等。`std::expected` 可以携带一个值（表示成功）或一个异常（表示失败），从而避免了使用异常处理机制的开销，并提供了更清晰的错误处理路径。
+
+### 主要特点
+
+1. **类型安全**：`std::expected` 明确区分成功和失败的情况，避免了使用裸露的错误码或异常。
+2. **性能**：相比于异常处理，`std::expected` 在失败时不会抛出异常，从而减少了运行时开销。
+3. **灵活性**：可以自定义失败时的处理逻辑，例如记录日志、重试操作等。
+
+### 基本用法
+
+#### 包含头文件
+
+```cpp
+#include <expected>
+```
+
+#### 创建 `std::expected`
+
+```cpp
+#include <expected>
+#include <iostream>
+#include <stdexcept>
+
+std::expected<int, std::runtime_error> divide(int a, int b) {
+    if (b == 0) {
+        return std::unexpected(std::runtime_error("Division by zero"));
+    }
+    return a / b;
+}
+```
+
+#### 使用 `std::expected`
+
+```cpp
+int main() {
+    auto result = divide(10, 2);
+    if (result) {
+        std::cout << "Result: " << *result << std::endl;
+    } else {
+        std::cerr << "Error: " << result.error().what() << std::endl;
+    }
+
+    auto result2 = divide(10, 0);
+    if (!result2) {
+        std::cerr << "Error: " << result2.error().what() << std::endl;
+    }
+
+    return 0;
+}
+```
+
+### 详细说明
+
+#### 成功和失败
+
+- **成功**：`std::expected<T, E>` 包含一个值 `T`。
+- **失败**：`std::expected<T, E>` 包含一个错误 `E`。
+
+#### 检查结果
+
+- `if (result)`：检查 `result` 是否包含一个值。
+- `if (!result)`：检查 `result` 是否包含一个错误。
+
+#### 访问值和错误
+
+- `*result`：访问成功时的值。
+- `result.error()`：访问失败时的错误。
+
+### 高级用法
+
+#### 转换和组合
+
+`std::expected` 支持多种转换和组合操作，例如：
+
+- `std::expected<T, E>::transform`：将成功值转换为另一种类型。
+- `std::expected<T, E>::and_then`：在成功时执行另一个 `std::expected` 操作。
+- `std::expected<T, E>::or_else`：在失败时执行另一个 `std::expected` 操作。
+
+#### 示例
+
+```cpp
+#include <expected>
+#include <iostream>
+#include <string>
+
+std::expected<std::string, std::runtime_error> get_name(int id) {
+    if (id < 0) {
+        return std::unexpected(std::runtime_error("Invalid ID"));
+    }
+    return "User" + std::to_string(id);
+}
+
+std::expected<int, std::runtime_error> get_age(const std::string& name) {
+    if (name == "User-1") {
+        return 30;
+    }
+    return std::unexpected(std::runtime_error("User not found"));
+}
+
+int main() {
+    auto name_result = get_name(1);
+    auto age_result = name_result.and_then(get_age);
+
+    if (age_result) {
+        std::cout << "Age: " << *age_result << std::endl;
+    } else {
+        std::cerr << "Error: " << age_result.error().what() << std::endl;
+    }
+
+    return 0;
+}
+```
+
+### 总结
+
+`std::expected` 是一个强大的工具，用于处理可能失败的函数调用。它提供了类型安全的方式来表示成功和失败，并且支持多种转换和组合操作。通过使用 `std::expected`，可以编写更清晰、更健壮的代码，避免使用裸露的错误码或异常处理机制。

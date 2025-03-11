@@ -29,7 +29,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release -Dprotobuf_BUILD_SHARED_LIBS=ON -Dprot
 + 然后执行cmake命令，执行编译与安装
 
 ```sh
-cmake --build build --target INSTALL
+cmake --build build --target INSTALL -j8
 ```
 
 ## CMake

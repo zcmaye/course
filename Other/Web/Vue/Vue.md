@@ -55,7 +55,29 @@ npm config set registry https://registry.npmmirror.com
 npm config set registry https://registry.npmjs.org
 ```
 
+### cnpm
 
+使用npm安装包时，需要去npm仓库获取，而npm仓库在国外，很不稳定，有时获取会失败。
+
+- npm默认仓库地址：http://registry.npmjs.org
+
+为了解决这个问题，淘宝搭建了一个国内npm服务器，会定时拉取国外npm仓库内容，就是把国外的搬运到国内
+
+> 这是一个完整 `npmjs.org` 镜像，你可以用此代替官方版本(只读)，同步频率目前为 **10分钟** 一次以保证尽量与官方服务同步。
+
+###### **使用方法**
+
+第一种方法：安装cnpm，之后下载仓库内容时使用`cnpm`命令即可
+
+```javascript
+npm install -g cnpm --registry=https://registry.npmmirror.com
+```
+
+第二种方法：替换npm默认仓库地址，执行下面命令，后续下载仓库内容时，继续使用`npm`命令
+
+```javascript
+npm config set registry https://registry.npmmirror.com
+```
 
 ### vite
 
@@ -122,3 +144,32 @@ npm install vue-router@4 --save
 ![image-20230425023241774](assets/image-20230425023241774.png)
 
 写入以下代码：
+
+
+
+
+
+## 常见错误
+
++ **`failed to load config from D\...\...vite.config.js`**
+
+这是由于当前vite版本和项目依赖的vite版本不一致导致的，在项目中找到`package.json`，并在文件中找到如下所示位置：
+
+```json
+  "devDependencies": {
+    "@vitejs/plugin-vue": "5.0.5",			
+    "sass": "1.77.5",
+    "unplugin-auto-import": "0.17.6",
+    "unplugin-vue-setup-extend-plus": "1.0.1",
+    "vite": "^5.0.5",							//依赖vite版本
+    "vite-plugin-compression": "0.5.1",
+    "vite-plugin-svg-icons": "^0.1.0"
+  }
+```
+
+使用如下命令来安装指定版本的vite:
+
+```shell
+npm install -D vite@^5.0.5
+```
+

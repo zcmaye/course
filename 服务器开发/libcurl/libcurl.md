@@ -1,11 +1,13 @@
-## [libcurl](https://curl.se/)
+# [libcurl](https://curl.se/)
 
 libcurl是一个跨平台的网络协议库，支持http、 https、 ftp等多种协议。libcurl同样支持HTTPS证书授权，HTTP POST、 HTTP PUT、FTP 上传、HTTP基本表单上传、代理、cookies和用户认证。
 
-### 先决条件
+## 先决条件
 
 + [zlib](https://www.zlib.net/) 用于数据解压缩
 + [openssl](https://slproweb.com/products/Win32OpenSSL.html) 用于加密的安全传输
+
+## winbuild
 
 ### 库下载编译
 
@@ -265,3 +267,10 @@ error: SSL peer certificate or SSH remote key was not OK
 再次运行程序，即可拿到网页代码。
 
 ![image-20240722165613229](assets/image-20240722165613229.png)
+
+## cmake
+
+```cmake
+cmake -B build -DBUILD_LIBCURL_DOCS=OFF -DBUILD_MISC_DOCS=OFF -DENABLE_CURL_MANUAL=OFF -DCURL_USE_LIBPSL=OFF -DCMAKE_PREFIX_PATH="F:\Tools\zlib"cmake -B build -DBUILD_LIBCURL_DOCS=OFF -DBUILD_MISC_DOCS=OFF -DENABLE_CURL_MANUAL=OFF -DCURL_USE_LIBPSL=OFF -DCMAKE_PREFIX_PATH="F:\Tools\zlib;F:\Tools\OpenSSL-Win64" -DCMAKE_INSTALL_PREFIX="F:/Tools" -DCURL_USE_OPENSSL=ON
+```
+

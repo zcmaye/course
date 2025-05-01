@@ -863,15 +863,165 @@ sound.play(-1,5000)
 
 ### 7.精灵
 
-精灵（英文译为 Sprite），其实在一个游戏程序中，精灵本质指的是一张张小尺寸的图片，比如游戏中的各种道具、人物、场景装饰等，它们都可以看做成一张张小的“精灵”图。除此之外，人物的移动也可以看做是一系列小精灵图构成的序列（按帧组成的序列），如下图所示：
+在游戏开发里，`Sprite`（精灵）类是相当常用的，它主要用于表示游戏中的一个可移动的图形元素，像角色、道具、敌人等。
 
-![pygame精灵图](./assets/1121064645-0.gif)
+#### 没有精灵游戏会怎样
 
-如果将逐帧分解后的动作，按照一定的频率播放，那么就形成了动画精灵，您将会看到雄鹰展翅高飞、人在策马奔腾、运动员奋力跳远。
+先来看一段，没有使用精灵类的代码：
 
-精灵有个特点就是允许精灵之间进行交互，也称之为碰撞，而碰撞检测，指的就是检测两个精灵之间是否发生了碰撞。比如在贪吃蛇游戏中蛇的头部是否与食物发生了碰撞，或者飞机大战游戏中子弹是否击中了外星人等等。当检测到碰撞发生后，接下来会触发某些事件，比如子弹击中外星人，外星人就会消失，玩家的得分也会随之增加，并且在游戏屏幕上又会出现一个外星人。
+```python
+import pygame as pg
 
-Pygame 专门提供了一个处理精灵的模块，也就是 sprite（pygame.sprite）模块。通常情况下，我们使用该模块的基类 Sprite 来创建一个子类，从而达到处理精灵的目的，该子类提供了操作精灵的常用属性和方法，如下所示：
+pg.init()
+
+window = pg.display.set_mode((800,600))
+
+_ = pg.image.load('Resource/images/hero.png').convert_alpha()
+image = pg.transform.scale_by(_,0.8)
+rect = image.get_rect()
+rect.center = window.get_rect().center
+
+isRunning = True
+while  isRunning:
+    for ev in pg.event.get():
+        if ev.type == pg.QUIT:
+            isRunning = False
+            break
+
+    window.fill((227,227,227))
+
+    window.blit(image,rect,None)
+
+    pg.display.update()
+
+pg.quit()
+```
+
+在上面代码中，定义了image对象，用来保存图片；定义了rect对象，用来保存图片的矩形区域。
+
+这只是绘制一张图片，如果需要绘制两张？十张呢?那么就需要定义很多image对象和rect对象，这时给变量取名又是一个麻烦的事情，而且也让对象的管理变的复杂！
+
+#### 有精灵的游戏很舒服
+
+那么我们可以通过精灵类，来封装游戏对象。
+
+```python
+class Player:
+    def __init__(self,window):
+        self.window = window
+        _ = pg.image.load('Resource/images/hero.png').convert_alpha()
+        self.image = pg.transform.scale_by(_, 0.8)
+        self.rect = self.image.get_rect()
+        print(f"{self.rect}")
+
+    def draw(self):
+        self.window.blit(self.image,self.rect)
+
+    def update(self):
+        self.rect.x+=1
+        self.rect.y+=1
+
+pg.init()
+
+window = pg.display.set_mode((800,600))
+
+_ = pg.image.load('Resource/images/hero.png').convert_alpha()
+image = pg.transform.scale_by(_,0.8)
+rect = image.get_rect()
+rect.center = window.get_rect().center
+
+player = Player(window)
+
+isRunning = True
+while  isRunning:
+    for ev in pg.event.get():
+        if ev.type == pg.QUIT:
+            isRunning = False
+            break
+
+    window.fill((227,227,227))
+
+    window.blit(image,rect,None)
+    player.draw()
+
+    pg.display.update()
+    player.update()
+
+pg.quit()
+```
+
+通过上述代码进行封装后，可以让我们管理某个游戏对象更加简单。但是当我们的游戏中，游戏对象非常多的时候，也是难以管理的，我们需要放到一个列表中，让后通过遍历列表自己绘制；而实际上pygame给我们提供了对应的类，而不需要我们自己实现。
+
+#### 精灵组
+
+在使用精灵组之前，先讲我们自己封装的游戏对象，继承字pygame中的精灵类，Sprite类给我们提供了更多的操作，让精灵操作起来更加方便。
+
+```python
+import pygame as pg
+from pygame.sprite import Sprite
+
+#继承自pygame的Sprite类
+class Player(Sprite):
+    def __init__(self,window):
+        super().__init__()	#记得在构造函数中调用父类的构造函数
+```
+
+然后再创建精灵组，对精灵进行管理：
+
+```python
+import pygame as pg
+from pygame.sprite import Sprite
+
+
+class Player(Sprite):
+    def __init__(self,window):
+        super().__init__()
+        self.window = window
+        _ = pg.image.load('Resource/images/hero.png').convert_alpha()
+        self.image = pg.transform.scale_by(_, 0.8)
+        self.rect = self.image.get_rect()
+        print(f"{self.rect}")
+
+    def draw(self):
+        self.window.blit(self.image,self.rect)
+
+    def update(self):
+        self.rect.x+=1
+        self.rect.y+=1
+
+pg.init()
+
+window = pg.display.set_mode((800,600))
+
+player = Player(window)
+#创建精灵组
+sprites =  pg.sprite.Group()
+#将精灵添加到组中
+sprites.add(player)
+
+isRunning = True
+while  isRunning:
+    for ev in pg.event.get():
+        if ev.type == pg.QUIT:
+            isRunning = False
+            break
+
+    window.fill((227,227,227))
+
+    window.blit(image,rect,None)
+    #这里改成精灵组绘制，需要传入窗口对象
+    sprites.draw(window)	
+
+    pg.display.update()
+    #这里改成精灵组更新
+    sprites.update()
+
+pg.quit()
+```
+
+**需要注意的是，继承自`Sprite`的精灵，必须要有`image`对象和rect对象，精灵组才知道如何绘制精灵！**
+
+精灵类提供了操作精灵的常用属性和方法，如下所示：
 
 | 属性&方法       | 说明                                       |
 | --------------- | ------------------------------------------ |
@@ -883,16 +1033,11 @@ Pygame 专门提供了一个处理精灵的模块，也就是 sprite（pygame.sp
 | Sprite.kill()   | 删除精灵组中全部的精灵                     |
 | Sprite.alive()  | 判断某个精灵是否属于精灵组                 |
 
-注意，当游戏中有大量的精灵时，操作它们将变得复杂，此时通过构建精灵容器（group 类）也就是精灵组来统一管理这些精灵。构建方法如下：
+#### 碰撞检测
 
-```python
-# 创建精灵组
-group = pygame.sprite.Group()
-# 向组内添加一个精灵
-group.add(sprite_one)
-```
+精灵有个特点就是允许精灵之间进行交互，也称之为碰撞，而碰撞检测，指的就是检测两个精灵之间是否发生了碰撞。比如在贪吃蛇游戏中蛇的头部是否与食物发生了碰撞，或者飞机大战游戏中子弹是否击中了外星人等等。当检测到碰撞发生后，接下来会触发某些事件，比如子弹击中外星人，外星人就会消失，玩家的得分也会随之增加，并且在游戏屏幕上又会出现一个外星人。
 
-于此同时`pygame.sprite`模块也提供了多种检测精灵是否碰撞的方法，如下所示：
+`pygame.sprite`模块也提供了多种检测精灵是否碰撞的方法，如下所示：
 
 | 方法                             | 说明                                                         |
 | -------------------------------- | ------------------------------------------------------------ |
@@ -903,6 +1048,68 @@ group.add(sprite_one)
 | pygame.sprite.spritecollideany() | 精灵和精灵组之间的矩形碰撞检测，上述函数的变体，当发生碰撞时，返回组内的一个精灵，无碰撞发生时，返回 None。 |
 | pygame.sprite.groupcollide()     | 检测在两个组之间发生碰撞的所有精灵，它返回值是一个字典，将第一组中发生碰撞的精灵作为键，第二个组中发生碰撞的精灵作为值。 |
 
-下面看一组简单的示例，代码如下所示：
+
+
+#### 精灵动画
+
+人物的移动也可以看做是一系列小精灵图构成的序列（按帧组成的序列），如下图所示：
+
+![pygame精灵图](./assets/1121064645-0.gif)
+
+如果将逐帧分解后的动作，按照一定的频率播放，那么就形成了动画精灵，您将会看到雄鹰展翅高飞、人在策马奔腾、运动员奋力跳远。
+
+##### 精灵帧动画
+
+```python
+class Animation(Sprite):
+    def __init__(self,x,y,delay,filenames:list):
+        super().__init__()
+        self.images:list[pg.Surface] = []
+
+        for filename in filenames:
+             self.images.append(pg.image.load(filename))
+
+        self.index = 0
+        self.delay = delay
+
+        self.image =self.images[self.index]
+        self.rect = pg.rect.Rect(x,y,self.image.get_width(),self.image.get_height())
+
+    def update(self, *args, **kwargs):
+        if len(self.images) == 0:
+            return
+        self.index = int((pg.time.get_ticks()/self.delay)%len(self.images))
+        self.image = self.images[self.index]
+        self.rect.size = self.image.get_rect().size
+```
+
+##### 精灵集动画
+
+```python
+class AnimationSheet(pg.sprite.DirtySprite):
+    def __init__(self, x, y, delay,row,frame_count,frame_size,filename,scale = 2):
+        super().__init__()
+        self.delay = delay
+        self.y_index = row
+        self.x_index = 0
+        self.frame_count = frame_count
+        self.frame_size = frame_size
+        self.imageSheet = pg.image.load(filename).convert_alpha()
+        self.scale= scale
+
+        self.source_rect = pg.rect.Rect(self.x_index * self.frame_size,self.y_index * self.frame_size,frame_size,frame_size)
+        self.image = self.imageSheet.subsurface(self.source_rect)
+        self.rect = pg.rect.Rect(x, y, frame_size,frame_size)
+        self.dirty = 2
+
+    def update(self, *args, **kwargs):
+        self.x_index = int((pg.time.get_ticks() / self.delay) % self.frame_count)
+        self.source_rect = pg.rect.Rect(self.x_index * self.frame_size,self.y_index * self.frame_size,self.frame_size,self.frame_size)
+        self.image = self.imageSheet.subsurface(self.source_rect)
+        self.image = pg.transform.scale_by(self.image,self.scale)
+        print(f"{self.rect} {self.source_rect}")
+```
+
+
 
 ### 8. IMGUI

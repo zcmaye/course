@@ -663,156 +663,47 @@ with open('translate.mp3','wb') as file:
 print('翻译发音下载完成~')
 ```
 
-#### 百度详细翻译
-
-```python
-import urllib.request import urllib.parse
-
-url = 'https://fanyi.baidu.com/v2transapi ' headers = {
-# ':authority ': 'fanyi.baidu.com ', # ':method ': 'POST ',
-# ':path ': '/v2transapi ', # ':scheme ': 'https ',
-# 'accept ': '*/* ',
-# 'accept‐encoding ': 'gzip, deflate, br ', # 'accept‐language ': 'zh‐CN,zh;q=0.9 ',
-# 'content‐length ': '119 ',
-# 'content‐type ': 'application/x‐www‐form‐urlencoded; charset=UTF‐8 ',
-
-
-'cookie ': 'REALTIME_TRANS_SWITCH=1; FANYI_WORD_SWITCH=1; HISTORY_SWITCH=1;
-SOUND_SPD_SWITCH=1; SOUND_PREFER_SWITCH=1; PSTM=1537097513;
-BIDUPSID=D96F9A49A8630C54630DD60CE082A55C; BAIDUID=0814C35D13AE23F5EAFA8E0B24D9B436:FG=1;
-to_lang_often=%5B%7B%22value%22%3A%22en%22%2C%22text%22%3A%22%u82F1%u8BED%22%7D%2C%7B%22value%22 %3A%22zh%22%2C%22text%22%3A%22%u4E2D%u6587%22%7D%5D;
-from_lang_often=%5B%7B%22value%22%3A%22zh%22%2C%22text%22%3A%22%u4E2D%u6587%22%7D%2C%7B%22value% 22%3A%22en%22%2C%22text%22%3A%22%u82F1%u8BED%22%7D%5D; BDORZ=B490B5EBF6F3CD402E515D22BCDA1598;   delPer=0; H_PS_PSSID=1424_21115_29522_29519_29099_29568_28835_29220_26350; PSINO=2; locale=zh;
-Hm_lvt_64ecd82404c51e03dc91cb9e8c025574=1563000604,1563334706,1565592510; Hm_lpvt_64ecd82404c51e03dc91cb9e8c025574=1565592510;
-yj s_js_security_passport=2379b52646498f3b5d216e6b21c6f1c7bf00f062_1565592544_js ',
-# 'origin ': 'https://fanyi.baidu.com ',
-# 'referer ': 'https://fanyi.baidu.com/translate?
-aldtype=16047&query=&keyfrom=baidu&smartresult=dict&lang=auto2zh ',
-# 'sec‐fetch‐mode ': 'cors ',
-# 'sec‐fetch‐site ': 'same‐origin ',
-# 'user‐agent ': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36 ',
-# 'x‐requested‐with ': 'XMLHttpRequest ',
-}
-data = {
-		'from ': 'en ',
-    	'to ': 'zh ',
-		'query':'you',
-		'transtype ': 'realtime ', 
-    	'simple_means_flag ': '3 ', 
-    	'sign ': '269482.65435 ',
-		'token ': '2e0f1cb44414248f3a2b49fbad28bbd5 '
-}
-#参数的编码
-data = urllib.parse.urlencode(data).encode('utf‐8 ')
-# 请求对象的定制
-request = urllib.request.Request(url=url,headers=headers,data=data) response = urllib.request.urlopen(request)
-# 请求之后返回的所有的数据
-content = response.read().decode('utf‐8 ') import json
-# loads将字符串转换为python对象
-obj = json.loads(content)
-# python对象转换为json字符串    ensure_ascii=False  忽略字符集编码
-s = json.dumps(obj,ensure_ascii=False) print(s)    
-```
-
 ### 豆瓣电影
 
 爬取豆瓣电影排行版前十页数据。
 
  ```python
- # 爬取豆瓣电影前10页数据
- # https://movie.douban.com/j/chart/top_list?
- type=20&interval_id=100%3A90&action=&start=0&limit=20 # https://movie.douban.com/j/chart/top_list?
- type=20&interval_id=100%3A90&action=&start=20&limit=20 # https://movie.douban.com/j/chart/top_list?
- type=20&interval_id=100%3A90&action=&start=40&limit=20
- 
- import urllib.request 
  import urllib.parse
+ import urllib.request
  
- # 下载前10页数据
- # 下载的步骤 ：1.请求对象的定制    2.获取响应的数据  3.下载
- # 每执行一次返回一个request对象
- def create_request(page):
- 	base_url = 'https://movie.douban.com/j/chart/top_list?type=20&interval_id=100%3A90&action=& ' 
- 	headers = {
- 	'User‐Agent ': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.100 Safari/537.36 '
- 	}
- 	data={
- 		'start ':(page‐1)*20,
- 		'limit ':20 
- 	}
- 	# data编码
- 	data = urllib.parse.urlencode(data) 
- 	url = base_url + data
- 	
- 	request = urllib.request.Request(url=url,headers=headers) 
- 	return request
- # 获取网页源码
- def get_content(request):
- 	response = urllib.request.urlopen(request) 
-     content = response.read().decode('utf‐8 ')  
+ def create_request(page : int):
+     base_url = 'https://movie.douban.com/j/chart/top_list?type=5&interval_id=100%3A90&action=&'
+ 
+     data ={
+         'start':(page-1) * 20,
+         'limit':20
+     }
+ 
+     headers ={
+         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0'
+     }
+ 
+     url = base_url + urllib.parse.urlencode(data)
+     print(f"request url:{url}")
+     return urllib.request.Request(url,headers=headers,method='GET')
+ 
+ def download_conecnt(req):
+     resp =  urllib.request.urlopen(req)
+     content  = resp.read().decode('utf8')
      return content
  
- def down_load(page,content):
- #    with open（文件的名字 ，模式 ，编码）as fp: #        fp.write(内容)
- 	with open('douban_ '+str(page)+ '.json ', 'w ',encoding= 'utf‐8 ')as fp: 
+ def save_content(page,content):
+     with open(f'douban/douban_{page}.json','w',encoding='utf8') as fp:
          fp.write(content)
  
- if  __name__  == '__main__':
- 	start_page = int(input('请输入起始页码')) 
-     end_page = int(input('请输入结束页码'))
- 	for page in range(start_page,end_page+1):
- 		request = create_request(page) .
-     	content = get_content(request) 
-     	down_load(page,content)
+ if __name__ == '__main__':
+     start_page = int(input('请输入起始页码:'))
+     end_page = int(input('请输入结束页码:'))
+     for i in range(start_page,end_page):
+         req = create_request(i)
+         content = download_conecnt(req)
+         save_content(i,content)
  ```
-
-### KFC官网
-
-```python
-```
-
-### CSDN
-
-```python
-eg:
-
-import urllib.request import urllib.error
-url = 'https://blog.csdn.net/ityard/article/details/102646738 '
-
-# url = 'http://www.goudan11111.com '
-
-headers = {
-# 'Accept ':
-'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,applicati on/signed‐exchange;v=b3 ',
-# 'Accept‐Encoding ': 'gzip, deflate, br ', # 'Accept‐Language ': 'zh‐CN,zh;q=0.9 ',
-# 'Cache‐Control ': 'max‐age=0 ',
-# 'Connection ': 'keep‐alive ',
-'Cookie ': 'uuid_tt_dd=10_19284691370‐1530006813444‐566189;
-smidV2=2018091619443662be2b30145de89bbb07f3f93a3167b80002b53e7acc61420;
-_ga=GA1.2.1823123463.1543288103; dc_session_id=10_1550457613466.265727;
-acw_tc=2760821d15710446036596250e10a1a7c89c3593e79928b22b3e3e2bc98b89;
-Hm_lvt_e5ef47b9f471504959267fd614d579cd=1571329184;
-Hm_ct_e5ef47b9f471504959267fd614d579cd=6525*1*10_19284691370‐1530006813444‐566189; 	 yadk_uid=r0LSXrcNYgymXooFiLaCGt1ahSCSxMCb;
-Hm_lvt_6bcd52f51e9b3dce32bec4a3997715ac=1571329199,1571329223,1571713144,1571799968;
-acw_sc    v2=5dafc3b3bc5fad549cbdea513e330fbbbee00e25; firstDie=1; SESSION=396bc85c‐556b‐42bd ‐ 890c‐c20adaaa1e47; UserName=weixin_42565646; UserInfo=d34ab5352bfa4f21b1eb68cdacd74768;
-UserToken=d34ab5352bfa4f21b1eb68cdacd74768; UserNick=weixin_42565646; AU=7A5;
-UN=weixin_42565646; BT=1571800370777; p_uid=U000000; dc_tos=pzt4xf; Hm_lpvt_6bcd52f51e9b3dce32bec4a3997715ac=1571800372;
-Hm_ct_6bcd52f51e9b3dce32bec4a3997715ac=1788*1*PC_VC!6525*1*10_19284691370‐1530006813444 ‐ 566189!5744*1*weixin_42565646;
-announcement=%257B%2522isLogin%2522%253Atrue%252C%2522announcementUrl%2522%253A%2522https%253A%2 52F%252Fblogdev.blog.csdn.net%252Farticle%252Fdetails%252F102605809%2522%252C%2522announcementCo unt%2522%253A0%252C%2522announcementExpire%2522%253A3600000%257D ',
-# 'Host ': 'blog.csdn.net ',
-# 'Referer ': 'https://passport.csdn.net/login?code=public ',
-# 'Sec‐Fetch‐Mode ': 'navigate ',  # 'Sec‐Fetch‐Site ': 'same‐site ', # 'Sec‐Fetch‐User ': '?1 ',
-# 'Upgrade‐Insecure‐Requests ': '1 ',
-'User‐Agent ': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36 ',
-} try:
-request = urllib.request.Request(url=url,headers=headers)
-
-response = urllib.request.urlopen(request)
-
-content = response.read().decode('utf‐8 ') print(content)
-except urllib.error.HTTPError: print(1111)
-
-except urllib.error.URLError: print(2222)
-```
 
 ## 12.cookie登录
 
@@ -832,9 +723,34 @@ except urllib.error.URLError: print(2222)
 
 ### 使用案例
 
-#### 1.weibo登陆
+#### qq空间的爬取
 
-#### 2.qq空间的爬取
+```python
+import urllib.parse
+import urllib.request
+
+url = 'https://user.qzone.qq.com/466449822/infocenter'
+
+headers ={
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0',
+      'Cookie':'466449822_todaycount=0; 466449822_totalcount=22163; pgv_pvid=6293739165; RK=GTtkJOP7UR; ptcz=73618d32010d1041e2c6e3a176d9234f77908b003bced7b77bf93c2c718e1d21; qq_domain_video_guid_verify=367e0ea2d02e65c7; _qimei_uuid42=19109000a2f1007c57e9bf69eabf2d052ddca4c373; _qimei_fingerprint=ef098312f649e9df39a208d598941fcf; _qimei_h38=2159fc4157e9bf69eabf2d0502000004519109; pac_uid=0_shc8c2mDS4P2d; suid=user_0_shc8c2mDS4P2d; _qimei_q32=807781332a66161d5576401251820e12; _qimei_q36=13a761515416031741cf9784300015419101; __Q_w_s__QZN_TodoMsgCnt=1; _clck=mfzhub|1|fvh|0; uin=o0466449822; skey=@uPra0xo9u; p_uin=o0466449822; pt4_token=VCaXIO*vHOynaNY7dlLgvKJ4gNqEdu8F88OwwLp0Im0_; p_skey=jW3uo4Sg3lRORB56zUNWsxW9Jj7eQJ89z2GgWIJlTmw_; Loading=Yes; qz_screen=1920x1080; pgv_info=ssid=s7403978208; QZ_FE_WEBP_SUPPORT=1; __Q_w_s_hat_seed=1; cpu_performance_v8=1; domain_id=5; domainid=5',
+}
+
+req =  urllib.request.Request(url,headers=headers,method='GET')
+
+def download_conecnt(req):
+    resp =  urllib.request.urlopen(req)
+    content  = resp.read().decode('utf8')
+    return content
+
+def save_content(filename,content):
+    with open(filename,'w',encoding='utf8') as fp:
+        fp.write(content)
+
+if __name__ == '__main__':
+        content = download_conecnt(req)
+        save_content('qzone.html',content)
+```
 
 ## 13.Handler处理器
 
@@ -854,44 +770,72 @@ import urllib.request
 url = 'http://www.baidu.com ' headers = {
 'User ‐ Agent ': 'Mozilla / 5.0(Windows NT 10.0;Win64;x64) AppleWebKit / 537.36(KHTML, likeGecko) Chrome / 74.0.3729.169Safari / 537.36 '
 }
-request = urllib.request.Request(url=url,headers=headers) handler = urllib.request.HTTPHandler()
-opener = urllib.request.build_opener(handler) response = opener.open(request)
+request = urllib.request.Request(url=url,headers=headers) 
+handler = urllib.request.HTTPHandler()
+opener = urllib.request.build_opener(handler) 
+response = opener.open(request)
 print(response.read().decode('utf‐8 '))
 ```
 
 ## 14.代理服务器
 
-1.代理的常用功能?
+### 1. 代理的常用功能?
 
-1.突破自身IP访问限制 ，访问国外站点。 2.访问一些单位或团体内部资源
+1. 突破自身IP访问限制 ，访问国外站点。 
 
-扩展 ：某大学FTP(前提是该代理地址在该资源的允许访问范围之内)，使用教育网内地址段免费代理服务 器 ，就可以用于对教育网开放的各类FTP下载上传 ，以及各类资料查询共享等服务。
+2. 访问一些单位或团体内部资源
 
-3.提高访问速度
+>  扩展 ：某大学FTP(前提是该代理地址在该资源的允许访问范围之内)，使用教育网内地址段免费代理服务器 ，就可以用于对教育网开放的各类FTP下载上传 ，以及各类资料查询共享等服务。
 
-扩展 ：通常代理服务器都设置一个较大的硬盘缓冲区 ，当有外界的信息通过时 ，同时也将其保存到缓冲 区中 ，当其他用户再访问相同的信息时 ， 则直接由缓冲区中取出信息 ，传给用户 ，以提高访问速度。
+3. 提高访问速度
 
-4.隐藏真实IP
+>  扩展 ：通常代理服务器都设置一个较大的硬盘缓冲区 ，当有外界的信息通过时 ，同时也将其保存到缓冲 区中 ，当其他用户再访问相同的信息时 ， 则直接由缓冲区中取出信息 ，传给用户 ，以提高访问速度。
 
-扩展 ：上网者也可以通过这种方法隐藏自己的IP，免受攻击。 2.代码配置代理
+4. 隐藏真实IP
 
-创建Reuqest对象
+>  扩展 ：上网者也可以通过这种方法隐藏自己的IP，免受攻击。 
 
-创建ProxyHandler对象
+### 2. 代码配置代理
+
++ 创建Reuqest对象
+
++ 创建ProxyHandler对象
 
 用handler对象创建opener对象 使用opener.open函数发送请求
 
  ```python
- eg:
  import urllib.request
- url = 'http://www.baidu.com/s?wd=ip ' headers = {
- 'User ‐ Agent ': 'Mozilla / 5.0(Windows NT 10.0;Win64;x64) AppleWebKit / 537.36(KHTML, likeGecko) Chrome / 74.0.3729.169Safari / 537.36 '
+ 
+ url = 'https://ip.900cha.com/' 
+ 
+ headers = {
+     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36 Edg/136.0.0.0'
  }
- request = urllib.request.Request(url=url,headers=headers) proxies = {'http ': '117.141.155.244:53281 '}
+ 
+ req = urllib.request.Request(url=url,headers=headers) 
+ 
+ # 用户名密码认证(私密代理/独享代理)
+ username = "csjtjrou"
+ password = "efj5su30"
+ proxies = {
+     "https": "http://%(user)s:%(pwd)s@%(proxy)s/" % {"user": username, "pwd": password, "proxy": "113.250.49.145:16818"},
+ }
+ 
  handler = urllib.request.ProxyHandler(proxies=proxies)
- opener = urllib.request.build_opener(handler) response = opener.open(request)
- content = response.read().decode('utf‐8 ')
- with open( 'daili.html ', 'w ',encoding= 'utf‐8 ')as fp: fp.write(content)
+ 
+ opener = urllib.request.build_opener(handler) 
+ 
+ response = opener.open(req)
+ 
+ content = response.read().decode('utf-8')
+ 
+ with open( 'daili.html ', 'w',encoding= 'utf-8')as fp: 
+     fp.write(content)
  ```
 
-扩展： 1.代理池 2.快代理
+### 3.代理网站
+
+[永久免费公共代理池](https://proxy.scdn.io/?page=6&per_page=10)
+
+[快代理 - 企业级HTTP代理IP云服务_专注IP代理11年](https://www.kuaidaili.com/?ref=d0zvi83mvmas)
+

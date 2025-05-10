@@ -705,7 +705,7 @@ print('翻译发音下载完成~')
          save_content(i,content)
  ```
 
-## 12.cookie登录
+## cookie登录
 
  cookie的中文翻译是曲奇，小甜饼的意思。cookie其实就是一些数据信息，类型为“**小型文本文件**”，存储于电脑上的文本文件中。
 
@@ -752,32 +752,88 @@ if __name__ == '__main__':
         save_content('qzone.html',content)
 ```
 
-## 13.Handler处理器
+## Handler
 
-为什么要学习handler？
+`Handler`是用于处理特定类型请求的组件，它们负责实现不同协议（如 HTTP、HTTPS、FTP 等）的具体操作，也可以用于实现代理、认证等功能。
 
-urllib.request.urlopen(url) 不能定制请求头
-
-urllib.request.Request(url,headers,data) 可以定制请求头
-
-Handler
-
-定制更高级的请求头（随着业务逻辑的复杂 请求对象的定制已经满足不了我们的需求（动态cookie和代理 不能使用请求对象的定制）
+### HTTPHandler
 
 ```python
-eg:
 import urllib.request
-url = 'http://www.baidu.com ' headers = {
+
+url = 'http://www.baidu.com'
+
+headers = {
 'User ‐ Agent ': 'Mozilla / 5.0(Windows NT 10.0;Win64;x64) AppleWebKit / 537.36(KHTML, likeGecko) Chrome / 74.0.3729.169Safari / 537.36 '
 }
+
 request = urllib.request.Request(url=url,headers=headers) 
+
 handler = urllib.request.HTTPHandler()
+
 opener = urllib.request.build_opener(handler) 
+
 response = opener.open(request)
+
 print(response.read().decode('utf‐8 '))
 ```
 
-## 14.代理服务器
+### 自定义处理器
+
+```python
+import urllib.request
+from urllib.request import BaseHandler
+ 
+# 自定义处理器继承BaseHandler类
+class CustomHandler(BaseHandler):
+    def __init__(self, custom_param):
+        self.custom_param = custom_param
+ 
+    def http_request(self, request):
+        # 在发送HTTP请求前对请求进行修改
+        print("CustomHandler: Modifying HTTP request with custom parameter:", self.custom_param)
+        request.add_header('X-Custom-Param', self.custom_param)
+        return request
+ 
+    def http_response(self, request, response):
+        # 在接收到HTTP响应后对响应进行解析或修改
+        print("CustomHandler: Modifying HTTP response")
+        # 打印响应头部信息
+        print(response.info())
+        return response
+ 
+# 创建OpenerDirector对象，并将自定义处理器添加进去
+opener = urllib.request.build_opener(CustomHandler("custom_value"))
+ 
+# 使用OpenerDirector对象发送HTTP请求
+response = opener.open('http://www.baidu.com')
+ 
+# 打印响应内容
+print(response.read())
+```
+
+### 多个处理器同时使用
+
+```python
+from urllib.request import ProxyHandler, HTTPSHandler, build_opener
+
+# 设置代理
+proxy_handler = ProxyHandler({'https': 'http://proxy.example.com:8080'})
+
+# 创建默认 HTTPSHandler
+http_handler = HTTPHandler()
+
+# 组合 Handler
+opener = build_opener(proxy_handler, https_handler)
+
+# 发送请求
+with opener.open('https://example.com') as response:
+    print(response.read())
+```
+
+
+
+## 代理服务器
 
 ### 1. 代理的常用功能?
 

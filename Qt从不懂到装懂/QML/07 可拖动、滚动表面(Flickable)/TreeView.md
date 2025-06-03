@@ -1,0 +1,1 @@
+[qml中树形结构控件TreeView的使用，以及其继承QAbstractItemModel的model的使用方式_qml treeview-CSDN博客](https://blog.csdn.net/qq_23604781/article/details/133169620)

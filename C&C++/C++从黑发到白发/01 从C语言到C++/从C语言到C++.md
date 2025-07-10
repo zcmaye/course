@@ -1218,3 +1218,5 @@ std::format_to_n(std::back_inserter(buf),1, "{}", 123);
 
 [C++ format函数](https://www.yisu.com/jc/902923.html)
 
+[【C++ 格式化输出 】C++20 现代C++格式化：拥抱std--format简化你的代码-阿里云开发者社区](https://developer.aliyun.com/article/1463275)
+

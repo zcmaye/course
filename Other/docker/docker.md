@@ -46,13 +46,13 @@
    sudo tee /etc/docker/daemon.json << 'EOF'
    {
    	"registry-mirrors":[
+   		"https://docker.1ms.run",
    		"https://docker.m.daocloud.io",
    		"https://docker-0.unsee.tech",
    		"https://docker.1panel.live",
    		"https://func.ink",
    		"https://lispy.org",
-   		"https://docker.xiaogenban1993.com",
-   		"https://docker.1ms.run"
+   		"https://docker.xiaogenban1993.com"
    	]
    }
    EOF
@@ -80,7 +80,14 @@
    sudo systemctl enable docker --now
    ```
 
-   
+
+> 如果使用命令`sudo systemctl stop docker`停止docker，出现如下提示：`Stopping 'docker.service', but its triggering units are still active:docker.socket`。
+>
+> 1. 先使用命令`sudo systemctl stop docker.socket`停止socket服务
+> 2. 再使用命令`sudo systemctl stop docker.service`停止docker服务
+> 3. 最后运行命令`docker images`，出现这个提示`Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?`说明服务器已经停止！
+
+
 
 ## 镜像操作
 

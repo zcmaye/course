@@ -377,6 +377,35 @@ int* codePoints = LoadCodepoints(BASECHAR("你好世界，"), &codePointsCount);
 
 `DrawTextPro`函数还可以用于旋转文本。
 
+还可以把所有中文放到文件中，然后加载进来！！
+
+```c
+	//打开字体
+	int fileSize = 0;
+	unsigned char* fontData = LoadFileData("C:/Windows/Fonts/simhei.ttf", &fileSize);
+	if (!fontData) {
+		return -1;
+	}
+
+	//加载中文文件
+	int chineseSize = 0;
+	unsigned char* chineseData = LoadFileData("chinese.txt", &chineseSize);
+	if (!chineseData) {
+		return -1;
+	}
+
+	//加载马点
+	int codepointsCount = chineseSize;
+	int* codepoints = LoadCodepoints(chineseData, &codepointsCount);
+	if (!codepoints) {
+		return -1;
+	}
+
+	//从内存加载字体
+	Font font = LoadFontFromMemory(".ttf", fontData, fileSize, 26, codepoints, codepointsCount);
+
+```
+
 #### 绘制纹理(图片)
 
 要绘制图片，必须先将图片从文件加载到内存中。

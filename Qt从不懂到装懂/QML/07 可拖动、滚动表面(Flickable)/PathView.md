@@ -1,0 +1,1 @@
+[Qt Quick 之 PathView 详解_qml的pathview挡位切换效果-CSDN博客](https://blog.csdn.net/cupidove/article/details/38402835)

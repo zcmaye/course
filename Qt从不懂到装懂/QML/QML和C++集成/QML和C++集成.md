@@ -629,6 +629,8 @@ class ColorMaker : public QObject
 
 在某些时候，我们只需要将一个C++单例注册到QML，而不希望在QML中能定义QML对象，这个时候就需要使用`qmlRegisterSingletonType`函数进行注册。
 
+## 注册单例类型
+
 ```cpp
 template <typename T>
 int qmlRegisterSingletonType(const char *uri, int versionMajor, int versionMinor, const char *typeName, 
@@ -765,3 +767,835 @@ Window {
 ```
 
 在qml中，把`ColorMaker`对象注释掉，然后把所有引用次对象的位置，都修改为`ColorMakerSingleton`单例类型即可！
+
+## 设置上下文属性
+
+**main.cpp**
+
+```cpp
+int main(int argc, char *argv[])
+{
+    QGuiApplication app(argc, argv);
+
+    //这里可以注释掉
+    //ColorMaker::registerTypes();
+
+    QQmlApplicationEngine engine;
+    QObject::connect(
+        &engine,
+        &QQmlApplicationEngine::objectCreationFailed,
+        &app,
+        []() { QCoreApplication::exit(-1); },
+        Qt::QueuedConnection);    
+    
+	//获取qml根上下文
+    auto ctx =  engine.rootContext();
+    ctx->setContextProperty("ColorMakerSingleton",ColorMaker::create(nullptr,nullptr));
+    
+    engine.loadFromModule("learn_qml", "Main");
+}
+```
+
+在main函数中，加载模块文件之前，使用`setContextProperty`把实例设置到上下文中。
+
+**Main.qml**
+
+```css
+import QtQuick
+import QtQuick.Controls
+
+Window {
+    id: root
+    width: 640
+    height: 480
+    visible: true
+    title: "learnqml"
+
+
+    Rectangle{
+        width: 50
+        height:50
+        anchors.centerIn: parent
+        color:ColorMakerSingleton.color
+    }
+
+    Row{
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+
+        Button{
+            text: 'change color'
+            width: implicitWidth
+            height:30
+
+            onClicked: ColorMakerSingleton.color = 'blue'
+        }
+        Button{
+            text: 'start'
+            width: implicitWidth
+            height:30
+
+            onClicked: ColorMakerSingleton.start()
+        }
+        Button{
+            text: 'stop'
+            width: implicitWidth
+            height:30
+
+            onClicked: ColorMakerSingleton.stop()
+        }
+
+        Button{
+            text: 'random mode'
+            width: implicitWidth
+            height:30
+
+            onClicked: ColorMakerSingleton.setMode(0)
+        }
+        Button{
+            text: 'flicker mode'
+            width: implicitWidth
+            height:30
+
+            onClicked: ColorMakerSingleton.setMode(1)
+        }
+    }
+}
+```
+
+在QML文件中，不用导入模块，直接用注册进来的QML类型名访问属性、函数即可！
+
+> 注意，因为没有导入模块，所以枚举类型访问不了，必须使用对应的枚举值！
+
+## 设置初始化属性
+
+> 在 QML 引擎加载 QML 文件之前，设置 QML 根对象的初始属性值
+
+**main.cpp**
+
+```cpp
+    //设置初始属性，注意，这里的属性名必须是小写字母开头！！！
+	ColorMaker msg;
+    engine.setInitialProperties({{"colorMaker",QVariant::fromValue(&msg)}});
+
+    //获取qml根上下文
+    //auto ctx =  engine.rootContext();
+    //ctx->setContextProperty("ColorMakerSingleton",ColorMaker::create(nullptr,nullptr));
+```
+
+把`setContextProperty`替换成`setInitialProperties`即可！
+
+**ColorMaker.h**
+
+```cpp
+class ColorMaker : public QObject
+{
+    Q_OBJECT
+    QML_ELEMENT		/*加上这行*/
+    Q_PROPERTY(QColor color MEMBER m_color NOTIFY colorChanged FINAL)
+ public:
+    /*...*/
+}
+```
+
+然后还必须在头文件中加上`QML_ELEMENT`宏！
+
+**Main.qml**
+
+```css
+    required property ColorMaker  colorMaker
+
+    Rectangle{
+        anchors.centerIn: parent
+        width:50
+        height:50
+        radius: 5
+        //绑定属性，当colorMaker.color变化时，会发出信号通知Rectangle
+        color:colorMaker.color
+    }
+```
+
+在qml文件中，也不需要导入`ColorMaker`模块，但是必须使用`required property ColorMaker  colorMaker`来获取从C++传递过来的属性。
+
+当然，如果要注册单例最好也不要通过这种方式处理！这种方式主要用来传递简单的数据（如字符串、数字）到 QML 根对象。如下案例：
+
+**main.cpp**
+
+```cpp
+    engine.setInitialProperties({
+                                 {"age",18},
+                                 {"name","maye"}
+    });
+```
+
+**Main.qml**
+
+```css
+    required property int age
+    required property string name
+
+    Component.onCompleted: console.log('age is',age,'name is ',name)
+```
+
+在QML中，使用`required`强制属性，从初始属性中获取对应的属性值。
+
+
+
+# 其他C++属性暴漏给QML
+
+## 类型为对象的属性
+
+**Message.h**
+
+```cpp
+#include <QObject>
+#include <QQmlEngine>
+
+class MessageBody;
+
+class Message : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(MessageBody* body READ body WRITE setBody NOTIFY bodyChanged)
+    Q_PROPERTY(QString text READ text NOTIFY textChanged CONSTANT)
+public:
+    Message(QObject*parent = nullptr);
+    void setBody(MessageBody* a)
+    {
+        if(m_body != a){
+            m_body = a;
+            emit bodyChanged();
+        }
+    }
+
+    MessageBody* body() const{
+        return m_body;
+    }
+
+    QString text()const;
+
+    static void registerTypes()
+    {
+        qmlRegisterType<Message>("Message",1,0,"Message");
+        qmlRegisterType<MessageBody>("Message",1,0,"MessageBody");
+    }
+signals:
+    void bodyChanged();
+    void textChanged();
+private:
+    MessageBody* m_body{};
+};
+
+class MessageBody : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QString title MEMBER m_title NOTIFY titleChanged)
+    Q_PROPERTY(QString content MEMBER m_content NOTIFY contentChanged)
+public:
+    MessageBody(QObject*parent = nullptr)
+        :QObject(parent)
+    {}
+signals:
+    void titleChanged();
+    void contentChanged();
+private:
+    QString m_title;
+    QString m_content;
+};
+```
+
+**Message.cpp**
+
+```cpp
+#include "Message.h"
+
+Message::Message(QObject *parent)
+    :QObject(parent)
+{
+    connect(this,&Message::bodyChanged,[this]{
+        if(!m_body)
+            return;
+        connect(m_body,&MessageBody::titleChanged,this,&Message::textChanged);
+        connect(m_body,&MessageBody::contentChanged,this,&Message::textChanged);
+    });
+}
+
+QString Message::text() const
+{
+    auto title = m_body->property("title").toString();
+    auto content = m_body->property("content").toString();
+    return QString("<h1>%1</h1><p>%2</p>").arg(title,content);
+
+}
+```
+
+**Main.qml**
+
+```cpp
+import QtQuick
+import QtQuick.Controls
+import Message
+
+Window {
+    id: root
+    width: 640
+    height: 480
+    visible: true
+    title: "learnqml"
+
+    Message{
+        id:msg
+        body:MessageBody{
+            title:'xxxx'
+            content:'111111111111'
+        }
+        //text:'11'   //Invalid property assignment: "text" is a read-only property
+    }
+
+    Text {
+        id: t
+        //text: '<h3>' + msg.body.title + '</h3><p>'+msg.body.content +'</p>'
+        text:msg.text
+    }
+
+    Button{
+        text:'change'
+        anchors.right: parent.right
+        onClicked: msg.body.title = 'title'
+    }
+}
+```
+
+## 类型为列表的属性
+
+**Message.h**
+
+```cpp
+
+qmlRegisterType<MessageBoard>("Message",1,0,"MessageBoard");
+
+class MessageBoard : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QList<Message*> messages MEMBER m_messages FINAL)
+public:
+
+private:
+    QList<Message*> m_messages;
+};
+```
+
+**Main.qml**
+
+```css
+    MessageBoard{
+        messages: [
+            Message{
+
+            }
+
+        ]
+    }
+```
+
+运行会报错:`Cannot assign multiple values to a singular property`，意思是`不能为单个属性赋多个值`，也就是说qml不认为messages属性是一个列表！
+
+如何处理呢？
+
+为了实现这一目的，应当使用**QQmlListProperty**而非QList\<T>作为属性类型。这是因为QList并非QObject派生类型，因此无法通过Qt元对象系统提供必要的QML属性特性，例如当列表被修改时的信号通知。
+
+**Message.h**
+
+```cpp
+class MessageBoard : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QQmlListProperty<Message> messages READ messages NOTIFY messagesChanged)
+public:
+    QQmlListProperty<Message> messages();
+
+    Q_INVOKABLE void testAddMessage();
+signals:
+    void messagesChanged();
+private:
+    QList<Message*> m_messages;
+};
+```
+
+**Message.cpp**
+
+```cpp
+QQmlListProperty<Message> MessageBoard::messages()
+{
+    return QQmlListProperty<Message>(this,&m_messages);
+}
+
+void MessageBoard::testAddMessage()
+{
+    auto msg = new Message(this);
+    auto body = new MessageBody;
+    body->setProperty("title","Cpp");
+    body->setProperty("content","Content cpp");
+    msg->setBody(body);
+
+    m_messages.append(msg);
+    emit messagesChanged();
+}
+```
+
+**Main.qml**
+
+```css
+Window {
+    id: root
+    width: 640
+    height: 480
+    visible: true
+    title: "learnqml"
+
+    MessageBoard{
+        id:msgBoard
+        messages: [
+            Message{
+                body:MessageBody{
+                    title:'msg1'
+                    content:'111111111111'
+                }
+            },
+            Message{
+                body:MessageBody{
+                    title:'msg2'
+                    content:'2222222222222222'
+                }
+            },
+            Message{
+                body:MessageBody{
+                    title:'msg3'
+                    content:'3333333333333'
+                }
+            }
+        ]
+
+        onMessagesChanged: {
+            for(var i of msgBoard.messages){
+                console.log(i.text)
+            }
+        }
+    }
+
+    Component.onCompleted: {
+        for(var i of msgBoard.messages){
+            console.log(i.text)
+        }
+    }
+
+    Message{
+        id:msg
+        body:MessageBody{
+            title:'xxxx'
+            content:'111111111111'
+        }
+        //text:'11'   //Invalid property assignment: "text" is a read-only property
+    }
+
+    Text {
+        id: t
+        //text: '<h3>' + msg.body.title + '</h3><p>'+msg.body.content +'</p>'
+        text:msg.text
+    }
+
+    Button{
+        text:'change'
+        anchors.right: parent.right
+        onClicked: {
+            msg.body.title = 'title'
+            msgBoard.testAddMessage()
+        }
+    }
+}
+```
+
+
+
+## 组属性
+
+任何只读的对象类型属性都可以在 QML 代码中作为分组属性进行访问。这可用于公开一组相关的属性，这些属性描述了该类型的一组属性特征。
+
+**Message.h**
+
+```cpp
+
+class MessageAuthor : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
+    Q_PROPERTY(QString email READ email WRITE setEmail NOTIFY emailChanged)
+public:
+    using QObject::QObject;
+
+    void setName(const QString& name){
+        if(m_name != name){
+            m_name = name;
+            emit nameChanged();
+        }
+    }
+    const QString& name()const{return m_name;}
+
+    void setEmail(const QString& email){
+        if(m_email != email){
+            m_email = email;
+            emit emailChanged();
+        }
+    }
+    const QString& email()const{return m_email;}
+signals:
+    void nameChanged();
+    void emailChanged();
+private:
+    QString m_name;
+    QString m_email;
+};
+
+class Message : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(MessageAuthor* author READ author)
+public:
+    Message(QObject *parent = nullptr)
+        : QObject(parent)
+        ,m_author(new MessageAuthor(this))
+    {
+    }
+    static void registerTypes()
+    {
+        qmlRegisterType<MessageAuthor>("Message",1,0,"MessageAuthor");
+        qmlRegisterType<Message>("Message",1,0,"Message");
+    }
+
+    MessageAuthor *author() const {
+        return m_author;
+    }
+private:
+    MessageAuthor *m_author;
+};
+```
+
+**Main.qml**
+
+```css
+Window {
+    id: root
+    width: 640
+    height: 480
+    visible: true
+    title: "learnqml"
+
+    Message {
+        id:msg
+        author.name: "Alexandra"
+        author.email: "alexandra@mail.com"
+    }
+
+    Component.onCompleted: {
+        console.log(msg.author.name,msg.author.email)
+    }
+}
+```
+
+## 注册值类型
+
+Q_GADGET 宏是 Q_OBJECT 宏的一个轻量级版本，适用于那些不继承自 QObject 但仍希望使用 QMetaObject 提供的一些反射功能的类。
+
+Q_GADGET 类可以包含 Q_ENUM、Q_PROPERTY 和 Q_INVOKABLE 属性，但不能包含信号或槽。
+
+Q_GADGET 提供了一个类成员“staticMetaObject”。该“staticMetaObject”对象的类型为 QMetaObject，并且能够访问使用 Q_ENUM 宏声明的枚举值。
+
+任何带有 Q_GADGET 宏的类型都可以注册为 QML 值类型。一旦此类类型在 QML 类型系统中注册，就可以在 QML 代码中用作属性类型。此类实例可以从 QML 中进行操作；正如“将 C++ 类型的属性暴露给 QML”中所述，任何值类型的属性和方法都可以从 QML 代码中访问。
+
+与对象类型不同，值类型需要使用小写名称。推荐使用 QML_VALUE_TYPE 或 QML_ANONYMOUS 宏来注册它们。由于您的 C++ 类通常具有大写名称，因此没有与 QML_ELEMENT 相当的等价物。否则，注册过程与对象类型的注册非常相似。
+
+对于值类型，还有一些进一步的限制：
+
++ 值类型不能是单例。
++ 值类型需要是可默认构造和可复制构造的。
++ 将 QProperty 用作值类型的成员是有问题的。值类型会被复制，此时您需要决定如何处理 QProperty 上的任何绑定。您不应在值类型中使QProperty。
++ 值类型无法提供附加属性。
+
+**UserEntity.h**
+
+```cpp
+#ifndef USERENTITY_H
+#define USERENTITY_H
+
+#include <QObject>
+#include <QQmlEngine>
+
+class User
+{
+    Q_GADGET
+    Q_PROPERTY(quint32 userId MEMBER user_id)
+    Q_PROPERTY(QString userName MEMBER user_name)
+    Q_PROPERTY(QString nickName MEMBER nick_name)
+    Q_PROPERTY(QString password MEMBER password)
+    QML_VALUE_TYPE(user)
+public:
+    quint32 user_id{};
+    QString user_name;
+    QString nick_name;
+    QString password;
+
+    // 添加默认构造函数
+   Q_INVOKABLE  User() = default;
+
+    // 添加带参数的构造函数
+   Q_INVOKABLE  User(quint32 id, const QString& username, const QString& nickname = {}, const QString& pass = {})
+        : user_id(id), user_name(username), nick_name(nickname), password(pass) {}
+
+};
+
+
+Q_DECLARE_METATYPE(User)
+
+#endif // USERENTITY_H
+```
+
+**Main.qml**
+
+```css
+pragma ValueTypeBehavior: Addressable	/*必须加上这行，才能识别user对象*/
+import QtQuick
+import QtQuick.Controls
+
+Window {
+    id: root
+    width: 640
+    height: 480
+    visible: true
+    title: "learnqml"
+
+    // 使用小写"user"类型名
+    property user maye:new user(1001, "maye", "顽石老师", "123456")
+
+    Text {
+        text: "Name: " + maye.userName + ", ID: " + maye.userId
+        anchors.centerIn: parent
+    }
+}
+```
+
+或者直接通过属性传进来！
+
+**main.cpp**
+
+```cpp
+    User maye(1001, "maye", "顽石老师", "123456");
+    engine.setInitialProperties({{"maye",QVariant::fromValue(maye)}});
+```
+
+**Main.qml**
+
+```css
+    required property user maye
+
+    Text {
+        text: "Name: " + maye.userName + ", ID: " + maye.userId
+        anchors.centerIn: parent
+    }
+```
+
+# C++调用QML
+
+QML 对象类型可以在 C++ 实例化并检查，以便访问它们的属性、调用它们的方法和接收它们的信号通知。这是因为所有 QML 对象类型都是使用 [QObject](https://thinkinginqt.com/doc/qtcore/qobject.html) 派生类实现的，QML 引擎能够通过 Qt 元对象系统动态加载和内省对象。
+
+> **警告：**虽然可以在 C++ 访问 QML 对象并对其进行操作，但除了用于测试和原型设计之外，不建议使用这种方法。QML 与 C++ 混合编程的优势之一是能够在 QML 中独立于 C++ 逻辑和数据集后端实现 UI，如果 C++ 端直接操作 QML，优势就没了，还让我们在不影响其 C++ 对应项的情况下更改 QML UI 变得困难。
+
+## 通过对象名访问QML对象
+
+QML 组件本质上就是具有子对象的树形结构，这些子对象之间存在兄弟关系，并且各自还有自己的子对象。可以通过使用 QObject::objectName 属性和 QObject::findChild() 函数来定位 QML 组件的子对象。例如，如果在 Main.qml 中的根项有一个名为 Rectangle 的子项：
+
+**Main.qml**
+
+```css
+import QtQuick
+import QtQuick.Controls
+
+Window {
+    id: root
+    objectName: "window"
+    width: 640
+    height: 480
+    visible: true
+    title: "learnqml"
+
+
+    Rectangle{
+        anchors.centerIn: parent
+        objectName: "rect"
+        color:'red'
+        width:150
+        height:width
+    }
+}
+```
+
+**main.cpp**
+
+```cpp
+	//获取所有根对象
+    auto objects =  engine.rootObjects();
+    for(auto& obj : objects){
+        qDebug()<<obj->objectName();
+    }
+```
+
+在main.cpp中可以通过引擎获取所有根对象，在这里根对象只有一个，就是window窗口。
+
+```cpp
+   //获取第一个根对象
+    auto window =  objects.first();
+    if(window){
+        //从根对象中查找子对象
+        auto rect =  window->findChild<QObject*>("rect");
+        if(rect){
+            //修改子对象的颜色属性
+            rect->setProperty("color",QColor(Qt::GlobalColor::cyan));
+        }
+        else{
+            qDebug()<<"rect not found!";
+        }
+    }
+```
+
+然后获取第一个根对象，在从根对象中查找`rect`矩形对象，找到之后修改颜色！
+
+## 连接QML对象的信号
+
+所有的 QML 信号都会自动对 C++ 程序可用，并且可以像任何普通的 Qt C++ 信号一样通过 QObject::connect() 进行连接。作为回报，任何 C++ 信号都可以由 QML 对象通过信号处理程序来接收。
+
+在上面的rect中，添加一个Button对象，代码如下：
+
+```css
+    Rectangle{
+        anchors.centerIn: parent
+        objectName: "rect"
+        color:'red'
+        width:150
+        height:width
+
+        /*按钮*/
+        Button{
+            objectName: 'btn'
+            text:"btn"
+            width:60
+            height:50
+
+            /*自定义信号*/
+            signal sig_clicked(msg:string)
+			/*当按钮被点击时发出*/
+            onClicked: sig_clicked('hello wrold!')
+        }
+    }
+```
+
+在上述代码中，添加了一个Button对象同时设置了对象名为`btn`，并在其中定义了一个信号，当按钮被点击时发出信号！接下来看一下如何在C++中连接信号！
+
+```cpp
+class Foo : public QObject
+{
+    Q_OBJECT
+public:
+    
+public slots:	//必须放在slots下
+    void f()
+    {
+        qDebug()<<"clicked";
+    }
+
+    void f(const QString& msg)
+    {
+        qDebug()<<"clicked "<<msg;
+    }
+};
+
+
+int main(int argc, char *argv[])
+{
+    QGuiApplication app(argc, argv);
+
+
+    QQmlApplicationEngine engine;
+    QObject::connect(
+        &engine,
+        &QQmlApplicationEngine::objectCreationFailed,
+        &app,
+        []() { QCoreApplication::exit(-1); },
+        Qt::QueuedConnection);
+
+    engine.loadFromModule("learn_qml", "Main");
+
+    //获取所有根对象
+    auto objects =  engine.rootObjects();
+    for(auto& obj : objects){
+        qDebug()<<obj->objectName();
+    }
+
+    Foo foo;
+    //获取第一个根对象
+    auto window =  objects.first();
+    if(window){
+        /*查找矩形代码已省略*/
+
+        auto btn = window->findChild<QObject*>("btn");
+        if(btn){
+            btn->setProperty("text","我是按钮");
+            //设置锚点无效
+            //if(!btn->setProperty("anchors.right","parent.right")){
+            //    qDebug()<<"设置属性background失败";
+            //}
+
+            //这里必须使用Qt4就出现的这种写法，因为QML的信号不能通过类名访问到
+            QObject::connect(btn,SIGNAL(clicked()),&foo,SLOT(f()));
+            QObject::connect(btn,SIGNAL(sig_clicked(QString)),&foo,SLOT(f(QString)));
+        }
+    }
+
+
+    return app.exec();
+}
+
+#include "main.moc"
+```
+
+## 调用QML中的函数(方法)
+
+所有QML方法都公开给元对象系统，可以使用QMetaObject::invokeMethod()从C++调用。
+
+**Main.qml**
+
+```css
+    function change(text:string,color:color){
+        rect.color  = color	/*rect btn就是上面的案例中的qml对象，给个id即可*/
+        btn.text = text
+    }
+
+    function getText(text:string){
+        return text
+    }
+```
+
+首先，在qml中定义两个函数。
+
+**main.cpp**
+
+```cpp
+        //调用只有参数的函数
+        QMetaObject::invokeMethod(window,"change",Q_ARG(QString,"cpp"),Q_ARG(QColor,"yellow"));
+        
+        //返回值必须用QVariant接收
+        QVariant ret;
+        QMetaObject::invokeMethod(window,"getText",Q_RETURN_ARG(QVariant,ret),Q_ARG(QString,"顽石老师"));
+        qDebug()<<ret;
+```
+
+然后，在c++中使用` QMetaObject::invokeMethod`调用函数。

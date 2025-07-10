@@ -5,3 +5,5 @@
 进入网站，直接点击下载安装即可！
 
 ![局部截取_20250508_190512](./assets/局部截取_20250508_190512.png)
+
+[CE修改器使用教程 [入门篇\] - lyshark - 博客园](https://www.cnblogs.com/LyShark/p/10799926.html#_label5)

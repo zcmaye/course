@@ -364,3 +364,152 @@ GuiGrid(CLITERAL(Rectangle) { 50, 100, 240, 240 }, "grid", 60, 1, & pos);
 ```
 
 ![image-20250710190401619](./assets/image-20250710190401619.png)
+
+## 容器/分割控件
+
+### GuiWindowBox
+
+这是一个窗口盒子控件，类似一个对话框！
+
+```c
+	bool isWindowShow = false;
+	...
+	//点击按钮时显示窗口
+	if (GuiButton(CLITERAL(Rectangle) { 0, 0, 100, 35 }, "show window")) {
+		isWindowShow = true;
+	}
+	
+	
+	//如果是显示的则绘制窗口
+	if (isWindowShow) {
+		GuiUnlock();	//先解锁
+		//当点击窗口的关闭按钮时，隐藏窗口
+		Rectangle rect = { 50, 0, 300, 250 };
+		//居中在窗口中
+		rect.x = (GetRenderWidth() - rect.width) / 2;
+		rect.y = (GetRenderHeight() - rect.height) / 2;
+		if (GuiWindowBox(rect, "Windowbox")) {
+			isWindowShow = false;
+		}
+		else {
+			//在窗口盒子上绘制控件
+			if (GuiButton(CLITERAL(Rectangle) { rect.x, rect.y + 24, 100, 25 }, "button")) {
+				TraceLog(LOG_INFO, "clicked");
+			}
+			//没有点击关闭按钮就锁定
+			GuiLock();
+		}
+	}
+```
+
+![录屏_20250712_161722](./assets/录屏_20250712_161722.gif)
+
+### GuiGroupBox
+
+这是一个带有名称的组框控件！
+
+```c
+GuiGroupBox(CLITERAL(Rectangle) { 50, 50, 300, 250 }, "GroupBox");
+```
+
+![image-20250712162018511](./assets/image-20250712162018511.png)
+
+### GuiLine
+
+带文本的水平分割线！
+
+![image-20250712162339865](./assets/image-20250712162339865.png)
+
+### GuiPanel
+
+这个一个面板控件！
+
+![image-20250712162359752](./assets/image-20250712162359752.png)
+
+### GuiTabBar
+
+这是一个选项卡栏控件！
+
+```c
+	const char* tabs[] = { "one","two","three" };	//所有选项卡文本
+	int currentTab = 0;								//当前选中的选项卡
+	...
+	int closeId = GuiTabBar(CLITERAL(Rectangle) { 50, 50, 160, 25 }, tabs, size, & currentTab);
+	if (closeId !=-1) {
+		//关闭标签
+		for (int i = closeId;i < size - 1;i++) {
+			tabs[i] = tabs[i + 1];
+		}
+		size--;
+	}
+	TraceLog(LOG_INFO, "current tab index:%d", currentTab);
+```
+
+![录屏_20250712_163440](./assets/录屏_20250712_163440.gif)
+
+## 高级控件
+
+### GuiMessageBox
+
+这是一个消息盒子控件！
+
+```c
+		int ret = GuiMessageBox(CLITERAL(Rectangle) { 50, 50, 250, 150 }, "system tip!", "ask?", "ok;cancel");
+		//关闭消息盒子
+		if (ret == 0) {
+			
+		}
+		//点击了ok按钮
+		else if (ret == 1) {
+
+		}
+		//点击了cancel按钮
+		else if (ret == 2) {
+
+		}
+```
+
+![局部截取_20250712_184606](./assets/局部截取_20250712_184606.png)
+
+## 自定义功能
+
+### 控件拖拽
+
+```c
+	bool isDrag = false;
+	Rectangle rect = { 50, 50, 250, 150 };
+	...
+        	int ret = GuiMessageBox(rect, "system tip!", "ask?", "ok;cancel");
+	//关闭消息盒子
+	if (ret == 0) {
+		
+	}
+	//点击了ok按钮
+	else if (ret == 1) {
+
+	}
+	//点击了cancel按钮
+	else if (ret == 2) {
+
+	}
+	//鼠标按下进行拖拽
+	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+		//if (CheckCollisionPointRec(GetMousePosition(), rect)) {
+		if (CheckCollisionPointRec(GetMousePosition(), CLITERAL(Rectangle) {rect.x,rect.y,rect.width,28})) {
+			isDrag = true;
+		}
+	}
+	//鼠标放开停止拖拽
+	if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+		isDrag = false;
+	}
+	//如果正在拖拽，则移动窗口位置
+	if (isDrag) {
+		Vector2 delta = GetMouseDelta();
+		rect.x += delta.x;
+		rect.y += delta.y;
+		TraceLog(LOG_INFO, "%f %f", delta.x, delta.y);
+	}
+```
+
+![录屏_20250712_185844](./assets/录屏_20250712_185844.gif)

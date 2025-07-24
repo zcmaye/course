@@ -1090,16 +1090,6 @@ auto str = std::format("I'm {0},{0} is good {1}", "maye","teacher");
 >
 > 注意：一旦使用了占位索引，每个占位符都必须使用占位索引，否则会抛出`std::format_error`异常
 
-+ **命名占位符**：你可以使用命名占位符来提高代码的可读性。
-
-```cpp
-std::string name = "maye";
-std::string job = "teacher";
-str = std::format("I'm {name},{name} is good {job}", name, job);
-```
-
-> C++23才支持，Vs暂时不支持，了解一下即可！
-
 ### 类型规格与格式选项
 
 `std::format`支持各种类型规格与格式选项，以便对输出进行详细的控制。以下是一些常见的类型规格与格式选项：

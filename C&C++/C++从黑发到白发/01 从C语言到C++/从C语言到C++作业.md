@@ -34,7 +34,7 @@
 
 ### 2，**编程题**
 
-1，在命名空间`dunkai`中，定义一系列函数，实现int,char,float,double类型，两个变量之间的交换。
+1，在命名空间`hdy`中，定义一系列函数，实现int,char,float,double类型，两个变量之间的交换。
 
  
 

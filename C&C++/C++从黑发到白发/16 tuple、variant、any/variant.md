@@ -1075,6 +1075,8 @@ if (auto [pos, ok] = coll.insert({ "new",42 }); !ok) {
 
 可以看到C++17提供了一种表达力更强的带初始化的if。
 
+# std::string_view
+
 
 
 # std::span(C++20)

@@ -31,23 +31,29 @@ gcc编译器将c源文件到生成一个可执行程序，中间一共经历了�
 
 + -v,--version 查看gcc版本
 + `-E`                       进行预处理；不要编译、汇编或链接。
-+ `-S    `                       进行编译，不汇编或链接。
-+ `-c`                       编译和汇编，但不要链接。
-+ `-o <file>`         指定输出文件名
-+ `-I`                        指定头文件路径
-
-+ `-l`                        指定库名
-+ `-L`                        指定库文件所在路径
-+ `-g`                        生成的目标包含调试信息，使用gdb调试必须添加-g参数
++ `-S    `               进行编译，不汇编或链接。
++ <font color='red'>`-c`</font>                       编译和汇编，但不要链接，生成.o文件。
++ <font color='red'>`-I`</font>                        指定头文件路径
++ <font color='red'>`-L`</font>                        指定库文件所在路径
++ <font color='red'>`-l`</font>                        指定库名
++ <font color='red'>`-o <file>`</font>         指定输出文件名
++ <font color='red'>`-g`</font>                        生成的目标包含调试信息，使用gdb调试必须添加-g参数
 + `-O<n>`                  n=0~3 编译优化，n越大优化越多
 + `-Wall`                  提示更多警告
 + `-D`                        编译时定义宏
-
 + `-std=c++<17>`    g++专用，用来指定c++标准
 
 **举例**
 
 + `-O`优化等级
+
+  + **-O0** 是默认的优化等级，不进行任何优化。此时，编译器尽量缩短编译时间和空间，适用于调试阶段。
+
+  + **-O1** 进行基本的优化，主要目的是在不显著增加编译时间的情况下，减少代码大小和提高执行速度。启用的优化选项包括 *-fauto-inc-dec*、*-fbranch-count-reg* 等。
+
+  + **-O2** 在 **-O1** 的基础上，进行更多的优化，牺牲部分编译速度以提高代码运行速度。启用的优化选项包括 *-fthread-jumps*、*-falign-functions* 等。
+
+  + **-O3** 在 **-O2** 的基础上，进一步优化，采用更多的向量化算法，提高代码的并行执行程度。启用的优化选项包括 *-finline-functions*、*-funswitch-loops* 等
 
   ```c
   //test.c
@@ -97,6 +103,13 @@ gcc编译器将c源文件到生成一个可执行程序，中间一共经历了�
   如果改为c++11，则会发生警告。
 
   ![image-20230815214939812](assets/image-20230815214939812.png)
+
+
+> 编译CPP文件必须使用g++，如果要使用gcc必须加上额外的`-lstdc++`选项。
+>
+> ```sh
+> gcc main.cpp -o out -std=c++20 -lstdc++
+> ```
 
 + `-D`编译时定义宏
 
@@ -327,12 +340,12 @@ gcc -o test_add_so main.c -L./ -ladd -Iinclude
 
 + 拷贝自己制作的共享库到/lib或者/usr/lib
   
-+ `sudo cp libadd.so usr/lib`
+  + `sudo cp libadd.so usr/lib`
   
 + 临时设置LD_LIBRARY_PATH:
-  
-+ 中断输入`export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./ `命令
-  
+
+  + 输入`export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./ `命令
+
 + 永久设置, 把`export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:库路径`, 设置到∼/.bashrc文件中。
 
   ![image-20230817202541581](assets/image-20230817202541581.png)

@@ -1,3 +1,769 @@
+## gdb
+
+> sudo apt install gdb
+
+### 介绍
+
+ GDB 全称“GNU symbolic debugger”，从名称上不难看出，它诞生于 GNU 计划（同时诞生的还有 GCC、Emacs 等），是 Linux 下常用的程序调试器。发展至今，GDB 已经迭代了诸多个版本，当下的 GDB 支持调试多种编程语言编写的程序，包括 C、C++、Go、Objective-C、OpenCL、Ada 等。实际场景中，GDB 更常用来调试 C 和 C++ 程序。一般来说，GDB主要帮助我们完成以下四个方面的功能：
+
+1. 启动你的程序，可以按照你的自定义的要求随心所欲的运行程序。
+2. 在某个指定的地方或条件下暂停程序。
+3. 当程序被停住时，可以检查此时你的程序中所发生的事。
+4. 在程序执行过程中修改程序中的变量或条件，将一个bug产生的影响修正从而测试其他bug。
+
+### 生成调试信息
+
+使用GDB调试程序，有以下两点需要注意：
+
+1. 要使用GDB调试某个程序，该程序编译时必须加上编译选项 **`-g`**，否则该程序是不包含调试信息的(相当于release模式)；`-g也是分级别的`
+
+   + **-g1：**级别1（-g1）不包含局部变量和与行号有关的调试信息，因此只能够用于回溯跟踪和堆栈转储之用。回溯跟踪指的是监视程序在运行过程中的函数调用历史，堆栈转储则是一种以原始的十六进制格式保存程序执行环境的方法，两者都是经常用到的调试手段
+   + **-g2：**这是**默认的级别**，此时产生的调试信息包括扩展的符号表、行号、局部或外部变量信息
+   + **-g3：**包含级别2中的所有调试信息，以及源代码中定义的宏
+
+2. GCC编译器支持 **`-O`** 和 **`-g`** 一起参与编译。GCC编译过程对进行优化的程度可分为5个等级，分别为 ：
+   + **-O/-O0**： 不做任何优化，这是默认的编译选项 ；
+   + **-O1**：使用能减少目标文件大小以及执行时间并且不会使编译时间明显增加的优化。 该模式在编译大型程序的时候会花费更多的时间和内存。在 -O1下：编译会尝试减少代 码体积和代码运行时间，但是并不执行会花费大量时间的优化操作。
+   + **-O2**：包含 -O1的优化并增加了不需要在目标文件大小和执行速度上进行折衷的优化。 GCC执行几乎所有支持的操作但不包括空间和速度之间权衡的优化，编译器不执行循环 展开以及函数内联。这是推荐的优化等级，除非你有特殊的需求。 -O2会比 -O1启用多 一些标记。与 -O1比较该优化 -O2将会花费更多的编译时间当然也会生成性能更好的代 码。
+   + **-O3**：打开所有 -O2的优化选项并且增加 -finline-functions, -funswitch-loops,-fpredictive-commoning, -fgcse-after-reload and -ftree-vectorize优化选项。这是最高最危险 的优化等级。用这个选项会延长编译代码的时间，并且在使用 gcc4.x的系统里不应全局 启用。自从 3.x版本以来 gcc的行为已经有了极大地改变。在 3.x，，-O3生成的代码也只 是比 -O2快一点点而已，而 gcc4.x中还未必更快。用 -O3来编译所有的 软件包将产生更 大体积更耗内存的二进制文件，大大增加编译失败的机会或不可预知的程序行为（包括 错误）。这样做将得不偿失，记住过犹不及。在 gcc 4.x.中使用 -O3是不推荐的。
+   + **-Os**：专门优化目标文件大小 ,执行所有的不增加目标文件大小的 -O2优化选项。同时 -Os还会执行更加优化程序空间的选项。这对于磁盘空间极其紧张或者 CPU缓存较小的 机器非常有用。但也可能产生些许问题，因此软件树中的大部分 ebuild都过滤掉这个等 级的优化。使用 -Os是不推荐的。
+
+   如：有mian.c文件，有如下两种编译方式：
+
+   ```bash
+   make main CFLAGS="-O0 -g"
+   
+   gcc -O -g -o main main.c
+   ```
+
+
+### 启动gdb
+
+gdb调试主要有三种方式：
+
+1. 直接调试目标程序：
+   + `gdb ./filename` 
+   + 也可以先启动gdb，然后使用`file ./filename`
+2. 附加进程id：`gdb attach pid`
+3. 调试core文件：`gdb filename corname`
+
+### 退出gdb
+
+- 可以用命令：**q（quit的缩写）或者 Ctrl + d** 退出GDB。
+- 如果GDB attach某个进程，退出GDB之前要用命令 **detach** 解除附加进程。
+
+### 常用命令
+
+| 命令名称                                         | 命令缩写  | 命令说明                                           |
+| ------------------------------------------------ | --------- | -------------------------------------------------- |
+| set args                                         | set args  | 设置程序启动命令行参数                             |
+| show args                                        | show args | 查看设置的命令行参数                               |
+| run                                              | r         | 运行一个待调试的程序                               |
+| continue                                         | c         | 让暂停的程序继续运行                               |
+| next                                             | n         | 运行到下一行                                       |
+| step                                             | s         | 单步执行，遇到函数会进入                           |
+| until                                            | u         | 运行到指定行停下来                                 |
+| finish                                           | fi        | 结束当前调用函数，回到上一层调用函数处             |
+| return                                           | return    | 结束当前调用函数并返回指定值，到上一层函数调用处   |
+| jump                                             | j         | 将当前程序执行流跳转到指定行或地址                 |
+| print                                            | p         | 打印变量或寄存器值                                 |
+| backtrace                                        | bt        | 查看当前线程的调用堆栈                             |
+| frame                                            | f         | 切换到当前调用线程的指定堆栈                       |
+| list                                             | l         | 显示源码                                           |
+| info                                             | i         | 查看断点 / 线程等信息                              |
+| break \[文件名:]行号或者函数名 [if <条件表达式>] | b         | 添加断点。如:b 23 if i==2,当i==2时，在23行触发断点 |
+| tbreak                                           | tb        | 添加临时断点，只会命中一次                         |
+| delete                                           | d         | 删除断点                                           |
+| enable                                           | enable    | 启用某个断点                                       |
+| disable                                          | disable   | 禁用某个断点                                       |
+| condition \<断点号> <条件>                       | condition | 修改对应断点条件                                   |
+| ignore \<断点号> <忽略次数>                      | ignore    | 忽略断点n次                                        |
+| watch                                            | watch     | 监视某一个变量或内存地址的值是否发生变化           |
+| ptype                                            | ptype     | 查看变量类型                                       |
+| disassemble                                      | dis       | 查看汇编代码                                       |
+
+
+### 常用命令示例
+
+#### help
+
+通过 **help** 命令可以查看目标命令的具体用法。
+
+如：`help run`
+
+#### run
+
+默认情况下，以 `gdb ./filename` 方式启用GDB调试只是附加了一个调试文件，并没有启动这个程序，需要输入run命令（简写为r）启动这个程序：
+
+```css
+ubuntu@VM-0-7-ubuntu:~/course/day03/test8$ gdb ./main
+GNU gdb (Ubuntu 12.1-0ubuntu1~22.04) 12.1
+...此处省略N行...
+Reading symbols from ./main...
+(gdb) run
+Starting program: /home/ubuntu/course/day03/test8/main 
+...此处省略N行...
+hello wrold
+input number:
+```
+
+ 以上是以main程序为例，输入 run 后运行了mian程序，在gdb界面按 Ctrl + C 让gdb中断下来，再次输入 r 命令，gdb会询问是否重启程序，输入 y（或yes）：
+
+```css
+input number:^C
+Program received signal SIGINT, Interrupt.
+0x00007ffff7e9e992 in __GI___libc_read (fd=0, buf=0x5555555596b0, nbytes=1024) at ../sysdeps/unix/sysv/linux/read.c:26
+26	../sysdeps/unix/sysv/linux/read.c: No such file or directory.
+(gdb) run
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /home/ubuntu/course/day03/test8/main 
+```
+
+ 退出gdb，会提示用户要关闭当前调试进程，是否继续退出：
+
+```css
+input number:^C
+Program received signal SIGINT, Interrupt.
+0x00007ffff7e9e992 in __GI___libc_read (fd=0, buf=0x5555555596b0, nbytes=1024) at ../sysdeps/unix/sysv/linux/read.c:26
+26	../sysdeps/unix/sysv/linux/read.c: No such file or directory.
+(gdb) q
+A debugging session is active.
+
+	Inferior 1 [process 1843311] will be killed.
+
+Quit anyway? (y or n) 
+```
+
+#### break
+
+break命令（简写为b）用于添加断点，可以使用以下几种方式添加断点：
+
+- **break FunctionName**，在函数的入口处添加一个断点；
+- **break LineNo**，在**当前文件**行号为**LineNo**处添加断点；
+- **break FileName:LineNo**，在**FileName**文件行号为**LineNo**处添加一个断点；
+- **break FileName:FunctionName**，在**FileName**文件的**FunctionName**函数的入口处添加断点；
+- **break -/+offset**，在当前程序暂停位置的前/后 offset 行处下断点；
+- **break ... if cond**，下条件断点；
+
+> tbreak命令时添加一个临时断点，断点一旦被触发就自动删除，使用方法同 break
+
+##### 在函数入口下断点
+
+比如给main函数下个断点，让程序一运行就断在main处，方便调试。
+
+```css
+(gdb) b main		/*在main入口下断点*/
+Breakpoint 1 at 0x555555555225: file main.c, line 10.
+(gdb) r				/*运行程序*/
+Starting program: /home/ubuntu/course/day03/test8/main 
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+/*程序断在了main函数开始的位置*/
+Breakpoint 1, main (argc=1, argv=0x7fffffffe3f8) at main.c:10/
+/*这里提示了行号 和 中断行的代码*/
+10	int main(int argc,char*argv[]) {
+(gdb)
+```
+
+##### 在当前文件的指定行下断点
+
+比如在15行下断点。
+
+```css
+(gdb) b 15
+Breakpoint 2 at 0x127d: file main.c, line 16.
+(gdb) info b		/*查看所有断点信息*/
+Num     Type           Disp Enb Address            What
+1       breakpoint     keep y   0x0000000000001225 in main at main.c:10
+2       breakpoint     keep y   0x000000000000127d in main at main.c:16
+(gdb) 
+```
+
+##### 在指定文件的指定行、函数下断点
+
+```css
+b hello.c:show
+b hello.c:16
+```
+
+##### 条件断点
+
+在某些情况下，我们需要在满足某些条件试，才命中断点。
+
+```css
+b 5 if i == 2
+```
+
+假设代码如下:
+
+```c
+int main()
+{
+    for(int i = 0;i<5;i++)
+    {
+        printf("%d ",arr[i]);
+	}
+    return 0;
+}
+```
+
+当我们在第5行添加条件断点时，当循环变量i等于2时，断点会命中printf这一行。
+
+#### 执行
+
+##### next/step
+
+`next`和`step`都是单步执行，区别是：
+
++ `next`是单步步过（step over），简写为`n`，即遇到函数直接跳过，不进入函数内部。
++ `step`是单步步入（step into），简写为`s`，即遇到函数会进入函数内部。
+
+##### continue
+
+ 当gdb触发断点或者使用 Ctrl + C 命令中断下来后，想让程序继续运行，只要输入 continue（简写为c）命令即可。
+
+> ctrl+c中断之后，可以进行设置断点等操作，操作完成之后继续运行即可
+
+```css
+input number:^C		/*在输入时ctrl + c中断*/
+Program received signal SIGINT, Interrupt.
+0x00007ffff7e9e992 in __GI___libc_read (fd=0, buf=0x5555555596b0, nbytes=1024) at ../sysdeps/unix/sysv/linux/read.c:26
+26	../sysdeps/unix/sysv/linux/read.c: No such file or directory.
+(gdb) continue		/*输入continue命令继续运行程序*/
+Continuing.
+12345
+54321
+finished~~~~
+[Inferior 1 (process 1847573) exited normally]
+```
+
+##### return/finish
+
+`return`和`finish`都是退出函数，区别是：
+
++ `return` 命令会立即退出当前函数，剩下的代码不会执行了；return 可以指定返回值
++ `finish` 命令是会继续执行完该函数剩余代码再正常退出。
+
+#### 维护断点
+
+##### info 
+
+查看断点信息
+
++ `info break、info b、i b`显示当前所有断点信息。
+
++ `info break 2` 显示编号为2的断点信息
+
+##### disable
+
+禁用断点，使断点失效，简写命令是dis。
+
++ disable 禁用所有断点
++ disable num1 num2 ... 禁用指定编号的断点
++ disable [m-n] 禁用(编号)m-n之间的所有断点
+
+```css
+(gdb) i b
+Num     Type           Disp Enb Address            What
+1       breakpoint     keep y   0x0000000000001225 in main at main.c:10
+2       breakpoint     keep y   0x000000000000127d in main at main.c:16
+3       breakpoint     keep y   0x0000000000001249 in main at main.c:12
+(gdb) disable 1-2		/*让1到2断点失效*/
+(gdb) i b
+Num     Type           Disp Enb Address            What
+1       breakpoint     keep n   0x0000000000001225 in main at main.c:10
+2       breakpoint     keep n   0x000000000000127d in main at main.c:16
+3       breakpoint     keep y   0x0000000000001249 in main at main.c:12
+(gdb) 
+```
+
+断点信息中第四列 ***Enb***，当断点启动时是 y，断点被禁用后是 n。
+
+##### enable
+
+使失效断点生效, 简写命令是ena。
+
++ enable 启用所有断点
++ enable num1 num2 ... 启用指定编号的断点
++ enable [m-n] 启用m-n之间的断点
+
+##### delete
+
+删除断点，简写为`d`
+
++ delete 删除所有断点
++ delete num1 num2... 删除指定编号的断点
++ delete [m-n] 删除m-n之间的所有断点
+
+> 如果只是暂时不需要断点，更好的方法是disable禁用断点, disable了的断点, gdb不会删除, 当你还需要时, enable即可, 就好像回收站一样。
+
+#### backtrace/frame
+
++ `backtrace` 可简写为bt，用于查找当前调用堆栈。
++ `frame num`可简写为`f num` ，用于查看指定的堆栈调用。
+
+```css
+(gdb) backtrace
+#0  splitNumber (num=<optimized out>) at main.c:6		/*#0 当前所在函数*/
+#1  0x0000555555555275 in test_splitNumber () at main.c:16	/*#1 调用#0的函数*/
+#2  0x00005555555552ad in main (argc=<optimized out>, argv=<optimized out>)
+    at main.c:20 /*#2 调用#1的函数*/
+(gdb) f 1		/*查看#1 处的堆栈信息*/
+#1  0x0000555555555275 in test_splitNumber () at main.c:16
+16		splitNumber(number);
+(gdb) f 2
+#2  0x00005555555552ad in main (argc=<optimized out>, argv=<optimized out>)
+    at main.c:20
+20		test_splitNumber();
+(gdb) f 0
+#0  splitNumber (num=<optimized out>) at main.c:6
+6			num/=10;
+(gdb) 
+```
+
+#### list
+
+显示代码。
+
+- **list** 输出上一次list命令显示的代码后面的代码，如果是第一次执行list命令，则会显示当前正在执行代码位置附近的代码；
+- **list -** 带一个减号，显示上一次list命令显示的代码前面的代码；
+- **list LineNo**显示当前代码文件第 **LineNo** 行附近的代码；
+- **list FileName:LineNo**，显示 **FileName** 文件第 **LineNo** 行附近的代码；
+- **list FunctionName**，显示当前文件的 **FunctionName** 函数附近的代码；
+- **list FileName:FunctionName**，显示 **FileName** 文件的 **FunctionName** 函数附件的代码；
+- **list [from,to]**，其中**from**和**to**是具体的代码位置，显示这之间的代码；
+
+**list**命令默认只会输出 **10** 行源代码，也可以使用如下命令修改：
+
+- **show listsize**，查看 **list** 命令显示的代码行数；
+- **set listsize [count]**，设置 **list** 命令显示的代码行数为 **count**;
+
+#### print
+
+print(简写为p)用来查看/修改变量的值，
+
++ `print param` 查看指定的变量；
++ `print param=value` 在调试过程中修改变量的值；
++ `print a+b+c` 可以进行一定的表达式计算，这里是计算a、b、c之和；
++ `print func()` 输出func函数执行的结果，常见的用途是打印系统函数执行失败的原因：`print strerror(errno)`；与之相同的还有`call`命令
++ `print *this` 在c++对象中，可以输出当前对象的各个成员变量的值
+
+##### 美化打印
+
+```c
+#include<stdio.h>
+typedef struct Person
+{
+	int age;
+	char name[20];
+	char desc[128];
+}Person;
+int main(int argc,char*argv[])
+{
+	int arr[]={1,2,3,4,5,6,7};
+	Person per[]={{12,"maye","I' maye,like girl"},{18,"xuxu","I love maye"}};
+	printf("game over");
+	return 0;
+}
+```
+
+在12行`printf("game over");`处加上断点，并中断在此处。
+
+```c
+(gdb) p arr
+$1 = {1, 2, 3, 4, 5, 6, 7}
+(gdb) p per
+$2 = {{age = 12, name = "maye", '\000' <repeats 15 times>, desc = "I' maye,like girl", '\000' <repeats 110 times>}, {
+    age = 18, name = "xuxu", '\000' <repeats 15 times>, desc = "I love maye", '\000' <repeats 116 times>}}
+
+```
+
+可以看到打印的数据比较乱，`set print pretty`命令可以美化gdb的打印；`set print array-indexes on`打印数组的下标。
+
+```c
+(gdb) set print pretty
+(gdb) set print array-indexes on
+(gdb) p arr
+$5 = {[0] = 1, [1] = 2, [2] = 3, [3] = 4, [4] = 5, [5] = 6, [6] = 7}
+(gdb) p per
+$6 = {[0] = {
+    age = 12,
+    name = "maye", '\000' <repeats 15 times>,
+    desc = "I' maye,like girl", '\000' <repeats 110 times>
+  }, [1] = {
+    age = 18,
+    name = "xuxu", '\000' <repeats 15 times>,
+    desc = "I love maye", '\000' <repeats 116 times>
+  }}
+
+```
+
+这样的话，输出就看的比较清晰了~
+
+#### whatis/ptype
+
+whatis用来查看变量的类型，ptype和whatis类似，但功能更强大，可以查看复合数据类型，会打印出该类型的成员变量。
+
+#### watch
+
+ **watch** 命令用来监视一个变量或者一段内存，当这个变量或者内存的值发生变化时，GDB就会中断下来。被监视的某个变量或内存地址会产生一个 **watch point（观察点）**。
+
+ 命令格式：
+
+- **watch 整型变量**；
+- **watch 指针变量**，监视的是指针变量本身；
+- **watch \*指针变量**，监视的是指针所指的内容；
+- **watch 数组变量或内存区间**；
+
+```css
+(gdb) watch num				/*监视变量*/
+Hardware watchpoint 3: num
+(gdb) n
+6			num/=10;		/*当变量发生改变时，会输出旧值和新值*/
+(gdb) n
+Hardware watchpoint 3: num
+
+Old value = 1234
+New value = 123
+```
+
+删除、禁用监视点，和断点相同。
+
+#### jump
+
+命令格式及作用：
+
+- **jump LineNo**，跳转到代码的 **LineNo** 行的位置；
+- **jump +10**，跳转到距离当前代码下10行的位置；
+- **jump \*0x12345678**，跳转到 **0x12345678** 地址的代码处，地址前要加星号；
+
+ **jump** 命令有两点需要注意的：
+
+1. 中间跳过的代码是不会执行的。`由于一些代码可能会对系统做持久性操作，例如删除文件，写数据库等操作，我们希望跳过一些函数或者代码段的执行，此时就可以使用jump指令来完成该功能。`
+2. 跳到的位置后如果没有断点，那么GDB会自动继续往后执行；
+
+#### disassemble
+
+查看某段代码的汇编指令
+
++ `disassemble funName` 显示函数的汇编指令
+
++ `disassemble /m main` 显示汇编指令的同时把源代码也显示出来，对照显示
+
+#### set args/show args
+
+ 很多程序启动需要我们传递参数，**set args** 就是用来设置程序启动参数的，**show args** 命令用来查询通过 **set args** 设置的参数，命令格式：
+
+- **set args args1**，设置单个启动参数 **args1**；
+- **set args "-p" "password"**，如果单个参数之间有空格，可以使用引号将参数包裹起来；
+- **set args args1 args2 args3**，设置多个启动参数，参数之间用空格隔开；
+- **set args**，不带参数，则清除之前设置的参数；
+
+### 查看内存
+
+在使用GDB调试程序时，可以通过 *x* 命令（即 examine 的缩写）扫描和查看内存内容。
+
+#### 基本语法
+
+```css
+x /<n><f><u> <addr>
+```
+
+- **n**: 要显示的内存单元数量（正整数）。
+- **f**: 显示格式（如十六进制、十进制等）。
+- **u**: 单元长度（如字节、双字节等）。
+- **addr**: 起始内存地址。
+
+**f 显示格式选项**
+
+- *x*: 十六进制显示。
+- *d*: 十进制显示。
+- *u*: 无符号十进制显示。
+- *o*: 八进制显示。
+- *t*: 二进制显示。
+- *c*: 字符格式显示。
+- *f*: 浮点数格式显示。
+
+**u 单元长度选项**
+
+- *b*: 单字节 (1 byte)。
+- *h*: 双字节 (2 bytes)。
+- *w*: 四字节 (4 bytes)。
+- *g*: 八字节 (8 bytes)。
+
+#### 示例操作
+
+1. 查看指定地址的内存内容
+
+```css
+(gdb) x/10xb &arr
+```
+
+从地址 *&arr* 开始，按 **十六进制** 格式显示 **10 个字节** 的内容。
+
+
+
+2. 查看双字节数据
+
+```css
+(gdb) x/5xh 0x7fffffffe080
+```
+
+从地址 *0x7fffffffe080* 开始，按 **十六进制** 格式显示 **5 个双字节** 的内容。
+
+
+
+3. 查看字符数据
+
+```css
+(gdb) x/20c 0x7fffffffe080
+```
+
+从地址 *0x7fffffffe080* 开始，按 **字符格式** 显示 **20 个字节** 的内容。
+
+
+
+4. 查看浮点数数据
+
+```css
+(gdb) x/4fg 0x7fffffffe080
+```
+
+从地址 *0x7fffffffe080* 开始，按 **浮点数格式** 显示 **4 个八字节** 的内容。
+
+### layout
+
+layout用于分割窗口，可以边调试边看代码。
+
+#### 命令
+
+| 命令         | 描述                        |
+| ------------ | --------------------------- |
+| layout src   | 显示源代码窗口              |
+| layout asm   | 显示汇编窗口                |
+| layout regs  | 显示源代码/汇编和寄存器窗口 |
+| layout split | 显示源代码和汇编窗口        |
+| layout next  | 显示下一个layout            |
+| layout prev  | 显示上一个layout            |
+
+#### 快捷键
+
+| 快捷键               | 描述                       |
+| -------------------- | -------------------------- |
+| Ctrl + `l` (L键)     | 刷新窗口                   |
+| Ctrl + x， 然后按 1  | 单窗口模式，显示一个窗口   |
+| Ctrl + x ， 然后按 2 | 双窗口模式，显示两个窗口   |
+| Ctrl + x ， 然后按 a | 回到传统模式，即退出layout |
+
+#### 使用流程
+
+在gdb中输入`layout src`命令，进入布局窗口，然后在main函数入口处加上断点。
+
+![image-20230830163151455](assets/image-20230830163151455.png)
+
+执行`run`命令开始调试，源代码窗口会高亮显示当前调试的行
+
+![image-20230830163313814](assets/image-20230830163313814.png)
+
+接下来就可以使用`next`、`step`、`continue`等命令调试代码了，源代码窗口也会同步更新。
+
+但是当我们调试完成之后，会发现源代码窗口错乱了，窗口没有及时更新，这个时候按下快捷键`Ctrl+l(小写L)`即可刷新窗口
+
+![image-20230830163543289](assets/image-20230830163543289.png)
+
+刷新窗口后，显示没有有效源，当你重新执行run命令时，会自动出现。想要关闭src窗口，按下`ctrl+x+a`即可
+
+![image-20230830163820667](assets/image-20230830163820667.png)
+
+
+
+#### 窗口焦点
+
+在调试时，按上、下、左、右键是滚动src窗口的代码，而不是切换历史命令，这是因为焦点默认在src窗口上。
+
+可以使用`fs cmd`把焦点切换到控制台窗口。
+
+![image-20230830164812828](assets/image-20230830164812828.png)
+
+上图中，左边是焦点在cmd窗口，右边是焦点在src窗口。
+
+> fs即focus焦点的意思，除了使用`fs windowName`之外，还可以使用`fs next`和`fs prev`命令切换到写一个和上一个窗口。
+
+当焦点切换到cmd窗口之后，就可以按上下键切换历史命令了。
+
+### 配置文件
+
+#### 保存/加载断点
+
+调试程序的时候，往往会设置很多断点，如果需要多次调试,来回敲这些断点信息，也是很烦的，可以通过`save breakpoints filename`的方法，将断点设置信息保存到`filename`文件中：
+
+```css
+(gdb) i b
+Num     Type           Disp Enb Address            What
+1       breakpoint     keep y   0x0000555555555185 in main at cmdline.c:9
+	breakpoint already hit 1 time
+3       breakpoint     keep y   0x00005555555551da in main at cmdline.c:11
+(gdb) save breakpoints break.bp /*把所有断点保存到指定文件*/
+Saved to file 'break.bp'.
+(gdb) 
+```
+
+gdb 启动后,在通过`source filename`方式加载：
+
+```css
+(gdb) i b
+No breakpoints or watchpoints.
+(gdb) source break.bp 		/*从指定的文件加载断点信息*/
+Breakpoint 1 at 0x1185: file cmdline.c, line 9.
+Breakpoint 2 at 0x11da: file cmdline.c, line 11.
+(gdb) i b
+Num     Type           Disp Enb Address            What
+1       breakpoint     keep y   0x0000000000001185 in main at cmdline.c:9
+2       breakpoint     keep y   0x00000000000011da in main at cmdline.c:11
+(gdb) 
+```
+
+#### .gdbinit
+
+在使用gdb时，经常指令命令`set print pertty on`以及其他配置命令。
+
+但是每次打开gdb都要配置，比较麻烦，因此gdb也提供了一个使用配置文件的方法。
+
+##### 通用配置
+
+首先，在`~/`用户目录创建`.gdbinit`文件，内容如下(通用配置)：
+
+```css
+# 保存历史命令
+set history filename ./.gdb_history
+set history save on
+ 
+ 
+# 记录执行gdb的过程
+set logging file ./.log.txt
+set logging enabled on
+ 
+ 
+# 退出时不显示提示信息
+#set confirm off
+ 
+ 
+# 打印数组的索引下标
+set print array-indexes on
+ 
+ 
+# 每行打印一个结构体成员
+set print pretty on
+ 
+ 
+# 退出并保留断点
+# 自定义命令，在gdb中输入qbp，退出并保存所有断点
+define qbp
+save breakpoints ./.gdb_bp
+quit
+end
+#自定义帮助命令，在gdb中输入help qbp 显示提示信息
+document qbp
+Exit and save the breakpoint
+end
+ 
+ 
+# 保留历史工作断点
+# 自定义命令，在gdb中输入downbp，保存所有断点
+define downbp
+save breakpoints ./.gdb_bp
+end
+document downbp
+Save the historical work breakpoint
+end
+ 
+ 
+# 加载历史工作断点
+# 自定义命令，在gdb中输入laodbp，加载所有断点
+define loadbp
+source ./.gdb_bp
+end
+document loadbp
+Load the historical work breakpoint
+end
+```
+
+然后，重新进入gdb即可。
+
+##### 配色方案
+
+```css
+set style textType attr value
+```
+
++ textType：要设置的字符类型
+  + address 地址
+  + filename 文件名
+  + function 函数
+  + sources 源码
+  + variable 变量
++ attr：属性
+  + background 背景颜色
+  + foreground  前景(文字)颜色
+  + intensity (控制粗细)
+
++ value：属性对应的值
+  + 颜色：black red green yellow blue magenta cyan white
+  + 粗细：normal bold dim
+
+示例：
+
+```css
+set style function foreground magenta
+```
+
+![image-20230831134006320](assets/image-20230831134006320.png)
+
+![image-20230831134149852](assets/image-20230831134149852.png)
+
+sources设置不一样，没有属性，只有值(on|off)。
+
+```css
+set style sources off
+```
+
+![image-20230831134451094](assets/image-20230831134451094.png)
+
+默认情况下，代码是高亮的，关掉之后，代码显示的颜色就比较单一了。
+
+### 测试代码
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+void print(int i )
+{
+    printf("i=%d\n",i);
+}
+
+int main(int argc,char*argv[])
+{
+    if (argc !=3) {
+        printf("error args\n");
+    }
+
+    int i = atoi(argv[1]);
+    int j = atoi(argv[2]);
+    int arr[5]={1,2,3,4,5};
+    for(i = 0 ;i < 5 ;i++)
+    {
+        printf("%3d",arr[i]);
+    }
+    putchar('\n');
+    print(i);
+    return 0;
+}
+```
+
+
+
 ## makefile
 
 **Makefile**是一种常用于编译的脚本语言，它可以更好更方便的管理你的项目的代码编译，节约编译时间（没改动的文件不编译）
@@ -27,11 +793,11 @@ makefile文件由一组**依赖关系**和**规则**构成。每个依赖关系�
 
 make程序本身有许多选项，其中最常用的3个选项如下所示：
 
-+  `-k`：它的作用是让make命令在发现错误时仍然继续执行，而不是在检测到第一个错误时就停下来。你可以利用这个选项在一次操作中发现所有未编译成功的源文件。
++ `-k`：它的作用是让make命令在发现错误时仍然继续执行，而不是在检测到第一个错误时就停下来。你可以利用这个选项在一次操作中发现所有未编译成功的源文件。
 
-+  `-n`：它的作用是让make命令输出将要执行的操作步骤，而不真正执行这些操作。
++ `-n`：它的作用是让make命令输出将要执行的操作步骤，而不真正执行这些操作。
 
-+  `-f <filename>`：它的作用是告诉make命令将哪个文件作为makefile文件。
++ `-f <filename>`：它的作用是告诉make命令将哪个文件作为makefile文件。
 
   > 如果未使用这个选项，标准版本的make命令将首先在当前目录下查找名为**makefile**的文件，如果该文件不存在，它就会查找名为**Makefile**的文件。
 
@@ -543,707 +1309,70 @@ clean:
 	find ./ -name *.o | xargs rm
 ```
 
-[makefile](https://www.cnblogs.com/paul-617/p/15501875.html)
+### 生成静态库
 
-[Makefile基础知识_七种不同的写法](https://blog.csdn.net/yueyuanhuaqing/article/details/124393402)
-
-[makefile生成*.d依赖文件，解决“只修改.h头文件，包含了该头文件的.c文件不重新编译的问题”](https://blog.csdn.net/Sup_klz/article/details/127587264)
-
-
-
-## gdb
-
-> sudo apt install gdb
-
-### 介绍
-
- GDB 全称“GNU symbolic debugger”，从名称上不难看出，它诞生于 GNU 计划（同时诞生的还有 GCC、Emacs 等），是 Linux 下常用的程序调试器。发展至今，GDB 已经迭代了诸多个版本，当下的 GDB 支持调试多种编程语言编写的程序，包括 C、C++、Go、Objective-C、OpenCL、Ada 等。实际场景中，GDB 更常用来调试 C 和 C++ 程序。一般来说，GDB主要帮助我们完成以下四个方面的功能：
-
-1. 启动你的程序，可以按照你的自定义的要求随心所欲的运行程序。
-2. 在某个指定的地方或条件下暂停程序。
-3. 当程序被停住时，可以检查此时你的程序中所发生的事。
-4. 在程序执行过程中修改程序中的变量或条件，将一个bug产生的影响修正从而测试其他bug。
-
-### 生成调试信息
-
-使用GDB调试程序，有以下两点需要注意：
-
-1. 要使用GDB调试某个程序，该程序编译时必须加上编译选项 **`-g`**，否则该程序是不包含调试信息的(相当于release模式)；`-g也是分级别的`
-
-   + **-g1：**级别1（-g1）不包含局部变量和与行号有关的调试信息，因此只能够用于回溯跟踪和堆栈转储之用。回溯跟踪指的是监视程序在运行过程中的函数调用历史，堆栈转储则是一种以原始的十六进制格式保存程序执行环境的方法，两者都是经常用到的调试手段
-   + **-g2：**这是**默认的级别**，此时产生的调试信息包括扩展的符号表、行号、局部或外部变量信息
-   + **-g3：**包含级别2中的所有调试信息，以及源代码中定义的宏
-
-2. GCC编译器支持 **`-O`** 和 **`-g`** 一起参与编译。GCC编译过程对进行优化的程度可分为5个等级，分别为 ：
-   + **-O/-O0**： 不做任何优化，这是默认的编译选项 ；
-   + **-O1**：使用能减少目标文件大小以及执行时间并且不会使编译时间明显增加的优化。 该模式在编译大型程序的时候会花费更多的时间和内存。在 -O1下：编译会尝试减少代 码体积和代码运行时间，但是并不执行会花费大量时间的优化操作。
-   + **-O2**：包含 -O1的优化并增加了不需要在目标文件大小和执行速度上进行折衷的优化。 GCC执行几乎所有支持的操作但不包括空间和速度之间权衡的优化，编译器不执行循环 展开以及函数内联。这是推荐的优化等级，除非你有特殊的需求。 -O2会比 -O1启用多 一些标记。与 -O1比较该优化 -O2将会花费更多的编译时间当然也会生成性能更好的代 码。
-   + **-O3**：打开所有 -O2的优化选项并且增加 -finline-functions, -funswitch-loops,-fpredictive-commoning, -fgcse-after-reload and -ftree-vectorize优化选项。这是最高最危险 的优化等级。用这个选项会延长编译代码的时间，并且在使用 gcc4.x的系统里不应全局 启用。自从 3.x版本以来 gcc的行为已经有了极大地改变。在 3.x，，-O3生成的代码也只 是比 -O2快一点点而已，而 gcc4.x中还未必更快。用 -O3来编译所有的 软件包将产生更 大体积更耗内存的二进制文件，大大增加编译失败的机会或不可预知的程序行为（包括 错误）。这样做将得不偿失，记住过犹不及。在 gcc 4.x.中使用 -O3是不推荐的。
-   + **-Os**：专门优化目标文件大小 ,执行所有的不增加目标文件大小的 -O2优化选项。同时 -Os还会执行更加优化程序空间的选项。这对于磁盘空间极其紧张或者 CPU缓存较小的 机器非常有用。但也可能产生些许问题，因此软件树中的大部分 ebuild都过滤掉这个等 级的优化。使用 -Os是不推荐的。
-
-   如：有mian.c文件，有如下两种编译方式：
-
-   ```bash
-   make main CFLAGS="-O0 -g"
-   
-   gcc -O -g -o main main.c
-   ```
-
-   
-
-### 启动gdb
-
-gdb调试主要有三种方式：
-
-1. 直接调试目标程序：
-   + `gdb ./filename` 
-   + 也可以先启动gdb，然后使用`file ./filename`
-2. 附加进程id：`gdb attach pid`
-3. 调试core文件：`gdb filename corname`
-
-### 退出gdb
-
-- 可以用命令：**q（quit的缩写）或者 Ctrl + d** 退出GDB。
-- 如果GDB attach某个进程，退出GDB之前要用命令 **detach** 解除附加进程。
-
-### 常用命令
-
-| 命令名称    | 命令缩写  | 命令说明                                         |
-| ----------- | --------- | ------------------------------------------------ |
-| run         | r         | 运行一个待调试的程序                             |
-| continue    | c         | 让暂停的程序继续运行                             |
-| next        | n         | 运行到下一行                                     |
-| step        | s         | 单步执行，遇到函数会进入                         |
-| until       | u         | 运行到指定行停下来                               |
-| finish      | fi        | 结束当前调用函数，回到上一层调用函数处           |
-| return      | return    | 结束当前调用函数并返回指定值，到上一层函数调用处 |
-| jump        | j         | 将当前程序执行流跳转到指定行或地址               |
-| print       | p         | 打印变量或寄存器值                               |
-| backtrace   | bt        | 查看当前线程的调用堆栈                           |
-| frame       | f         | 切换到当前调用线程的指定堆栈                     |
-| thread      | thread    | 切换到指定线程                                   |
-| break       | b         | 添加断点                                         |
-| tbreak      | tb        | 添加临时断点                                     |
-| delete      | d         | 删除断点                                         |
-| enable      | enable    | 启用某个断点                                     |
-| disable     | disable   | 禁用某个断点                                     |
-| watch       | watch     | 监视某一个变量或内存地址的值是否发生变化         |
-| list        | l         | 显示源码                                         |
-| info        | i         | 查看断点 / 线程等信息                            |
-| ptype       | ptype     | 查看变量类型                                     |
-| disassemble | dis       | 查看汇编代码                                     |
-| set args    | set args  | 设置程序启动命令行参数                           |
-| show args   | show args | 查看设置的命令行参数                             |
-
-### 常用命令示例
-
-#### help
-
-通过 **help** 命令可以查看目标命令的具体用法。
-
-如：`help run`
-
-#### run
-
-默认情况下，以 `gdb ./filename` 方式启用GDB调试只是附加了一个调试文件，并没有启动这个程序，需要输入run命令（简写为r）启动这个程序：
+如何使用makefile生成静态库呢?
 
 ```css
-ubuntu@VM-0-7-ubuntu:~/course/day03/test8$ gdb ./main
-GNU gdb (Ubuntu 12.1-0ubuntu1~22.04) 12.1
-...此处省略N行...
-Reading symbols from ./main...
-(gdb) run
-Starting program: /home/ubuntu/course/day03/test8/main 
-...此处省略N行...
-hello wrold
-input number:
+CC = gcc
+SRC = ${wildcard src/*.c}
+OBJECT = ${patsubst %.c,%.o,${SRC}}
+LIB_NAME = libhdy_math.a
+
+# 默认目标:生成静态库
+all:${LIB_NAME}
+
+# 生成静态库
+${LIB_NAME}:${OBJECT}
+	ar rcs $@ -o $^
+	@echo "静态库 $@ 已生成"
+
+# 编译源文件为目标文件
+%.o:%.c 
+	${CC} -c $< -o $@
+
+# 清理生成的文件
+clean: 
+	rm -f ${OBJECT} ${LIB_NAME} 
+	@echo "已清理目标文件和静态库"
+
+.PHONY:all clean
 ```
 
- 以上是以main程序为例，输入 run 后运行了mian程序，在gdb界面按 Ctrl + C 让gdb中断下来，再次输入 r 命令，gdb会询问是否重启程序，输入 y（或yes）：
+
+
+### 生成动态库
+
+如何使用makefile生成动态库呢?
 
 ```css
-input number:^C
-Program received signal SIGINT, Interrupt.
-0x00007ffff7e9e992 in __GI___libc_read (fd=0, buf=0x5555555596b0, nbytes=1024) at ../sysdeps/unix/sysv/linux/read.c:26
-26	../sysdeps/unix/sysv/linux/read.c: No such file or directory.
-(gdb) run
-The program being debugged has been started already.
-Start it from the beginning? (y or n) y
-Starting program: /home/ubuntu/course/day03/test8/main 
+CC = gcc
+SRC = ${wildcard src/*.c}
+OBJECT = ${patsubst %.c,%.o,${SRC}}
+LIB_NAME = libhdy_math.so
+INCLUDE_PATH = ./src
+
+# 默认目标:生成动态库
+all:${LIB_NAME}
+
+# 生成动态库
+${LIB_NAME}:${OBJECT}
+	${CC} -shared $^ -o $@
+	@echo "动态库 $@ 已生成"
+
+# 编译源文件为目标文件
+%.o:%.c 
+	${CC} -fpic -c $< -o $@
+
+test:
+	${CC} ./tests/test_one.c -o test.out -I${INCLUDE_PATH} -L./ -lhdy_math
+	
+
+# 清理生成的文件
+clean: 
+	rm -f ${OBJECT} ${LIB_NAME} 
+	@echo "已清理目标文件和动态库"
+
+.PHONY:all clean
 ```
 
- 退出gdb，会提示用户要关闭当前调试进程，是否继续退出：
-
-```css
-input number:^C
-Program received signal SIGINT, Interrupt.
-0x00007ffff7e9e992 in __GI___libc_read (fd=0, buf=0x5555555596b0, nbytes=1024) at ../sysdeps/unix/sysv/linux/read.c:26
-26	../sysdeps/unix/sysv/linux/read.c: No such file or directory.
-(gdb) q
-A debugging session is active.
-
-	Inferior 1 [process 1843311] will be killed.
-
-Quit anyway? (y or n) 
-```
-
-#### break
-
-break命令（简写为b）用于添加断点，可以使用以下几种方式添加断点：
-
-- **break FunctionName**，在函数的入口处添加一个断点；
-- **break LineNo**，在**当前文件**行号为**LineNo**处添加断点；
-- **break FileName:LineNo**，在**FileName**文件行号为**LineNo**处添加一个断点；
-- **break FileName:FunctionName**，在**FileName**文件的**FunctionName**函数的入口处添加断点；
-- **break -/+offset**，在当前程序暂停位置的前/后 offset 行处下断点；
-- **break ... if cond**，下条件断点；
-
-> tbreak命令时添加一个临时断点，断点一旦被触发就自动删除，使用方法同 break
-
-##### 在函数入口下断点
-
-比如给main函数下个断点，让程序一运行就断在main处，方便调试。
-
-```css
-(gdb) b main		/*在main入口下断点*/
-Breakpoint 1 at 0x555555555225: file main.c, line 10.
-(gdb) r				/*运行程序*/
-Starting program: /home/ubuntu/course/day03/test8/main 
-[Thread debugging using libthread_db enabled]
-Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
-/*程序断在了main函数开始的位置*/
-Breakpoint 1, main (argc=1, argv=0x7fffffffe3f8) at main.c:10/
-/*这里提示了行号 和 中断行的代码*/
-10	int main(int argc,char*argv[]) {
-(gdb)
-```
-
-##### 在当前文件的指定行下断点
-
-比如在15行下断点。
-
-```css
-(gdb) b 15
-Breakpoint 2 at 0x127d: file main.c, line 16.
-(gdb) info b		/*查看所有断点信息*/
-Num     Type           Disp Enb Address            What
-1       breakpoint     keep y   0x0000000000001225 in main at main.c:10
-2       breakpoint     keep y   0x000000000000127d in main at main.c:16
-(gdb) 
-```
-
-##### 在指定文件的指定行、函数下断点
-
-```css
-b hello.c:show
-b hello.c:16
-```
-
-#### 执行
-
-##### next/step
-
-`next`和`step`都是单步执行，区别是：
-
-+ `next`是单步步过（step over），简写为`n`，即遇到函数直接跳过，不进入函数内部。
-+ `step`是单步步入（step into），简写为`s`，即遇到函数会进入函数内部。
-
-##### continue
-
- 当gdb触发断点或者使用 Ctrl + C 命令中断下来后，想让程序继续运行，只要输入 continue（简写为c）命令即可。
-
-> ctrl+c中断之后，可以进行设置断点等操作，操作完成之后继续运行即可
-
-```css
-input number:^C		/*在输入时ctrl + c中断*/
-Program received signal SIGINT, Interrupt.
-0x00007ffff7e9e992 in __GI___libc_read (fd=0, buf=0x5555555596b0, nbytes=1024) at ../sysdeps/unix/sysv/linux/read.c:26
-26	../sysdeps/unix/sysv/linux/read.c: No such file or directory.
-(gdb) continue		/*输入continue命令继续运行程序*/
-Continuing.
-12345
-54321
-finished~~~~
-[Inferior 1 (process 1847573) exited normally]
-```
-
-##### return/finish
-
-`return`和`finish`都是退出函数，区别是：
-
-+ `return` 命令会立即退出当前函数，剩下的代码不会执行了；return 可以指定返回值
-+ `finish` 命令是会继续执行完该函数剩余代码再正常退出。
-
-#### 维护断点
-
-##### info 
-
-查看断点信息
-
-+ `info break、info b、i b`显示当前所有断点信息。
-
-+ `info break 2` 显示编号为2的断点信息
-
-##### disable
-
-禁用断点，使断点失效，简写命令是dis。
-
-+ disable 禁用所有断点
-+ disable num1 num2 ... 禁用指定编号的断点
-+ disable [m-n] 禁用(编号)m-n之间的所有断点
-
-```css
-(gdb) i b
-Num     Type           Disp Enb Address            What
-1       breakpoint     keep y   0x0000000000001225 in main at main.c:10
-2       breakpoint     keep y   0x000000000000127d in main at main.c:16
-3       breakpoint     keep y   0x0000000000001249 in main at main.c:12
-(gdb) disable 1-2		/*让1到2断点失效*/
-(gdb) i b
-Num     Type           Disp Enb Address            What
-1       breakpoint     keep n   0x0000000000001225 in main at main.c:10
-2       breakpoint     keep n   0x000000000000127d in main at main.c:16
-3       breakpoint     keep y   0x0000000000001249 in main at main.c:12
-(gdb) 
-```
-
-断点信息中第四列 ***Enb***，当断点启动时是 y，断点被禁用后是 n。
-
-##### enable
-
-使失效断点生效, 简写命令是ena。
-
-+ enable 启用所有断点
-+ enable num1 num2 ... 启用指定编号的断点
-+ enable [m-n] 启用m-n之间的断点
-
-##### delete
-
-删除断点，简写为`d`
-
-+ delete 删除所有断点
-+ delete num1 num2... 删除指定编号的断点
-+ delete [m-n] 删除m-n之间的所有断点
-
-> 如果只是暂时不需要断点，更好的方法是disable禁用断点, disable了的断点, gdb不会删除, 当你还需要时, enable即可, 就好像回收站一样。
-
-#### backtrace/frame
-
-+ `backtrace` 可简写为bt，用于查找当前调用堆栈。
-+ `frame num`可简写为`f num` ，用于查看指定的堆栈调用。
-
-```css
-(gdb) backtrace
-#0  splitNumber (num=<optimized out>) at main.c:6		/*#0 当前所在函数*/
-#1  0x0000555555555275 in test_splitNumber () at main.c:16	/*#1 调用#0的函数*/
-#2  0x00005555555552ad in main (argc=<optimized out>, argv=<optimized out>)
-    at main.c:20 /*#2 调用#1的函数*/
-(gdb) f 1		/*查看#1 处的堆栈信息*/
-#1  0x0000555555555275 in test_splitNumber () at main.c:16
-16		splitNumber(number);
-(gdb) f 2
-#2  0x00005555555552ad in main (argc=<optimized out>, argv=<optimized out>)
-    at main.c:20
-20		test_splitNumber();
-(gdb) f 0
-#0  splitNumber (num=<optimized out>) at main.c:6
-6			num/=10;
-(gdb) 
-```
-
-#### list
-
-显示代码。
-
-- **list** 输出上一次list命令显示的代码后面的代码，如果是第一次执行list命令，则会显示当前正在执行代码位置附近的代码；
-- **list -** 带一个减号，显示上一次list命令显示的代码前面的代码；
-- **list LineNo**显示当前代码文件第 **LineNo** 行附近的代码；
-- **list FileName:LineNo**，显示 **FileName** 文件第 **LineNo** 行附近的代码；
-- **list FunctionName**，显示当前文件的 **FunctionName** 函数附近的代码；
-- **list FileName:FunctionName**，显示 **FileName** 文件的 **FunctionName** 函数附件的代码；
-- **list [from,to]**，其中**from**和**to**是具体的代码位置，显示这之间的代码；
-
-**list**命令默认只会输出 **10** 行源代码，也可以使用如下命令修改：
-
-- **show listsize**，查看 **list** 命令显示的代码行数；
-- **set listsize [count]**，设置 **list** 命令显示的代码行数为 **count**;
-
-#### print
-
-print(简写为p)用来查看/修改变量的值，
-
-+ `print param` 查看指定的变量；
-+ `print param=value` 在调试过程中修改变量的值；
-+ `print a+b+c` 可以进行一定的表达式计算，这里是计算a、b、c之和；
-+ `print func()` 输出func函数执行的结果，常见的用途是打印系统函数执行失败的原因：`print strerror(errno)`；与之相同的还有`call`命令
-+ `print *this` 在c++对象中，可以输出当前对象的各个成员变量的值
-
-##### 美化打印
-
-```c
-#include<stdio.h>
-typedef struct Person
-{
-	int age;
-	char name[20];
-	char desc[128];
-}Person;
-int main(int argc,char*argv[])
-{
-	int arr[]={1,2,3,4,5,6,7};
-	Person per[]={{12,"maye","I' maye,like girl"},{18,"xuxu","I love maye"}};
-	printf("game over");
-	return 0;
-}
-```
-
-在12行`printf("game over");`处加上断点，并中断在此处。
-
-```c
-(gdb) p arr
-$1 = {1, 2, 3, 4, 5, 6, 7}
-(gdb) p per
-$2 = {{age = 12, name = "maye", '\000' <repeats 15 times>, desc = "I' maye,like girl", '\000' <repeats 110 times>}, {
-    age = 18, name = "xuxu", '\000' <repeats 15 times>, desc = "I love maye", '\000' <repeats 116 times>}}
-
-```
-
-可以看到打印的数据比较乱，`set print pretty`命令可以美化gdb的打印；`set print array-indexes on`打印数组的下标。
-
-```c
-(gdb) set print pretty
-(gdb) set print array-indexes on
-(gdb) p arr
-$5 = {[0] = 1, [1] = 2, [2] = 3, [3] = 4, [4] = 5, [5] = 6, [6] = 7}
-(gdb) p per
-$6 = {[0] = {
-    age = 12,
-    name = "maye", '\000' <repeats 15 times>,
-    desc = "I' maye,like girl", '\000' <repeats 110 times>
-  }, [1] = {
-    age = 18,
-    name = "xuxu", '\000' <repeats 15 times>,
-    desc = "I love maye", '\000' <repeats 116 times>
-  }}
-
-```
-
-这样的话，输出就看的比较清晰了~
-
-#### whatis/ptype
-
-whatis用来查看变量的类型，ptype和whatis类似，但功能更强大，可以查看复合数据类型，会打印出该类型的成员变量。
-
-#### watch
-
- **watch** 命令用来监视一个变量或者一段内存，当这个变量或者内存的值发生变化时，GDB就会中断下来。被监视的某个变量或内存地址会产生一个 **watch point（观察点）**。
-
- 命令格式：
-
-- **watch 整型变量**；
-- **watch 指针变量**，监视的是指针变量本身；
-- **watch \*指针变量**，监视的是指针所指的内容；
-- **watch 数组变量或内存区间**；
-
-```css
-(gdb) watch num				/*监视变量*/
-Hardware watchpoint 3: num
-(gdb) n
-6			num/=10;		/*当变量发生改变时，会输出旧值和新值*/
-(gdb) n
-Hardware watchpoint 3: num
-
-Old value = 1234
-New value = 123
-```
-
-删除、禁用监视点，和断点相同。
-
-#### jump
-
-命令格式及作用：
-
-- **jump LineNo**，跳转到代码的 **LineNo** 行的位置；
-- **jump +10**，跳转到距离当前代码下10行的位置；
-- **jump \*0x12345678**，跳转到 **0x12345678** 地址的代码处，地址前要加星号；
-
- **jump** 命令有两点需要注意的：
-
-1. 中间跳过的代码是不会执行的。`由于一些代码可能会对系统做持久性操作，例如删除文件，写数据库等操作，我们希望跳过一些函数或者代码段的执行，此时就可以使用jump指令来完成该功能。`
-2. 跳到的位置后如果没有断点，那么GDB会自动继续往后执行；
-
-#### disassemble
-
-查看某段代码的汇编指令
-
-+ `disassemble funName` 显示函数的汇编指令
-
-+ `disassemble /m main` 显示汇编指令的同时把源代码也显示出来，对照显示
-
-#### set args/show args
-
- 很多程序启动需要我们传递参数，**set args** 就是用来设置程序启动参数的，**show args** 命令用来查询通过 **set args** 设置的参数，命令格式：
-
-- **set args args1**，设置单个启动参数 **args1**；
-- **set args "-p" "password"**，如果单个参数之间有空格，可以使用引号将参数包裹起来；
-- **set args args1 args2 args3**，设置多个启动参数，参数之间用空格隔开；
-- **set args**，不带参数，则清除之前设置的参数；
-
-### layout
-
-layout用于分割窗口，可以边调试边看代码。
-
-#### 命令
-
-| 命令         | 描述                        |
-| ------------ | --------------------------- |
-| layout src   | 显示源代码窗口              |
-| layout asm   | 显示汇编窗口                |
-| layout regs  | 显示源代码/汇编和寄存器窗口 |
-| layout split | 显示源代码和汇编窗口        |
-| layout next  | 显示下一个layout            |
-| layout prev  | 显示上一个layout            |
-
-#### 快捷键
-
-| 快捷键       | 描述                       |
-| ------------ | -------------------------- |
-| Ctrl + `l`   | 刷新窗口                   |
-| Ctrl + x + 1 | 单窗口模式，显示一个窗口   |
-| Ctrl + x + 2 | 双窗口模式，显示两个窗口   |
-| Ctrl + x + a | 回到传统模式，即退出layout |
-
-#### 使用流程
-
-在gdb中输入`layout src`命令，进入布局窗口，然后在main函数入口处加上断点。
-
-![image-20230830163151455](assets/image-20230830163151455.png)
-
-执行`run`命令开始调试，源代码窗口会高亮显示当前调试的行
-
-![image-20230830163313814](assets/image-20230830163313814.png)
-
-接下来就可以使用`next`、`step`、`continue`等命令调试代码了，源代码窗口也会同步更新。
-
-但是当我们调试完成之后，会发现源代码窗口错乱了，窗口没有及时更新，这个时候按下快捷键`Ctrl+l(小写L)`即可刷新窗口
-
-![image-20230830163543289](assets/image-20230830163543289.png)
-
-刷新窗口后，显示没有有效源，当你重新执行run命令时，会自动出现。想要关闭src窗口，按下`ctrl+x+a`即可
-
-![image-20230830163820667](assets/image-20230830163820667.png)
-
-
-
-#### 窗口焦点
-
-在调试时，按上、下、左、右键是滚动src窗口的代码，而不是切换历史命令，这是因为焦点默认在src窗口上。
-
-可以使用`fs cmd`把焦点切换到控制台窗口。
-
-![image-20230830164812828](assets/image-20230830164812828.png)
-
-上图中，左边是焦点在cmd窗口，右边是焦点在src窗口。
-
-> fs即focus焦点的意思，除了使用`fs windowName`之外，还可以使用`fs next`和`fs prev`命令切换到写一个和上一个窗口。
-
-当焦点切换到cmd窗口之后，就可以按上下键切换历史命令了。
-
-
-
-[gdb调试的layout使用_gdb layout_zhangjs0322的博客-CSDN博客](https://blog.csdn.net/zhangjs0322/article/details/10152279)
-
-
-
-[gdb](https://blog.csdn.net/gatieme/article/details/51671430)
-
-[你可能不知道的GDB命令 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/363973508)
-
-[GDB使用详解 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/297925056#概述)
-
-
-
-### 线程
-
-#### thread命令
-
- 命令格式及作用：
-
-- **info thread**，查看当前进程的所有线程运行情况；
-- **thread 线程编号**，切换到具体编号的线程上去；
-
-#### 6.1 概述
-
- 多线程程序的编写更容易产生异常或 Bug（例如线程之间因竞争同一资源发生了死锁、多个线程同时对同一资源进行读和写等等）。GDB调试器不仅仅支持调试单线程程序，还支持调试多线程程序。本质上讲，使用GDB调试多线程程序的过程和调试单线程程序类似，不同之处在于，调试多线程程序需要监控多个线程的执行过程。
-
- 用GDB调试多线程程序时，该程序的编译需要添加 **`-lpthread`** 参数。
-
-#### 6.2 一些命令
-
-1. **info thread**，查看当前调试程序启动了多少个线程，并打印出各个线程信息；
-2. **thread 线程编号**，将该编号的线程切换为当前线程；
-3. **thread apply 线程编号1 线程编号2 ... command**，将GDB命令作用指定对应编号的线程，可以指定多个线程，若要指定所有线程，用 **all** 替换线程编号；
-4. **break location thread 线程编号**，在 **location** 位置设置普通断点，该断点只作用在特定编号的线程上；
-
-#### 6.3 一些术语
-
-- **all-stop mode**，全停模式，当程序由于任何原因在GDB下停止时，不止当前的线程停止，所有的执行线程都停止。这样允许你检查程序的整体状态，包括线程切换，不用担心当下会有什么改变。
-- **non-stop mode**，不停模式，调试器（如VS2008和老版本的GDB）往往只支持 **all-stop** 模式，但在某些场景中，我们可能需要调试个别的线程，并且不想在调试过程中影响其他线程的运行，这样可以把GDB的调式模式由 **all-stop** 改成 **non-stop**，**7.0** 版本的GDB引入了 **non-stop** 模式。在 **non-stop** 模式下 **continue、next、step** 命令只针对当前线程。
-- **record mode**，记录模式；
-- **replay mode**，回放模式；
-- **scheduler-locking** ，调度锁；
-
-> (gdb) help set scheduler-locking Set mode for locking scheduler during execution. off == no locking (threads may preempt at any time) on == full locking (no thread except the current thread may run) This applies to both normal execution and replay mode. step == scheduler locked during stepping commands (step, next, stepi, nexti). In this mode, other threads may run during other commands. This applies to both normal execution and replay mode. replay == scheduler locked in replay mode and unlocked during normal execution.
-
-- **schedule-multiple**，多进程调度；
-
-> (gdb) help set schedule-multiple Set mode for resuming threads of all processes. When on, execution commands (such as 'continue' or 'next') resume all threads of all processes. When off (which is the default), execution commands only resume the threads of the current process. The set of threads that are resumed is further refined by the scheduler-locking mode (see help set scheduler-locking).
-
-#### 6.4 设置线程锁
-
- 使用GDB调试多线程程序时，默认的调试模式是：**一个线程暂停运行，其他线程也随即暂停；一个线程启动运行，其他线程也随即启动**。但在一些场景中，我们希望只让特定线程运行，其他线程都维持在暂停状态，即要防止**线程切换**，要达到这种效果，需要借助 **set scheduler-locking** 命令。
-
- 命令格式及作用：
-
-- **set scheduler-locking on**，锁定线程，只有当前或指定线程可以运行；
-- **set scheduler-locking off**，不锁定线程，会有线程切换；
-- **set scheduler-locking step**，当单步执行某一线程时，其他线程不会执行，同时保证在调试过程中当前线程不会发生改变。但如果在该模式下执行 **continue、until、finish** 命令，则其他线程也会执行；
-- **show scheduler-locking**，查看线程锁定状态；
-
-### 配置文件
-
-#### 保存/加载断点
-
-调试程序的时候，往往会设置很多断点，如果需要多次调试,来回敲这些断点信息，也是很烦的，可以通过`save breakpoints filename`的方法，将断点设置信息保存到`filename`文件中：
-
-```css
-(gdb) i b
-Num     Type           Disp Enb Address            What
-1       breakpoint     keep y   0x0000555555555185 in main at cmdline.c:9
-	breakpoint already hit 1 time
-3       breakpoint     keep y   0x00005555555551da in main at cmdline.c:11
-(gdb) save breakpoints break.bp /*把所有断点保存到指定文件*/
-Saved to file 'break.bp'.
-(gdb) 
-```
-
-gdb 启动后,在通过`source filename`方式加载：
-
-```css
-(gdb) i b
-No breakpoints or watchpoints.
-(gdb) source break.bp 		/*从指定的文件加载断点信息*/
-Breakpoint 1 at 0x1185: file cmdline.c, line 9.
-Breakpoint 2 at 0x11da: file cmdline.c, line 11.
-(gdb) i b
-Num     Type           Disp Enb Address            What
-1       breakpoint     keep y   0x0000000000001185 in main at cmdline.c:9
-2       breakpoint     keep y   0x00000000000011da in main at cmdline.c:11
-(gdb) 
-```
-
-#### .gdbinit
-
-在使用gdb时，经常指令命令`set print pertty on`以及其他配置命令。
-
-但是每次打开gdb都要配置，比较麻烦，因此gdb也提供了一个使用配置文件的方法。
-
-首先，在`~/`用户目录创建`.gdbinit`文件，内容如下(通用配置)：
-
-```css
-# 保存历史命令
-set history filename ./.gdb_history
-set history save on
- 
- 
-# 记录执行gdb的过程
-set logging file ./.log.txt
-set logging enabled on
- 
- 
-# 退出时不显示提示信息
-#set confirm off
- 
- 
-# 打印数组的索引下标
-set print array-indexes on
- 
- 
-# 每行打印一个结构体成员
-set print pretty on
- 
- 
-# 退出并保留断点
-# 自定义命令，在gdb中输入qbp，退出并保存所有断点
-define qbp
-save breakpoints ./.gdb_bp
-quit
-end
-#自定义帮助命令，在gdb中输入help qbp 显示提示信息
-document qbp
-Exit and save the breakpoint
-end
- 
- 
-# 保留历史工作断点
-# 自定义命令，在gdb中输入downbp，保存所有断点
-define downbp
-save breakpoints ./.gdb_bp
-end
-document downbp
-Save the historical work breakpoint
-end
- 
- 
-# 加载历史工作断点
-# 自定义命令，在gdb中输入laodbp，加载所有断点
-define loadbp
-source ./.gdb_bp
-end
-document loadbp
-Load the historical work breakpoint
-end
-```
-
-然后，重新进入gdb即可。
-
-##### 配色方案
-
-```css
-set style textType attr value
-```
-
-+ textType：要设置的字符类型
-  + address 地址
-  + filename 文件名
-  + function 函数
-  + sources 源码
-  + variable 变量
-+ attr：属性
-  + background 背景颜色
-  + foreground  前景(文字)颜色
-  + intensity (控制粗细)
-
-+ value：属性对应的值
-  + 颜色：black red green yellow blue magenta cyan white
-  + 粗细：normal bold dim
-
-示例：
-
-```css
-set style function foreground magenta
-```
-
-![image-20230831134006320](assets/image-20230831134006320.png)
-
-![image-20230831134149852](assets/image-20230831134149852.png)
-
-sources设置不一样，没有属性，只有值(on|off)。
-
-```css
-set style sources off
-```
-
-![image-20230831134451094](assets/image-20230831134451094.png)
-
-默认情况下，代码是高亮的，关掉之后，代码显示的颜色就比较单一了。

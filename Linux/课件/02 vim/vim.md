@@ -767,3 +767,6 @@ if has("autocmd")
 endif
 ```
 
+## 文件差异对比
+
+[(83 封私信 / 87 条消息) Vim文件差异比较工具vimdiff和vim -d命令详细 - 知乎](https://zhuanlan.zhihu.com/p/86027381)

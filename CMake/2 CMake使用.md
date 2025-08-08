@@ -1859,5 +1859,3 @@ output
 <!-- 内链接 -->
 
 [appendix]:#附录	"附录"
-
->>>>>>> 6eb7fd3b5b61c73a4559f30d06b30f7dbb19bf78

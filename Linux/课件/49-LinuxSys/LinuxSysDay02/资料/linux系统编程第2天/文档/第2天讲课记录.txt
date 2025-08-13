@@ -1,0 +1,44 @@
+10.写出命令查找宿主目录下文件大于100k小于10M的文件，
+   并将查到文件的详细信息保存到另一个文件file中。
+   
+   find ~ -size +10M -size -20M | xargs ls -l > file
+   
+
+
+gcc的工作流程:
+1 预处理: cpp预处理器, 去掉注释, 展开头文件, 宏替换
+	gcc -E test.c -o test.i
+2 编译: gcc, 将源代码文件编译成汇编语言代码
+	gcc -S test.i -o test.s
+3 汇编: as, 将汇编语言代码编译成了二进制文件(目标代码)
+	gcc -c test.s -o test.o
+4 链接: ld, 链接test.c代码中调用的库函数
+	gcc -o test test.o
+  
+静态库的制作:
+	1 将.c文件编译成.o文件
+		gcc -c fun1.c fun2.c
+	2 使用ar命令将.o文件打包成.a文件
+		ar rcs libtest1.a fun1.o fun2.o
+	
+静态库的使用:
+	1 main.c与head.h和libtest1.a在同一级目录的情况
+		gcc -o main1 main.c -I./ -L./ -ltest1
+	2 main.c与head.h和libtest1.a在不同一级目录的情况
+		gcc -o main1 main.c -I./include -L./lib -ltest1
+		
+动态库的制作:
+	1 将.c文件编译成.o文件
+		gcc -fpic -c fun1.c fun2.c
+	2 使用gcc将.o文件编译成库文件
+		gcc -shared fun1.o fun2.o -o libtest2.so
+	
+动态库的使用:
+	gcc -o main2 main.c -I./include -L./lib -ltest2
+	
+动态库文件在编译的时候, 连接器需要使用参数-L找到库文件所在的路径;
+在执行的时候, 是加载器ldd根据动态库的路径进行加载的, 与编译的时候用的-L
+指定的路径无关.
+
+	最常用的解决办法:将LD_LIBRARY_PATH环境变量加到用户级别的配置文件~/.bashrc中, 
+	然后生效(. ~/.bashrc    source ~/.bashrc   退出终端然后再登录)

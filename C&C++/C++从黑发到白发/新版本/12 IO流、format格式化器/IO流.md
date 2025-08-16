@@ -55,8 +55,8 @@ else
 
 ```css
 123 顽石 男
-456 强森 男
-789 里奇 男
+456 微笑 男
+789 天明 男
 110 莫影 男
 ```
 
@@ -263,6 +263,44 @@ int main() {
 ```
 
 # 自定义格式化器
+
+## 自定义format
+
+`std::format`的格式字符串，只能传递编译时常量，如下所示代码，将不能运行。
+
+```cpp
+const std::string fmt = "{} {}";
+std::cout << std::format(fmt, 1, "nihao") << std::endl;	//对即时函数的调用不是常量表达式
+```
+
+如果有这种需求怎么办呢?这就要自己实现一个format函数了！实现如下：
+
+```cpp
+namespace hdy {
+	template<typename ...Args>
+	auto format(std::string_view fmt, Args&& ...args)
+	{
+		return std::vformat(fmt, std::make_format_args(args...));
+	}
+}
+```
+
+调用它！
+
+```cpp
+std::cout << hdy::format(fmt, 1, "nihao") << std::endl;	//调用自己写的format可以
+```
+
+这样就能使用任何类型的字符串类型了！
+
+> std::print或std::println格式字符串，只支持编译时常量，不能使用变量！如果你想用先定义格式，可以使用宏定义或者编译时常量。
+>
+> ```c
+> constexpr char const* str = "{} {}";		//编译时常量
+> std::println(str, 1, "nihao");				//可以使用
+> ```
+
+## 自定义格式化简介
 
 C++20 引入了新的 `<format>` 库，提供了类型安全的字符串格式化功能。除了内置类型的格式化支持外，你还可以为自定义类型创建格式化器。
 

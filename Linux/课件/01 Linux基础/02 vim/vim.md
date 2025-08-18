@@ -420,6 +420,12 @@ WORD跳转命令和word类似，把所有命令变为大写即可！
 
 垂直分屏: vim -O file1 file2…  
 
+### 折叠
+
+[Ch 17 - 折叠 · VIM 操作手册](https://docs.kilvn.com/vim_zh_cn/ch17_fold.html)
+
+[(84 封私信 / 87 条消息) vim中折叠代码 - 知乎](https://zhuanlan.zhihu.com/p/305555574)
+
 ## vim配置
 
 ### 基础知识

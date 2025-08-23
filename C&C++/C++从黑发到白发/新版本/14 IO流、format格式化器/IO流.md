@@ -262,6 +262,195 @@ int main() {
 
 ```
 
+## 流操作
+
+### stream_iterator
+
+流迭代器适配器（stream_iterator），简称流迭代器，其功能就是从指定的流读取/写入数据。介于流对象又可细分为输入流对象（istream）和输出流对象（ostream），C++ STL 标准库中，也对应的提供了 2 类流迭代器：
+
+| 迭代器适配器     | 功能                     |
+| ---------------- | ------------------------ |
+| istream_iterator | 用来读取输入流中的数据   |
+| ostream_iterator | 用来将数据写入到输出流中 |
+
+#### istream_iterator
+
+   istreambuf_iterator 输入流缓冲区迭代器的功能是从指定的流缓冲区中读取指定类型的数据。
+
+> 值得一提的是，该类型迭代器本质是一个输入迭代器，即假设 p 是一个输入流迭代器，则其只能进行 ++p、p++、*p 操作，同时迭代器之间也只能使用 == 和 != 运算符。
+
+##### 读取基本类型
+
+```cpp
+int main()
+{
+	//通过流迭代器获取char类型数据
+	{
+		//std::cin.unsetf(std::ios::skipws);		//如果需要获取空格，取消掉跳过空白字符标志即可
+		std::istream_iterator<char> in(std::cin);
+		std::istream_iterator<char> eof;			//创建用于表示结束的迭代器,对于接受char类的迭代器来说，只有按下Ctrl+Z才能结束输入
+		std::string str(in, eof);
+		std::println("{}", str);
+	}
+
+	//通过流迭代器获取double类型数据
+	{
+		std::istream_iterator<double> in(std::cin);
+		std::istream_iterator<double> eof;			//创建用于表示结束的迭代器,遇到不是浮点型/整型的数据时结束输入
+		std::vector<int> vec(in, eof);
+		std::println("{}", vec);
+	}
+
+	//通过流迭代器初始化容器
+	{
+		std::istream_iterator<int> in(std::cin);
+		std::vector<int> nums(in, std::istream_iterator<int>());
+		std::println("{}", nums);
+	}
+	
+	return 0;
+}
+```
+
+##### 读取类
+
+```cpp
+int main2()
+{
+	//1，流迭代器从cin读取数据
+	{
+		std::istream_iterator<Student> in(std::cin);
+		std::istream_iterator<Student> eof;
+
+		std::vector<Student> stus(in, eof);
+		for (auto& s : stus) {
+			std::cout << s << std::endl;
+		}
+	}
+    
+	//2，流迭代器从stringstream读取数据
+	{
+		std::stringstream ss("1 maye 2 tianming 3 玩蛇");
+		std::istream_iterator<Student> in(ss);
+		std::istream_iterator<Student> eof;
+
+		std::vector<Student> stus(in, eof);
+		for (auto& s : stus) {
+			std::cout << s << std::endl;
+		}
+	}
+	//3，流迭代器从ifstream读取数据
+	{
+		std::ifstream ifs("students.txt");
+		if (!ifs) {
+			std::cerr << "students.txt open failed" << std::endl;
+			return;
+		}
+		std::istream_iterator<Student> in(ifs);
+		std::istream_iterator<Student> eof;
+
+		std::vector<Student> stus(in, eof);
+		for (auto& s : stus) {
+			std::cout << s << std::endl;
+		}
+	}
+	return 0;
+}
+```
+
+#### ostream_iterator
+
+  和 istreambuf_iterator 输入流缓冲区迭代器恰恰相反，ostreambuf_iterator 输出流缓冲区迭代器用于将字符元素写入到指定的流缓冲区中。
+
+>  实际上，该类型迭代器本质上是一个输出迭代器，这意味着假设 p 为一个输出迭代器，则它仅能执行 ++p、p++、*p=t 以及 *p++=t 操作。
+
+另外，和 ostream_iterator 输出流迭代器一样，istreambuf_iterator 迭代器底层也是通过重载赋值（=）运算符实现的。换句话说，即通过赋值运算符，每个赋值给输出流缓冲区迭代器的字符元素，都会被写入到指定的流缓冲区中。
+
+```cpp
+int main()
+{
+	std::ostream_iterator<const char*> out_it(std::cout,",");
+    
+	out_it = "hello";
+	out_it = "wrold";
+	out_it = "maye";
+	return 0;
+}
+```
+
+![image-20230715164618405](./assets/image-20230715164618405.png)
+
+out_it第一个参数为输出流对象，第二个参数为写入数据之后，每个数据之间的分隔字符串。
+
+输出流迭代器常和 copy() 函数连用，即作为该函数第 3 个参数：
+
+```cpp
+	//准备输出的数据
+	std::vector<Student> stus = {
+		{100,"maye"},
+		{101,"hello"},
+		{102,"world"},
+	};
+
+	//输出到标准输出
+	std::copy(stus.begin(), stus.end(), std::ostream_iterator<Student>(std::cout, " | "));
+
+	std::println();
+
+	//输出到字符串流
+	std::stringstream ss;
+	std::copy(stus.begin(), stus.end(), std::ostream_iterator<Student>(ss, " | "));
+	std::println("{}", ss.str());
+
+	//输出到文件流
+	std::ofstream of("xxx.txt");
+	if (of.is_open()) {
+		std::copy(stus.begin(), stus.end(), std::ostream_iterator<Student>(of, " | "));
+	}
+```
+
+### streambuf_iterator
+
+流缓冲迭代器适配器（streambuf_iterator），简称流缓冲迭代器，其功能也是从指定的流读取/写入数据，但是不支持自定义对象。(和stream_iterator的区别在于stream_iterator更接近底层不会忽略空白字符)介于流对象又可细分为输入流对象（istream）和输出流对象（ostream），C++ STL 标准库中，也对应的提供了 2 类流迭代器：
+
+| 迭代器适配器        | 功能                     |
+| ------------------- | ------------------------ |
+| istreambuf_iterator | 用来读取输入流中的数据   |
+| ostreambuf_iterator | 用来将数据写入到输出流中 |
+
+#### istreambuf_iterator
+
+```cpp
+int main()
+{
+	//通过流缓冲迭代器获取char类型数据，也只能获取char类型的数据，因为构造函数需要basic_istream<_Elem, _Traits>对象
+	//cin就是basic_istream<char, char_traits<char>>;这个类型的，所以只能获取char
+	//通过流迭代器获取char类型数据
+	std::istreambuf_iterator<char> in(std::cin);
+	std::istreambuf_iterator<char> eof;			//创建用于表示结束的迭代器,对于接受char类的迭代器来说，只有按下Ctrl+Z才能结束输入
+	std::string str(in, eof);
+	std::println("{}", str);
+	
+	return 0;
+}
+```
+
+#### ostreambuf_iterator
+
+```c
+	//ostreambuf_iterator
+	{
+		std::ostreambuf_iterator<char> out_it(std::cout);
+		for (size_t i = 0; i < 26; i++)
+		{
+			out_it = 'a' + i;
+		}
+
+	}
+```
+
+
+
 # 自定义格式化器
 
 ## 自定义format

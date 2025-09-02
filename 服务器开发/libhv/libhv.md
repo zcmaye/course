@@ -120,3 +120,4 @@ add_executable(test_libhv "test_libhv.cpp")
 target_link_libraries(test_libhv hv_static libcrypto_static libssl_static Crypt32)
 ```
 
+[MQTT 示例 | ithewei/libhv - KoalaWiki](https://opendeep.wiki/ithewei/libhv/mqtt-examples)

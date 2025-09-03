@@ -1,5 +1,15 @@
 #include "socket_wrap.h"
+#include <unistd.h>
+#include <stdint.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
 
+#define HDY_ERROR(fmt,...)\
+	printf("[ERROR] %s:%d  : ",__FILE__,__LINE__);\
+	printf(fmt,##__VA_ARGS__);\
+	printf(" (%s)",strerror(errno));\
+	printf("\n");
 
 int hdy_accept(int fd, struct sockaddr *sa, socklen_t *salenptr)
 {
@@ -8,8 +18,10 @@ again:
 	if ((n = accept(fd, sa, salenptr)) < 0) {
 		if ((errno == ECONNABORTED) || (errno == EINTR))
 			goto again;
-		else
+		else {
 			HDY_ERROR("accept error");
+			exit(-1);
+		}
 	}
 	return n;
 }
@@ -17,38 +29,45 @@ again:
 int hdy_bind(int fd, const struct sockaddr *sa, socklen_t salen)
 {
 	int n;
-	if ((n = bind(fd, sa, salen)) < 0)
+	if ((n = bind(fd, sa, salen)) < 0) {
 		HDY_ERROR("bind error");
+		exit(-1);
+	}
 
 	return n;
 }
 
 int hdy_connect(int fd, const struct sockaddr *sa, socklen_t salen)
 {
-    int n;
-    n = connect(fd, sa, salen);
+	int n;
+	n = connect(fd, sa, salen);
 	if (n < 0) {
 		HDY_ERROR("connect error");
-    }
+		exit(-1);
+	}
 
-    return n;
+	return n;
 }
 
 int hdy_listen(int fd, int backlog)
 {
-    int n;
-	if ((n = listen(fd, backlog)) < 0)
+	int n;
+	if ((n = listen(fd, backlog)) < 0) {
 		HDY_ERROR("listen error");
+		exit(-1);
+	}
 
-    return n;
+	return n;
 }
 
 int hdy_socket(int family, int type, int protocol)
 {
 	int n;
 
-	if ((n = socket(family, type, protocol)) < 0)
+	if ((n = socket(family, type, protocol)) < 0) {
 		HDY_ERROR("socket error");
+		exit(-1);
+	}
 
 	return n;
 }
@@ -82,20 +101,18 @@ again:
 
 int hdy_close(int fd)
 {
-    int n;
-	if ((n = close(fd)) == -1)
+	int n;
+	if ((n = close(fd)) == -1) {
 		HDY_ERROR("close error");
+	}
 
-    return n;
+	return n;
 }
 ssize_t hdy_read_len(int fd, void *vptr, size_t n)
 {
-	size_t  nleft;              //usigned int 剩余未读取的字节数
-	ssize_t nread;              //int 实际读到的字节数
-	char   *ptr;
-
-	ptr = vptr;
-	nleft = n;                  //n 未读取字节数
+	size_t  nleft = n;              //usigned int 剩余未读取的字节数
+	ssize_t nread = 0;              //int 实际读到的字节数
+	char   *ptr = vptr;
 
 	while (nleft > 0) {
 		if ((nread = read(fd, ptr, nleft)) < 0) {
@@ -113,12 +130,10 @@ ssize_t hdy_read_len(int fd, void *vptr, size_t n)
 }
 
 ssize_t hdy_write_len(int fd, const void *vptr, size_t n){
-	size_t nleft;
-	ssize_t nwritten;
-	const char *ptr;
+	size_t nleft = n;
+	ssize_t nwritten = 0;
+	const char *ptr = vptr;
 
-	ptr = vptr;
-	nleft = n;
 	while (nleft > 0) {
 		if ( (nwritten = write(fd, ptr, nleft)) <= 0) {
 			if (nwritten < 0 && errno == EINTR)
@@ -132,7 +147,7 @@ ssize_t hdy_write_len(int fd, const void *vptr, size_t n){
 	return n;
 }
 
-ssize_t hdy_read_line(int sockfd, char *buffer, size_t size) {
+ssize_t hdy_read_line(int sockfd, char*buffer, size_t size) {
 	if (buffer == NULL || size < 3) { // 至少需要容纳一个字符 + \r\n
 		errno = EINVAL;
 		return -1;

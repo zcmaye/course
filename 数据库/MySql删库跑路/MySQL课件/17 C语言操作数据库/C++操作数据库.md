@@ -333,7 +333,9 @@ while (row = mysql_fetch_row(result))
 
 MySQL Connector/C是一个MySQL数据库连接器，用于C++应用程序连接MySQL服务器。
 
-### 下载
+### Windows
+
+#### 下载
 
 直接在MySQL官网下载[MySQL :: Download Connector/C++](https://dev.mysql.com/downloads/connector/cpp/)，有Release版本和Debug版本，写代码是用什么版本就下载什么版本，也可以都下载，配置方式一样！
 
@@ -347,9 +349,9 @@ MySQL Connector/C是一个MySQL数据库连接器，用于C++应用程序连接M
 
 ![image-20250308145322950](./assets/image-20250308145322950.png)
 
-### 配置
+#### 配置
 
-#### Vs2022
+##### Vs2022
 
 + 将头文件目录`F:\Tools\mysql-connector-c++-9.2.0-winx64\include`配置到包含目录
 + 将库文件目录`F:\Tools\mysql-connector-c++-9.2.0-winx64\lib64\vs14`配置到库目录
@@ -360,7 +362,17 @@ MySQL Connector/C是一个MySQL数据库连接器，用于C++应用程序连接M
 
   ![image-20250308145956332](./assets/image-20250308145956332.png)
 
-#### CMake
+##### CMake
+
+
+
+### Linux
+
+直接使用命令进行安装即可！
+
+```shell
+sudo apt install libmysqlcppconn-dev
+```
 
 
 

@@ -161,6 +161,8 @@ sudo systemctl daemon-reload
 sudo systemctl restart docker
 ```
 
+> 配置的镜像加速源在`/etc/docker/daemon.json`文件中，可以手动修改。
+
 使用如下命令，查看所有镜像源：
 
 ```shell
@@ -491,6 +493,14 @@ docker rm f44				#根据容器ID删除容器
 docker rm -f 152			#强制删除容器，即使容器正在运行
 ```
 
+如果启动了多个容器，想要一次性删除所有容器可以使用如下命令：
+
+```shell
+docker rm -f $(docker ps -aq)
+```
+
+
+
 ## 启动和执行
 
 ### 启动容器细节
@@ -654,10 +664,90 @@ docker load -i mynginx.tar
 
 > 解压并加载：gunzip -c mynginx.tar.gz |  sudo docker load
 
-# 分享镜像
+# 上传镜像
+
+使用腾讯云[容器镜像服务](https://console.cloud.tencent.com/tcr/repository)。
+
+## 登录镜像仓库
+
++ 要上传镜像，先要在腾讯云镜像服务器中创建容器镜像[**个人实例**]( https://cloud.tencent.com/document/product/1141/63910?from=copy)。
+
+![image-20251011163514193](./assets/image-20251011163514193.png)
+
++ 然后创建命名空间
+
+> 命名空间用于管理实例内的镜像仓库，不直接存储容器镜像，可映射为企业内团队、项目或是其他自定义层级。
+
+
+
++ 最后使用docker登录个人版实例：
+
+```shell
+sudo docker login ccr.ccs.tencentyun.com --username=username
+```
+
+回车之后输入密码即可。
+
+## 推送拉取镜像
+
++ 将要推送的镜像打标签
+
+  ```shell
+  sudo docker tag nginx:latest ccr.ccs.tencentyun.com/zcmaye/nginx:latest
+  ```
+
++ 然后推送镜像
+
+  ```shell
+  sudo docker push ccr.ccs.tencentyun.com/zcmaye/nginx:latest
+  ```
+
++ 然后就可以拉取镜像了
+
+  ```shell
+  sudo docker pull ccr.ccs.tencentyun.com/zcmaye/nginx:latest
+  ```
 
 # 目录挂载
 
+Docker 目录挂载，这是一个非常重要且常用的功能。它允许在容器和主机之间共享数据。
+
+比如前面我们运行的nginx容器，如果想要修改`/usr/share/nginx/html`中的`index.html`，必须要先使用`docker exec`命令进入容器进行修改，这样太麻烦。而且，当容器删除之后，修改的内容会丢失，我们需要持久化！也就是说将修改保存到主机中。
+
+如果能将容器中的`index.html`挂载到主机上，那么需要修改时，直接修改主机上的文件即可，nginx会自动读取主机的文件。这样就方便多了。
+
+```shell
+docker run -d --name mynginx -p 80:80 -v /app/nghtml:/usr/share/nginx/html nginx:latest
+```
+
++ `/app/nghtml`不需要提前创建，docker会自动创建这个目录。
++ 需要手动在nghtml目录中创建`index.html`文件。
++ 容器`/usr/share/nginx/html`的内容和主机`/app/nghtml`中一模一样，是共享的，也就是说修改任何一个目录中的，另一个会同步改变(实际上就是同一份)。
++ 当容器删掉之后，启动容器时加上`-v /app/nghtml:/usr/share/nginx/html`，即可恢复。
+
 # 卷映射
 
+卷是由 Docker 完全管理的存储单元。它们不依赖于主机的目录结构，是 Docker 中**首选的持久化数据方式**。
+
+卷映射能将容器中的目录或文件映射到主机上。
+
+比如将nginx的配置文件（`/etc/nginx/nginx.conf`）映射到主机上：
+
+```shell
+docker run -d --name mynginx -p 80:80 -v ngconfig:/etc/nginx nginx:latest
+```
+
+> 映射的卷放在`/var/lib/docker/volumes`中。
+
++ 使用`docker volume ls`可以查看所有卷。
++ 使用`docker volume create <卷名>`可以创建卷
++ 使用`docker volume rm <卷名>`可以删除指定卷
++ 使用`docker volume inspect <卷名>`可以查看指定卷的细节(位置、创建时间等信息)
+
 # 自定义网络
+
+
+
+# Dockerfile
+
+# Docker Compose

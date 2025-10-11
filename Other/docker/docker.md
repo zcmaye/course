@@ -746,7 +746,104 @@ docker run -d --name mynginx -p 80:80 -v ngconfig:/etc/nginx nginx:latest
 
 # 自定义网络
 
+## docker虚拟网卡
 
+为了让多个容器能相互之间访问网络，docker创建了一个虚拟网卡。
+
++ 输入如下命令，查看网卡信息
+
+```shell
+ip addr
+```
+
+输出如下:
+
+```css
+3: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 9e:af:1f:85:cf:49 brd ff:ff:ff:ff:ff:ff
+    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::9caf:1fff:fe85:cf49/64 scope link 
+       valid_lft forever preferred_lft forever
+```
+
+docker0就是这个虚拟网卡名称。
+
+## 从一个容器中访问另一个容器的网络
+
+想要在容器中访问另外一个容器的网络，除了通过主机端口映射之外，还可以直接通过docker的网络。
+
+```shell
+docker inspect mynginx
+```
+
+能在最后看到`mynginx`容器的网络信息：
+
+```css
+"Networks": {
+                "bridge": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "MacAddress": "d2:ea:5c:d0:76:a8",
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "bbd7f2e875e11f703889c9fbe3bbb37d839dc79bf2f3b01087f6dfd6b8d05f5a",
+                    "EndpointID": "9066b82a84553f818101eb1f82a10fee7db5c15ccd64e780a826bd887bcc1143",
+                    "Gateway": "172.17.0.1",
+                    "IPAddress": "172.17.0.2",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": null
+                }
+            }
+```
+
+我们可以在另外一个容器中，直接使用容器的IP地址`172.17.0.2`进行访问。
+
+使用curl命令获取另一个nginx容器的首页。
+
+```shell
+curl http://172.17.0.2:80
+```
+
+## 创建虚拟网卡
+
+在上面，我们使用了容器的IP地址访问容器，但是由于某些原因(比如多个容器启动顺序)可能会导致每次容器启动后，ip地址不一样。所以使用ip地址不是很方便，如果能直接使用容器名作为域名访问就好了(容器名必须是唯一的)。
+
+默认的`docker0`网卡并不支持容器名作为域名，所以我们需要自己创建网卡。
+
++ 创建网卡
+
+  ```shell
+  docker network create mynet
+  ```
+
+> 创建完网卡之后，启动容器需要使用指定的网卡，加上`--network mynet`即可！
+>
+> 另一个容器访问时直接使用容器名+端口号即可：`curl http://mynginx:80`
+
++ 查看所有网卡
+
+  ```shell
+  docker network ls
+  ```
+
++ 查看网卡信息
+
+  ```shell 
+  docker network inspect mynet
+  ```
+
++ 删除网卡
+
+  ```shell
+  docker network rm mynet
+  ```
+
+  
 
 # Dockerfile
 

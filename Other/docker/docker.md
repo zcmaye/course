@@ -843,8 +843,158 @@ curl http://172.17.0.2:80
   docker network rm mynet
   ```
 
-  
+
+# Docker Compose
+
+Compose 是用于定义和运行多容器 Docker 应用程序的工具。通过 Compose，您可以使用 YML 文件来配置应用程序需要的所有服务。然后，使用一个命令，就可以从 YML 文件配置中创建并启动所有服务。
+
+## 为什么需要Docker Compose?
+
+我们需要 Docker Compose 是因为它解决了多容器应用“编排”的复杂性问题。
+
+接下来我们使用Docker搭建wordpress，从中感受有和没有Docker compose的区别。
+
+**创建网络**
+
+首先要创建一个共享网络（让容器能互相通信）。
+
+```shell
+docker network create blog
+```
+
+**Mysql容器**
+
+启动数据库容器，并设置密码、卷挂载，加入到网络中。
+
+```shell
+docker run -d  -p 3306:3306 \
+  --name mysql-8.4 \
+  -e MYSQL_ROOT_PASSWORD=123456 \
+  -e MYSQL_DATABASE=wordpress \
+  -v mysql-data:/var/lib/mysql \
+  -v /etc/mysql/my.cnf:/etc/mysql/my.cnf \
+  --network blog \
+  mysql:8.4
+```
+
+**WordPress容器**
+
+启动wordpress容器，并设置数据库信息、卷挂载，加入到网络中。
+
+```shell
+docker run -d -p 8080:80 \
+ --name wordpress-app \
+ -e WORDPRESS_DB_HOST=mysql-8.4 \
+ -e WORDPRESS_DB_USER=root \
+ -e WORDPRESS_DB_PASSWORD=123456 \
+ -e WORDPRESS_DB_NAME=wordpress \
+ -v wordpress:/var/www/html \
+ --restart always \
+ --network blog \
+ wordpress:latest
+```
+
+**访问workpress后台**
+
+在浏览器中输入如下链接即可访问后台：
+
+```shell
+http://192.168.248.128:8080
+```
+
+在配置完之后，上面的链接就是访问正常网页，要访问后台，加上`/wp-admin`即可！
+
+**这带来了几个大问题：**
+
+- **命令冗长复杂**：你需要记住并输入一长串 `docker run` 参数。
+- **难以管理**：启动、停止、重建整个应用需要按正确顺序执行多个命令。
+- **缺乏整体视图**：你无法从一个文件中一眼看清整个应用由哪些服务构成，以及它们之间的关系。
+- **依赖关系**：你必须手动确保数据库先于 wordpress启动，否则 wordpress 服务器会启动失败。
+
+## Docker Compose如何解决这个问题？
+
+[Docker Compose](https://docs.docker.com/reference/compose-file/) 通过一个名为 `docker-compose.yml` 的 **YAML 配置文件** 来定义和运行多容器的 Docker 应用。这个文件描述了整个应用栈（Stack）。
+
+上面那个复杂的手动过程，可以用一个 `compose.yml` 文件来定义：
+
+```yaml
+name: myblog
+services:
+    mysql:
+        container_name: mysql-8.4
+        image: mysql:8.4
+        ports:
+            - "3306:3306"
+        environment:
+            - MYSQL_ROOT_PASSWORD=123456
+            - MYSQL_DATABASE=wordpress
+        volumes:
+            - mysql-data:/var/lib/mysql
+            - /etc/mysql/conf.d:/etc/mysql/conf.d
+        restart: always
+        networks:
+            - blog
+    wordpress:
+        image: wordpress:latest
+        ports:
+            - "8080:80"
+        environment:
+            WORDPRESS_DB_HOST: mysql-8.4
+            WORDPRESS_DB_USER: root
+            WORDPRESS_DB_PASSWORD: 123456
+            WORDPRESS_DB_NAME: wordpress
+        volumes:
+            - wordpress:/var/www/html
+        restart: always
+        networks:
+            - blog
+        depends_on:
+            - mysql
+
+volumes:
+    mysql-data:   
+    wordpress:
+
+networks:
+    blog:
+```
+
+使用`compose.yaml`文件**启动**容器。
+
+```shell
+docker compose -f compose.yaml up -d
+```
+
+## compose 其他功能
+
++ 使用`docker compose stop`命令停止所有运行中的容器。
+
++ 使用`docker compose start`命令停止所有运行中的容器。
+
++ 使用`docker compose logs`命令查看所有容器的日志。
+
++ 使用`docker compose down`停止并移除容器和镜像。
+
+  + 只删除容器和网络
+
+    ```shell
+    docker compose down
+    ```
+
+  + 删除容器、网络、镜像以及数据卷和挂载
+
+    ```shell
+    docker compose down --rmi all -v
+    ```
+
++ 如果想拉取compose中的镜像，不需要自己一个一个拉取，直接使用`docker compose pull`命令，即可拉取文件中的所有镜像
 
 # Dockerfile
 
-# Docker Compose
+**Dockerfile** 是 Docker 生态系统的核心构建块。它是一个文本文件，包含了一系列用于自动构建 Docker 镜像的指令。
+
+> 简单来说：
+>
+> - **Dockerfile** = **构建镜像的配方**
+> - **Docker 镜像** = 只读的模板
+> - **Docker 容器** = 镜像的运行实例

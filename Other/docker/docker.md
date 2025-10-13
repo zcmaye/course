@@ -998,3 +998,77 @@ docker compose -f compose.yaml up -d
 > - **Dockerfile** = **构建镜像的配方**
 > - **Docker 镜像** = 只读的模板
 > - **Docker 容器** = 镜像的运行实例
+
+## 构建一个镜像
+
+将自己写的[服务器程序](./assets)app打包成镜像，然后通过容器运行！
+
+### 编写Dockerfile文件
+
+```dockerfile
+FROM ubuntu:24.04				#从ubuntu基础镜像构建
+
+LABEL author=maye				#指定作者名称
+
+COPY app /usr/local/bin/app		#将本地app拷贝到镜像中
+
+WORKDIR /usr/local/bin			#设置工作目录
+
+EXPOSE 8080						#对外暴漏的端口
+
+ENTRYPOINT ["./app"]			#容器启动后执行的命令
+```
+
+### 构建镜像
+
+```shell
+sudo docker build -f dockerfile -t myapp:1.0 .
+```
+
+## 构建C/C++开发环境镜像
+
+### 1. 准备 Dockerfile
+
+创建一个 `Dockerfile` 文件，定义基础镜像和开发工具：
+
+```dockerfile
+FROM gcc:latest 
+
+LABEL author="zcmaye"
+LABEL version="0.1"
+LABEL description="这是用于C/C++开发的镜像"
+
+# 拷贝镜像源
+#RUN mv /etc/apt/sources.list.d/ubuntu.sources /etc/apt/sources.list.d/ubuntu.sources.bak
+#COPY /etc/apt/sources.list.d/ubuntu.sources /etc/apt/sources.list.d/ubuntu.sources
+
+#更新apt并安装必备软件
+RUN apt update
+RUN apt install -y g++ make gdb make cmake ninja-build
+RUN rm -rf /var/lib/apt/lists/*         #清理缓存
+
+
+#设置工作目录
+WORKDIR /workspace
+
+#启动时进入bash
+CMD ["bash"]
+```
+
+### 2. 构建镜像
+
+在 `Dockerfile` 所在目录执行以下命令构建镜像（命名为 `cpp-dev`）：
+
+```shell
+sudo docker build -f Dockerfile -t cpp-dev:0.1 .
+```
+
+### 3. 运行容器并挂载代码目录
+
+```shell
+sudo docker run -it --rm -v /mycode:/workspace cpp-dev:0.1
+```
+
+- `-it`：交互式终端
+- `--rm`：容器退出后自动删除（可选，避免残留）
+- `-v`：将本地目录挂载到容器的 `/workspace`

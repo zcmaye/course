@@ -1183,9 +1183,150 @@ GEOSEARCH key <FROMMEMBER member | FROMLONLAT longitude latitude>
 
   
 
-### Stream
+### 消息队列
 
-Redis Stream 是 Redis 5.0 版本新增的数据结构，主要用于消息队列（Message Queue, MQ）。它解决了 Redis 发布订阅（pub/sub）无法持久化消息的问题，确保即使在网络断开或 Redis 宕机的情况下，消息也不会丢失。Redis Stream 提供了消息的持久化、主备复制功能，允许客户端访问任何时刻的数据，并记录每个客户端的访问位置。
+消息队列（Message Queue，简称MQ）是一种用于在分布式系统中传递消息的中间件。它通过高效的消息传递机制，实现系统间的解耦、异步处理、流量削峰等功能，是高并发系统的重要组成部分。
+
+消息队列的本质是一个**消息容器**，用于存储和转发消息。其主要组成包括生产者、消费者和队列。生产者将消息发送到队列，消费者从队列中读取消息。
+
+![image-20251028162257640](./assets/image-20251028162257640.png)
+
+#### List消息队列
+
+在分布式系统中，Redis 的 List 数据结构可以用来实现消息队列，满足先进先出的需求。然而，使用 List 作为消息队列也存在一些明显的缺点和局限性，尤其在复杂场景下可能无法满足需求。
+
+![image-20251028163232363](./assets/image-20251028163232363.png)
+
+**案例：**
+
+```bash
+#生产数据
+localhost:6379> lpush tasks 1 2 3 4 5
+(integer) 5
+
+localhost:6379> lrange tasks 0 -1
+1) "5"
+1) "4"
+1) "3"
+1) "2"
+1) "1"
+
+#消费数据
+localhost:6379> rpop tasks 1
+1) "1"
+localhost:6379> rpop tasks 1
+1) "2"
+localhost:6379> rpop tasks 1
+1) "3"
+localhost:6379> rpop tasks 1
+1) "4"
+localhost:6379> rpop tasks 1
+1) "5"
+```
+
+#### Stream
+
+Redis Stream 是 Redis 5.0 版本新增的数据结构，主要用于消息队列（Message Queue, MQ）。Redis Stream 提供了消息的持久化、主备复制功能，允许客户端访问任何时刻的数据，并记录每个客户端的访问位置。
+
+![image-20251028163530314](./assets/image-20251028163530314.png)
+
+
+
+##### 命令
+
+###### XADD
+
+![image-20251029162352962](./assets/image-20251029162352962.png)
+
+例如：创建名为users的队列，并向其中发送一个消息，内容是：{name=maye,age=18}，并且使用Redis自动生成ID。
+
+```bash
+localhost:6379> xadd users * name maye age 18
+1761808760889-0
+
+localhost:6379> xadd users * name zoi age 20
+1761808883523-0
+```
+
+###### XRANGE
+
+**语法：**
+
+```bash
+XRANGE key start end [COUNT count]
+```
+
+该命令返回与给定id范围匹配的流项。 范围由最小ID和最大ID指定。所有包含 指定的两个ID之间的ID，或者恰好是指定的两个ID中的一个 （关闭间隔）返回。
+
+**案例：**
+
+```bash
+localhost:6379> xrange users - +
+1761808760889-0
+name
+maye
+age
+18
+1761808883523-0
+name
+zoi
+age
+20
+```
+
+
+
+###### XLEN
+
+返回流中消息的数量！
+
+###### XDEL
+
+删除消息并返回剩余消息数量！
+
+###### XTRIM
+
+**语法：**
+
+```bash
+XTRIM key <MAXLEN | MINID> [= | ~] threshold [LIMIT count] [KEEPREF| DELREF | ACKED]
+```
+
++ key：流key名
+
+**MAXLEN | MINID** ：修剪策略。
+
++ MAXLEN ：只要流的长度超过指定的阈值，就会驱逐表项
++ MINID：退出id低于指定阈值的表项
++ threshold：微调阈值。对于 `MAXLEN` ，这是一个表示最大条目数的正整数。对于 `MINID` ，这是一个流ID。
+
+**= | ~ **修边操作。
+
+- `=`: 精确微调（默认）-微调到精确的阈值
+- `~`: 近似修整-更有效，可能会留下略多于阈值的条目
+
+**LIMIT count** ：限制在修剪期间要检查的条目数量。当未指定时，Redis使用默认值100 *宏节点中的条目数。指定0将完全禁用限制机制。
+
+**KEEPREF | DELREF | ACKED**：指定裁剪时如何处理消费者组引用。如果不指定，默认为 `KEEPREF` 。
+
++ **KEEPREF**和**DELREF**：这两个选项用于控制如何处理消息的引用。在Redis Stream中，每个消息都有一个唯一的ID，并且可以被多个消费者组引用。当使用KEEPREF时，即使消息被修剪，只要它被至少一个消费者组引用，就会保留该消息。而DELREF则相反，它会删除被引用的消息，但请注意，这可能会导致消费者组无法处理这些消息，因此使用DELREF要非常小心。
++ `ACKED` ：这个选项表示只修剪已经被消费者组确认的消息。也就是说，只有当消息被消费者组中的所有消费者确认后，才会被考虑删除。这个选项通常与消费者组一起使用，以确保不会删除尚未被处理的消息。
+
+###### XREAD
+
+![image-20251029170207854](./assets/image-20251029170207854.png)
+
+##### 单消费者模式
+
+
+
+##### 消费者组模式
+
+消费者组（cusumer group）是指将多个消费者划分到一个组中，监听同一个队列。具备以下特点：
+
++ 消息分流：队列中的消息会分流给组内的不同消费者，而不是重复消费，从而加快消息处理的速度。
++ 消息标识：消费者组会维护一个标识，记录最后一个被处理的消息，哪怕消费者宕机重启，还会从标识之后读取消息。确保每一个消息都会被消费。
++ 消息确认：消费者获取消息后，消息处于pending状态，并存入一个pending-list。当处理完成后需要通过XACK来确认消息，标记消息为已处理，才会pending-list移除。
 
 
 

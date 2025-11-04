@@ -1328,6 +1328,81 @@ XTRIM key <MAXLEN | MINID> [= | ~] threshold [LIMIT count] [KEEPREF| DELREF | AC
 + 消息标识：消费者组会维护一个标识，记录最后一个被处理的消息，哪怕消费者宕机重启，还会从标识之后读取消息。确保每一个消息都会被消费。
 + 消息确认：消费者获取消息后，消息处于pending状态，并存入一个pending-list。当处理完成后需要通过XACK来确认消息，标记消息为已处理，才会pending-list移除。
 
+###### XGROUP
+
+XGROUP是一组命令，用来管理消费者组。
+
++ **创建消费者组**
+
+```bash
+XGROUP CREATE key group <id | $> [MKSTREAM]
+XGROUP SETID key group <id | $>
+```
+
+**key：**队列名称。
+
+**group：**消费者组名称，当已经存在同名的消费者组时返回错误。
+
+**<id | $>：**消费者组最后一次交付的ID，接下来会从这个ID的下一个开始消费：
+
++ id：指定消息ID，只消费此消息之后的消息;
++ $：指定最后一个消息，只消费新来的消息；
++ 0：指定第一个消息，从头开始消费整个流。
+
+**[MKSTREAM]：**默认情况下， `XGROUP CREATE` 命令期望目标流存在，如果不存在则返回错误。 如果流不存在，可以使用 `MKSTREAM` 子命令作为 `<id>` 后的最后一个参数，自动创建长度为0的流。
+
++ **删除消费者组**
+
+```bash
+XGROUP DESTROY key group
+```
+
++ **创建消费者**
+
+在存储在 `<key>` 的流的消费者组 `<groupname>` 中创建一个名为 `<consumername>` 的消费者。一般不需要自己创建，在读取时如果指定的消费者不存在，则会自动创建。
+
+```bash
+XGROUP CREATECONSUMER key group consumer
+```
+
++ **删除消费者**
+
+```bash
+XGROUP DELCONSUMER key group consumer
+```
+
++ **消费者组消息读取**
+
+```bash
+XREADGROUP GROUP group consumer [COUNT count] [BLOCK milliseconds]
+  [NOACK] STREAMS key [key ...] id [id ...]
+```
+
+**group：**消费者组名
+
+**consumer：**消费者名
+
+**[COUNT count]：**本次读取消息的最大数量
+
+**[BLOCK milliseconds]：**当没有消息时最大等待时长。
+
+ **[NOACK]：**无需手动ACK，获取到消息后自动确认。
+
+**STREAMS key [key ...]：**指定从哪些流中读取消息。
+
+**id [id ...]：**获取消息的起始ID：
+
++ “>” ：从下一个未消费的消息开始
++ 其它：根据指定id从pending-list中获取已消费但未确认的消息，例如是0，是从pending-list中的第一个消息开始。
+
+
+
++ **查询挂起列表**
+
+```bash
+XPENDING key group [[IDLE min-idle-time] start end count [consumer]]
+```
+
 
 
 [Redis 消息队列的终极解决方案 Stream - 万明珠 - 博客园](https://www.cnblogs.com/wan-ming-zhu/p/18080644)

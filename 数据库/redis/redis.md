@@ -1351,6 +1351,12 @@ XGROUP SETID key group <id | $>
 
 **[MKSTREAM]：**默认情况下， `XGROUP CREATE` 命令期望目标流存在，如果不存在则返回错误。 如果流不存在，可以使用 `MKSTREAM` 子命令作为 `<id>` 后的最后一个参数，自动创建长度为0的流。
 
++ **查看消费者组**
+
+```bash
+XINFO GROUPS key
+```
+
 + **删除消费者组**
 
 ```bash

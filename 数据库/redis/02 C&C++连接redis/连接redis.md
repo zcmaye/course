@@ -22,7 +22,7 @@ cd hiredis
 > openssl需要安装，[下载安装包](https://slproweb.com/download/Win64OpenSSL-3_3_1.exe)安装即可，在安装目录就有头文件和库文件目录
 
 ```sh
-cmake -B build
+cmake -B build --install-prefix "F:/Tools/hiredis"
 ```
 
 编译并安装(必须以管理员权限打开终端哟~)
@@ -680,7 +680,7 @@ cd redis-plus-plus
 > 打开CMakeLists.txt文件，把cmake_minimum_required(VERSION 3.10)命令，版本号改为3.5以上版本即可。
 
 ```sh
-cmake -B build -DCMAKE_PREFIX_PATH="F:\Tools\hiredis"
+cmake -B build -DCMAKE_PREFIX_PATH="F:\Tools\hiredis" -DREDIS_PLUS_PLUS_BUILD_TEST=OFF --install-prefix "F:/Tools/redis++"
 ```
 
 编译并安装(必须以管理员权限打开终端哟~)
@@ -694,4 +694,326 @@ cmake --build build --target INSTALL
 
 库的安装位置如下图所示，可以自己把redis++目录剪切到其他位置。
 
-![image-20240731235318729](assets/image-20240731235318729.png)
+![image-20251108133725838](./assets/image-20251108133725838.png)
+
+## 环境配置
+
+### cmake
+
+CMakeLists.txt
+
+```cmake
+cmake_minimum_required (VERSION 3.10)
+
+project ("test_redispp")
+
+# 设置C++标准
+set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# 查找hiredis和redis++库
+find_package (hiredis REQUIRED)
+find_package (redis++ REQUIRED)
+
+# 将源代码添加到此项目的可执行文件。
+add_executable (${PROJECT_NAME} "test_redis++.cpp" )
+
+target_link_libraries(${PROJECT_NAME} hiredis::hiredis redis++::redis++)
+```
+
+main.cpp
+
+```cpp
+#include "sw/redis++/redis++.h"
+...
+```
+
+## 库使用
+
+### 连接
+
+```cpp
+// 此时不会建立实际连接
+sw::redis::Redis redis("tcp://192.168.248.128:6379");
+```
+
+注意：它在创建Redis对象时并不会立即连接，而是在第一次操作时进行连接。但是，我们可能需要确保连接是成功的，或者在某些情况下，我们希望在第一次使用前就建立连接。不过，根据sw::redis的设计，它是惰性连接，所以我们可以通过执行一个命令来触发连接，比如AUTH或PING。
+
+```cpp
+// 第一次执行命令时才真正连接
+redis.command("AUTH","123456");
+```
+
+注意：由于连接可能会失败，所以我们需要处理异常。
+
+验证示例：
+
+```cpp
+	try {
+		sw::redis::Redis redis("tcp://192.168.248.128:6379");
+
+		redis.command("AUTH","123456");
+
+		printf("连接成功~\n");
+	}
+	catch (const std::exception& e) {
+		printf("connect error: %s\n", e.what());
+	}
+```
+
+### 发送命令
+
+#### Redis::command
+
+我们可以使用通用的 Redis::command 方法向 Redis 发送任何命令。与其他客户端库不同，Redis::command 不使用格式字符串将命令参数组合成命令字符串。相反，您可以直接将 StringView 类型或算术类型的命令参数作为 Redis:：command 的参数传递。
+
+##### 返回ReplyUPtr
+
+默认的`command`函数返回一个`ReplyUPtr`指针，该指针只是对hiredis中`redisReply*`的简单包装，如下所示：
+
+```cpp
+struct ReplyDeleter {
+    void operator()(redisReply *reply) const {
+        if (reply != nullptr) {
+            freeReplyObject(reply);
+        }
+    }
+};
+
+using ReplyUPtr = std::unique_ptr<redisReply, ReplyDeleter>;
+```
+
+也就是说`ReplyUPtr`本质上是一个`std::unique_ptr`指针，只不过库实现了删除器而已，这样就能自动销毁Reply对象了！
+
+###### 执行命令
+
+```cpp
+try{
+    ...
+    //如果有错误会抛异常，所以不用判断返回值
+	redis.command("SET", "age", 18);
+
+	//有错误抛异常，正常返回才需要获取值
+	sw::redis::ReplyUPtr reply = redis.command("GET", "age");
+	printf("Reply: %s\n", reply->str);
+}
+...
+```
+
+###### 获取结果
+
+为了方便获取结果，我们可以使用库提供的一些函数，而不用自己通过访问reply来获取结果。
+
+对于**返回单个值**的命令，可以使用`reply::parse<T>(redisReply&)` 来解析reply。
+
+对于**返回数组的**命令，可以使用`void to_array(redisReply &reply, Output output) `来解析reply。
+
++ 结果是字符串
+
+```cpp
+		auto val = sw::redis::reply::parse<sw::redis::OptionalString>(*reply);
+		if (val)
+			std::cout << std::format("Reply: {}\n", *val) << std::endl;
+```
+
+如果key不存在，返回值是nil，所以必须使用OptionalString类型。不存在时val就不存在值，存在就返回key的值。
+
++ 结果是整型
+
+```cpp
+		reply = redis.command("INCRBY", "age", 2);
+		auto num = sw::redis::reply::parse<long long>(*reply);
+		std::cout << std::format("Reply: {}\n", num) << std::endl;
+```
+
+获取结果的类型必须是`long long`，不能是其他类型。
+
++ 结果是浮点型
+
+```cpp
+		reply = redis.command("INCRBYFLOAT", "age", 0.5);
+		auto real= sw::redis::reply::parse<double>(*reply);
+		std::cout << std::format("Reply: {}\n", real) << std::endl;
+```
+
+获取结果的类型必须是`double`，不能是其他类型。
+
++ 结果是数组
+
+```cpp
+		reply = redis.command("KEYS", "*");
+		std::vector<sw::redis::OptionalString> keys;
+		sw::redis::reply::to_array(*reply,std::back_inserter(keys));
+		for (auto& val : keys) {
+			if(val)
+				std::cout << std::format("key: {} ", *val) << std::endl;
+		}
+```
+
++ 结果是map(比如HGETALL的返回结果)
+
+```cpp
+		redis.command("HSET", "user:1000", "name", "Tom", "age", 20);
+
+		reply = redis.command("HGETALL", "user:1000");
+		std::unordered_map<std::string, std::optional<std::string>> user_100;
+		sw::redis::reply::to_array(*reply, std::inserter(user_100, user_100.begin()));
+		for (auto& v : user_100) {
+			std::cout << std::format("key: {}, value: {}\n", v.first, *v.second) << std::endl;
+		}
+```
+
++ command函数的参数还可以是一个字符串区间。
+
+```cpp
+		auto cmd_strs = {"GET","age"};
+		reply = redis.command(cmd_strs.begin(), cmd_strs.end());
+		val = sw::redis::reply::parse<sw::redis::OptionalString>(*reply);
+		if(val)
+			std::cout<< std::format("Reply: {}\n", *val) << std::endl;
+```
+
+##### 返回结果
+
+使用函数能很方便的从reply中获取结果，但是还是不太方便，所以redis++库还提供了`command`重载版本，能直接返回结果！更加方便了！
+
+```cpp
+void test_command() {
+
+	try {
+		sw::redis::Redis redis("tcp://192.168.248.128:6379");
+
+		redis.command("AUTH", "123456");
+
+		printf("连接成功~\n");
+
+		//结果为字符串
+		auto val = redis.command<sw::redis::OptionalString>("GET", "age");
+		if (val) {
+			std::cout << std::format("Reply: {}", *val) << std::endl;
+		}
+
+		//结果为浮点数
+		auto num = redis.command<double>("INCRBYFLOAT", "age", 0.5);
+		std::cout << std::format("Reply: {}", num) << std::endl;
+
+		//结果为数组
+		auto keys = redis.command<std::vector<sw::redis::OptionalString>>("KEYS", "*");
+		for (auto& key : keys) {
+			if (key) {
+				std::cout << std::format("key: {}", *key) << std::endl;
+			}
+		}
+
+		//结果为数组(map解析为键值对)
+		auto user_1000 = redis.command<std::unordered_map<std::string, std::optional<std::string>>>("HGETALL", "user:1000");
+		for (auto& [key, value] : user_1000) {
+			std::cout << std::format("key: {}, value: {}", key, *value) << std::endl;
+		}
+
+	}
+	catch (const std::exception& e) {
+		printf("connect error: %s\n", e.what());
+	}
+}
+```
+
+#### 专属命令
+
+redis++提供了大量的命令函数，就是把命令包成了函数，能在编写代码时更方便。
+
+所有命令都在`redis++\include\sw\redis++\redis.h`头文件中。
+
+##### server命令
+
+服务器相关命令大概从`218`行开始。
+
+##### key命令
+
+键相关的命令大概从`264`行开始。
+
+##### string命令
+
+字符串相关的命令大概从`626`行开始。
+
+##### list命令
+
+列表相关的命令大概从`1001`行开始。
+
+##### hash命令
+
+哈希表相关的命令大概从`1423`行开始。
+
+##### set命令
+
+集合相关的命令大概从`1795`行开始。
+
+##### zset命令
+
+有序集合相关的命令大概从`2140`行开始。
+
+##### BitMap命令
+
+位图相关的命令大概从`642`行开始。
+
+##### HyperLogLog命令
+
+基数统计相关的命令大概从`3125`行开始。
+
+##### Geospatial命令
+
+地理空间相关的命令大概从`3188`行开始。
+
+##### Stream命令
+
+流相关的命令大概从`3482`行开始。
+
+##### Scripting命令
+
+lua脚本相关的命令大概从`3331`行开始。
+
+##### pub/sub命令
+
+订阅发布模式相关的命令大概从`3463`行开始。
+
+##### Transaction命令
+
+事务相关的命令大概从`3469`行开始。
+
+## 连接池
+
+### 使用连接选项创建连接
+
+除了前面直接在`sw::redis::Redis`类的构造函数中，指定连接url之外，还可以通过连接选项指定连接信息。
+
+```cpp
+sw::redis::Redis redis("tcp://192.168.248.128:6379");
+```
+
+通过连接选项连接。
+
+```cpp
+sw::redis::ConnectionOptions con_options;
+con_options.host = "192.168.248.128";
+con_options.port = 6379;
+con_options.password = "123456";
+con_options.db = 0;
+con_options.connect_timeout = std::chrono::seconds(6);
+auto redis = std::make_shared<sw::redis::Redis>(m_con_options);
+```
+
+### 指定连接池选项
+
+```cpp
+using namespace std::chrono;
+sw::redis::ConnectionPoolOptions pool_options;
+pool_options.size =  8;
+pool_options.wait_timeout = 10s;
+pool_options.connection_idle_time = 10min;
+pool_options.connection_lifetime = 10min;
+auto redis = std::make_shared<sw::redis::Redis>(con_options, pool_options);
+```
+
+指定连接池选项之后，后续就可以在多线程总使用redis，它内部会维护一个连接池，每次执行命令时，会自动从连接池中获取一个连接。
+
+> 创建一个 `Redis` 对象并不便宜，因为它将创建到Redis服务器的新连接。因此，您最好尽可能重用 `Redis` 对象。同时，在多线程环境中调用 `Redis` '成员函数是安全的，并且可以在多线程中共享 `Redis` 对象。

@@ -98,6 +98,8 @@ int main(void)
 
 ```c
 #include "raylib.h"
+//下面这行代码可以去掉控制台窗口
+#pragma comment(linker,"/subsystem:windows /entry:mainCRTStartup")
 ```
 
 首先，包含raylib.h头文件。

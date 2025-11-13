@@ -1,6 +1,6 @@
 # CMake使用
 
-## 1 hello-cmake
+## hello-cmake
 
 对于简单的项目，只需要一个三行`CMakeLists.txt`文件即可。
 
@@ -69,27 +69,11 @@ cmake --build . --target INSTALL	#安装
 
 ![image-20220425004049921](assets/image-20220425004049921.png)
 
-## 2 直译和非直译模式
+## CMake基础
 
-直译模式简单解释就是不生成Makefile的模式。这很方便我们验证一些CMakeLists.txt的语法及验证一些数学运算等。
+先来学习cmake基本语法。
 
-**直译模式(Process script mode)：**
-
-输入 **-P 参数**指定CMakeLists.txt脚本以直译模式解析(不需要C/C++源文件)。其中，message是CMakeLists.txt中用于输出信息的命令。以直译模式解析就不会生成Makefile文件，并且终端输出的信息就是我们CMakeLists.txt指定输出的内容。
-
-![image-20220425014201032](assets/image-20220425014201032.png)
-
-**非直译模式(正常模式):**
-
-以非直译模式解析则会生成Makefile文件，并且终端多输出了一些核查编译器相关的信息。
-
-```shell
-cmake  .\CMakeLists.txt -G "MinGW Makefiles" -B build
-```
-
-![image-20220425014947505](assets/image-20220425014947505.png)
-
-## 3 message命令
+### 日志输出-message
 
 message命令用于在生成和构建过程中输出信息。
 
@@ -115,11 +99,11 @@ message([<mode>] "message text" ...)
 >
 > 消息前缀都以`CMAKE_MESSAGE_INDENT `变量中的内容作为前缀，可以通过set命令来设置它，例如：`set(CMAKE_MESSAGE_INDENT "HDY: ")`
 
-## 4  CMake变量
+### 变量-set
 
 变量是CMake语言的最基本的存储单元。变量的值始终为**字符串类型**，尽管一些命令将会将其理解为其他类型的值。命令`set()`和`unset()`用于显式地设置或重置一个变量。变量名是区分大小写的、命名规范建议和编程语言一致。
 
-### 自定义变量
+#### 自定义变量
 
 通过命令`Set`可一个普通、缓存和环境变量的值。语法格式：
 
@@ -137,7 +121,7 @@ unset(<variable>)
 
 访问一个值，格式`${<variable>}`。使用起来较复杂（美元符号+大括号包裹要使用的变量名）
 
-### 系统变量
+#### 系统变量
 
 cmake常用系统变量：
 
@@ -153,7 +137,7 @@ cmake常用系统变量：
 
 
 
-#### 平台相关变量
+##### 平台相关变量
 
 | 变量                 | 解释                                                     |
 | -------------------- | -------------------------------------------------------- |
@@ -163,7 +147,7 @@ cmake常用系统变量：
 | CMAKE_SIZEOF_VOID_P  | void指针的大小。 x64位8个字节，x32位4个字节              |
 | CMAKE_BUILD_TYPE     | 构建类型（Release、Debug、MinSizeRel 或 RelWithDebInfo） |
 
-#### 编译器相关变量
+##### 编译器相关变量
 
 查看编译器相关属性，<LANG>是C、CXX、OBJC、OJBCXX
 
@@ -172,7 +156,7 @@ cmake常用系统变量：
 | CMAKE\_<LANG>\_COMPILER_ID      | 编译器标识字符串。如：GUN 、MSVC<br> <font style="font:normal 12px gray">不保证为所有编译器或语言定义此变量</font> |
 | CMAKE\_<LANG>\_COMPILER_VERSION | 编译器版本 如：7.3.0                                         |
 
-#### 编译相关变量
+##### 编译相关变量
 
 | 变量               | 解释                                                         |
 | ------------------ | ------------------------------------------------------------ |
@@ -184,7 +168,7 @@ cmake常用系统变量：
 | CMAKE_C_STANDARD   | 指定C标准 如： C11                                           |
 | CMAKE_CXX_STANDARD | 指定C++标准 如：C++11 C++17 C++20                            |
 
-#### 输出目录变量
+##### 输出目录变量
 
 设置一下变量，可以改变对应的输出目录。如：`SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")`
 
@@ -194,7 +178,7 @@ cmake常用系统变量：
 | CMAKE_ARCHIVE_OUTPUT_DIRECTORY | 动态库文件目录 |
 | CMAKE_LIBRARY_OUTPUT_DIRECTORY | 可执行文件目录 |
 
-#### 项目相关变量
+##### 项目相关变量
 
 project命令中指定的参数可以通过以下变量查看。如：`project(var VERSION 0.1.0.1 DESCRIPTION "My First project" HOMEPAGE_URL "www.maye.com")`
 
@@ -212,7 +196,7 @@ project命令中指定的参数可以通过以下变量查看。如：`project(v
 | PROJECT_IS_TOP_LEVEL  | 是否是顶级项目(不是子项目)  ON/OFF |
 | PROJECT_NAME          | 项目名                             |
 
-#### 安装相关变量
+##### 安装相关变量
 
 | 变量 | 解释 |
 | ---- | ---- |
@@ -226,9 +210,9 @@ project命令中指定的参数可以通过以下变量查看。如：`project(v
 |CMAKE_INSTALL_RPATH||
 |CMAKE_INSTALL_RPATH_USE_LINK_PATH||
 
-## 5 条件判断
+### 分支-if
 
-### 基本语法
+#### 语法
 
 ```cmake
 if(条件)
@@ -240,31 +224,16 @@ else()
 endif()
 ```
 
-if、endif必须要有，其他的可有可无。
++ if()、endif()是必须的，不能缺少。
++ 所有的条件都可以用在`if`,`elseif`中。
 
-### 条件语法
-
-所有的条件都可以用在`if`,`elseif`和`while()`中。
-
-复合条件优先顺序：
-
-+ 括号。
-
-+ 一元测试，例如EXISTS、COMMAND和DEFINED。
-
-+ 二进制测试，例如EQUAL、LESS、LESS_EQUAL、GREATER、 GREATER_EQUAL、STREQUAL、STRLESS、STRLESS_EQUAL、 STRGREATER、STRGREATER_EQUAL、VERSION_EQUAL、VERSION_LESS、 VERSION_LESS_EQUAL、VERSION_GREATER、VERSION_GREATER_EQUAL和MATCHES。
-
-+ 一元逻辑运算符NOT。
-
-+ 二元逻辑运算符AND和OR，从左到右，没有任何短路。
-
-### 基本表达式
+#### 基本表达式
 
 ```cmake
 if(<constant>)
 ```
 
-如果常数是`1`, `ON`, `YES`, `TRUE`,`Y`或非零数（包括浮点数），则为真。False 如果常量是`0`, `OFF`, `NO`, `FALSE`, `N`, `IGNORE`, `NOTFOUND`, 空字符串，或者以`-NOTFOUND`后缀结尾。命名布尔常量不区分大小写。如果参数不是这些特定常量之一，则将其视为变量或字符串（请参阅下面的[变量扩展](https://cmake.org/cmake/help/latest/command/if.html?highlight=#variable-expansion) ），并适用以下两种形式之一。
+如果常数是`1`, `ON`, `YES`, `TRUE`,`Y`或非零数（包括浮点数），则为真。False 如果常量是`0`, `OFF`, `NO`, `FALSE`, `N`, `IGNORE`, `NOTFOUND`, 空字符串，或者以`-NOTFOUND`后缀结尾。命名布尔常量不区分大小写。如果参数不是这些特定常量之一，则将其视为变量或字符串，并适用以下两种形式之一。
 
 ```cmake
 if(<variable>)
@@ -282,17 +251,44 @@ if(<string>)
 + “123”  为true     123为常量
 + "YES" 为true      YES为常量
 
-### 运算符
+#### 比较运算符
 
-逻辑运算符
+##### 数值比较
+
+| 运算符        | 描述                                                         |
+| ------------- | ------------------------------------------------------------ |
+| GREATER       | 如果给定的字符串或变量的值是有效数字并且大于右边的数字，则为真 |
+| LESS          | 如果给定字符串或变量的值是有效数字且小于右侧的数字，则为真   |
+| EQUAL         | 如果给定字符串或变量的值是有效数字并且等于右侧的数字，则为真 |
+| LESS_EQUAL    | *3.7 版新功能：*如果给定字符串或变量的值是有效数字且小于或等于右侧的数字，则为真。 |
+| GREATER_EQUAL | *3.7 新版功能：*如果给定字符串或变量的值是有效数字并且大于或等于右侧的数字，则为真。 |
+
+##### 字符串比较
+
+| 运算符           | 描述                                                         |
+| ---------------- | ------------------------------------------------------------ |
+| STRLESS          | 如果给定字符串或变量的值按字典顺序小于右侧的字符串或变量，则为真 |
+| STRGREATER       | 如果给定字符串或变量的值按字典顺序大于右侧的字符串或变量，则为真。 |
+| STREQUAL         | 如果给定字符串或变量的值在字典上等于右侧的字符串或变量，则为真。 |
+| STRLESS_EQUAL    | *3.7 版中的新功能：*如果给定字符串或变量的值按字典顺序小于或等于右侧的字符串或变量，则为真。 |
+| STRGREATER_EQUAL | *3.7 新版功能：*如果给定字符串或变量的值在字典上大于或等于右侧的字符串或变量，则为真。 |
+| MATCHES          | 如果给定的字符串或变量的值与给定的正则表达式匹配，则为真     |
+
+##### 路径比较
+
+| 运算符     | 描述                                                         |
+| ---------- | ------------------------------------------------------------ |
+| PATH_EQUAL | 按字典顺序逐个组件比较两个CMake路径 访问文件系统。只有当两个路径的每个组件都匹配时才会 两条路径比较起来相等。 |
+
+
+
+#### 逻辑运算符
 
 | 运算符 | 案例           | 描述                                     |
 | ------ | -------------- | ---------------------------------------- |
 | NOT    | if(NOT YES)    | 如果条件不为真，则为真。                 |
 | AND    | if(YES AND NO) | 如果两个条件都被单独认为是真的，则为真。 |
 | OR     | if(YES OR NO)  | 如果任一条件单独被认为是真的，则为真。   |
-
-+ 复杂的逻辑表达式：`if((condition) AND (condition OR (condition)))`
 
 #### 存在性检查
 
@@ -302,21 +298,18 @@ if(<string>)
 | TARGET  | if(TARGET hello_camke)      | 如果给定名称是由调用创建的现有逻辑目标名称，则为真[`add_executable()`](https://cmake.org/cmake/help/latest/command/add_executable.html#command:add_executable),[`add_library()`](https://cmake.org/cmake/help/latest/command/add_library.html#command:add_library)， 或者[`add_custom_target()`](https://cmake.org/cmake/help/latest/command/add_custom_target.html#command:add_custom_target)已经调用的命令（在任何目录中）。 |
 | IN_LIST | if(hello IN_LIST TEST_LIST) | *3.3 新版功能：*如果给定元素包含在命名列表变量中，则为真。   |
 
-#### 比较运算符
+#### 文件操作
 
-| 运算符           | 案例 | 描述                                                         |
-| ---------------- | ---- | ------------------------------------------------------------ |
-| MATCHES          |      | 如果给定的字符串或变量的值与给定的正则表达式匹配，则为真     |
-| LESS             |      | 如果给定字符串或变量的值是有效数字且小于右侧的数字，则为真   |
-| GREATER          |      | 如果给定的字符串或变量的值是有效数字并且大于右边的数字，则为真 |
-| EQUAL            |      | 如果给定字符串或变量的值是有效数字并且等于右侧的数字，则为真 |
-| LESS_EQUAL       |      | *3.7 版新功能：*如果给定字符串或变量的值是有效数字且小于或等于右侧的数字，则为真。 |
-| GREATER_EQUAL    |      | *3.7 新版功能：*如果给定字符串或变量的值是有效数字并且大于或等于右侧的数字，则为真。 |
-| STRLESS          |      | 如果给定字符串或变量的值按字典顺序小于右侧的字符串或变量，则为真 |
-| STRGREATER       |      | 如果给定字符串或变量的值按字典顺序大于右侧的字符串或变量，则为真。 |
-| STREQUAL         |      | 如果给定字符串或变量的值在字典上等于右侧的字符串或变量，则为真。 |
-| STRLESS_EQUAL    |      | *3.7 版中的新功能：*如果给定字符串或变量的值按字典顺序小于或等于右侧的字符串或变量，则为真。 |
-| STRGREATER_EQUAL |      | *3.7 新版功能：*如果给定字符串或变量的值在字典上大于或等于右侧的字符串或变量，则为真。 |
+| 运算符        | 描述                                                         | 示例                                                         |
+| ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| EXISTS        | 如果指定的文件或目录存在并且可读，则为True。                 | if(EXISTS "F:/MyCode/test_code/test_cmake/src/01 message/CMakeLists.txt") |
+| IS_READABLE   | 如果指定的文件或目录可读，则为True。                         | if(IS_READABLE "F:/MyCode/test_code/test_cmake/src/01 message/CMakeLists.txt") |
+| IS_WRITABLE   | 如果指定的文件或目录是可写的，则为True                       |                                                              |
+| IS_EXECUTABLE | 如果指定的文件或目录是可执行的，则为True                     |                                                              |
+| IS_NEWER_THAN | 如果file1比file2更新，则为True 存在（如果文件时间戳完全相同，返回比较 True） |                                                              |
+| IS_DIRECTORY  | 如果是目录，则为True                                         |                                                              |
+| IS_SYMLINK    | 如果给定的路径是符号链接，则为True                           |                                                              |
+| IS_ABSOLUTE   | 如果给定的路径是绝对路径，则为True。                         |                                                              |
 
 #### 版本比较
 
@@ -388,13 +381,13 @@ endif()
 
 
 
-## 6 循环
+## 循环
 
 [list](https://cmake.org/cmake/help/latest/command/list.html?highlight=list)
 
 CMake中有两种循环(`foreach`和`while`)可以使用，支持`break`和`continue`流程控制语句。
 
-### 6.1 foreach循环
+### foreach循环
 
 ```cmake
 foreach(<loop_var> <items>)
@@ -465,7 +458,7 @@ foreach(pair IN ZIP_LISTS A B)
 endforeach()
 ```
 
-### 6.2 while循环
+### while循环
 
 ```cmake
 while(<condition>)
@@ -485,7 +478,7 @@ endwhile()
 
 
 
-## 7 函数
+## 函数
 
 ### 相关变量
 
@@ -496,11 +489,11 @@ endwhile()
 | CMAKE_CURRENT_FUNCTION_LIST_FILE | 此变量包含定义当前函数的CMakeLists文件的完整路径       |
 | CMAKE_CURRENT_FUNCTION_LIST_LINE | 此变量包含定义当前函数的列表文件中的行号。             |
 
-## 8 文件操作
+## 文件操作
 
 文件操作命令`file`，这个命令专用于需要访问文件系统的文件和路径操作。  对于其他仅处理语法方面的路径操作，请查看cmake_path()命令。
 
-### 8.1 读文件
+### 读文件
 
 + 读取二进制/文本文件
 
@@ -540,7 +533,7 @@ file(STRINGS <filename> <variable> [<options> ...])
 
 
 
-### 8.2 写文件
+### 写文件
 
 ```cmake	
 file(WRITE <filename> <content>...)
@@ -566,7 +559,7 @@ file(APPEND <filename> <content>...)
 
 
 
-## 8 定义宏
+## 定义宏
 
 我们可以再cmake中定义宏，以便再C/C++代码中使用。
 
@@ -582,13 +575,13 @@ add_compile_definitions(<definition> ...)
 target_compile_definitions(<target>）
 ```
 
-## 9 生成库和使用库
+## 生成库和使用库
 
-## 10 安装
+## 安装
 
 所谓安装，起就是把我们需要的文件复制到指定位置，方便使用。
 
-### 10.1 安装目标
+### 安装目标
 
 ```cmake
 install(TARGETS targets... [DESTINATION <dir>])
@@ -600,13 +593,13 @@ install(TARGETS targets... [DESTINATION <dir>])
 
 
 
-## 10 模块
+## 模块
 
 [find_package()函数](https://blog.csdn.net/fb_941219/article/details/88526157)
 
 [如何将CMAKE_MODULE_PATH设置为在CMake中进行常规构建和源代码外构建？](https://cloud.tencent.com/developer/ask/sof/193478)
 
-## 12 列表(list)
+## 列表(list)
 
 list是一个由`;`分隔的字符串组。可以使用set命令创建列表。例如，set(var a b c d e)创建一个包含a;b;c;d;e的列表，而set(var "a b c d e")创建一个字符串或包含一项的列表。
 
@@ -802,7 +795,7 @@ list(TRANSFORM <list> <ACTION> REGEX <regular_expression> ...)
 
   + **DESCENDING：**按降序排序。
 
-## 13 生成器表达式
+## 生成器表达式
 
 https://blog.csdn.net/u012156872/article/details/121605642
 

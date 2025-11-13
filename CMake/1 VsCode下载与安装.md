@@ -312,6 +312,68 @@ InstalledDir: /Library/Developer/CommandLineTools/usr/bin
 
 ### Linux
 
++ 下载linux版本的cmake
+
+![image-20251113131306216](./assets/image-20251113131306216.png)
+
+直接使用如下命令下载：
+
+```BASH
+wget https://github.com/Kitware/CMake/releases/download/v4.2.0-rc3/cmake-4.2.0-rc3-linux-x86_64.sh
+```
+
++ 下载之后授权执行权限
+
+```bash
+chmod u+x cmake-4.2.0-rc3-linux-x86_64.sh
+```
+
++ 然后运行脚本
+
+```bash
+sudo ./cmake-4.2.0-rc3-linux-x86_64.sh --prefix=/usr/local
+```
+
++ 然后会进入超长的一个`协议阅读`，按住`Enter（回车键）`即可，最后会提示`是否接受`如下：输入`y`即可`接受`
+
+```bash
+  Do you accept the license? [yn]: 
+接受协议`后，会有一个安装路径的`提示`,如果选y，那么默认安装路径为`"/usr/local/cmake-4.2.0-rc3-linux-x86_64"`，选择`n`则会使用我们`自定义`的路径`"/usr/local"`安装，这里我们选`n
+By default the CMake will be installed in:
+  "/usr/local/cmake-4.2.0-rc3-linux-x86_64"
+Do you want to include the subdirectory cmake-4.2.0-rc3-linux-x86_64?
+Saying no will install in: "/usr/local" [Yn]:
+```
+
++ 然后会出现提示`Unpacking finished successfully`为安装成功
+
+```bash
+Using target directory: /usr/local
+Extracting, please wait...
+Unpacking finished successfully
+```
+
++ 使用命令`验证cmake`版本
+
+```bash
+cmake --version
+```
+
+返回值如下
+
+```bash
+cmake version 4.2.0-rc3
+
+CMake suite maintained and supported by Kitware (kitware.com/cmake).
+```
+
+> linux一般是使用windows远程开发，所以必须先安装好openssh服务：
+>
+> ```bash
+> sudo apt update
+> sudo apt install openssh-server
+> ```
+
 ## 3.3 基本使用
 
 还是用前面创建的helloworld项目，先在`main.c`同级目录中创建`CMakeLists.txt`并写入如下cmake指令。

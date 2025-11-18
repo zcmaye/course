@@ -321,31 +321,7 @@ if(<string>)
 | VERSION_LESS_EQUAL    |      | *3.7 版中的新功能：*同上                                     |
 | VERSION_GREATER_EQUAL |      | *3.7 版中的新功能：*同上                                     |
 
-### 变量扩展
-
-if 命令是在 CMake 历史的早期编写的，早于 ${} 变量评估语法，并且为方便起见，评估由其参数命名的变量，如上述签名所示。 请注意，使用 ${} 的正常变量评估在 if 命令甚至接收参数之前应用。 因此像这样的代码
-
-```cmake
-set(var1 OFF)
-set(var2 "var1")
-if(${var2})
-```
-
-if命令显示为
-
-```cmake
-if(var1)
-```
-
-和根据上面记录的if(<variable>)情况进行计算。 结果是OFF，即false。 但是，如果我们从示例中删除${}，命令就会看到
-
-```cmake
-if(var2)
-```
-
-这是true，因为var2被定义为var1，而var1不是false常数。  
-
-### 案例
+#### 案例
 
 + 判断构建平台
 
@@ -378,226 +354,6 @@ else(x64)
     message(STATUS "x64")
 endif()
 ```
-
-
-
-## 循环
-
-[list](https://cmake.org/cmake/help/latest/command/list.html?highlight=list)
-
-CMake中有两种循环(`foreach`和`while`)可以使用，支持`break`和`continue`流程控制语句。
-
-### foreach循环
-
-```cmake
-foreach(<loop_var> <items>)
-  	<commands>
-endforeach()
-```
-
-<items>是由分号或空格分隔的item列表；在每次迭代开始时，变量<loop_var>将被设置为当前项的值。  
-
-+ 遍历列表
-
-```cmake
-foreach(num 1 2 3 4)
-    message(STATUS ${num})
-endforeach()
-#或
-set(num_list 1 2 3 4)
-foreach(num ${num_list})
-    message(STATUS ${num})
-endforeach()
-```
-
-+ `foreach(<loop_var> RANGE <stop>)`，从0遍历到stop(包含stop)
-
-```cmake
-foreach(num RANGE 10)
-    message(STATUS ${num})
-endforeach()
-```
-
-+ `foreach(<loop_var> RANGE <start> <stop> [<step>])`，从start遍历到stop，步长为step，如果不指定step则为1
-
-```cmake
-foreach(num RANGE 0 100 10)
-    message(STATUS ${num})
-endforeach()
-```
-
-+ `foreach(<loop_var> IN [LISTS [<lists>]] [ITEMS [<items>]])`
-
-```CMAKE
-#遍历lists列表中的项
-set(my_list "hello" "world" "maye")
-foreach(num IN LISTS my_list)
-    message(STATUS ${num})
-endforeach()
-#直接指定项items
-foreach(num IN ITEMS "顽石" "九夏" "莫影")
-    message(STATUS ${num})
-endforeach()
-```
-
-+ `foreach(<loop_var> ... IN ZIP_LISTS <lists>)`，3.17版本引入，组合多个列表一起遍历，如果指定的2多个列表项目数量不相等，项数少的，在loop_var中的值为空值。
-
-```cmake
-set(A 1 2 3 4)
-set(B 'hello' 'world')
-#方式一
-foreach(a b IN ZIP_LISTS A B)
-    message(STATUS "${a}   ${b}")
-endforeach()
-#方式二
-foreach(pair IN ZIP_LISTS A B)
-     message(STATUS "${pair_0}  ${pair_1}")
-     if(pair_1)	#判断是不是空值
-     	message(STATUS "paie_1 is NULL");
-     endif()
-endforeach()
-```
-
-### while循环
-
-```cmake
-while(<condition>)
-	<commands>
-endwhile()
-```
-
-<condition>为true时，就执行命令列表<commands>
-
-```cmake
-set(i 0)
-while(i LESS 10)
-	message(STATUS "i is ${i}")
-	math(EXPR i "${i} + 1")
-endwhile()
-```
-
-
-
-## 函数
-
-### 相关变量
-
-| 变量                             | 描述                                                   |
-| -------------------------------- | ------------------------------------------------------ |
-| CMAKE_CURRENT _FUNCTION          | 此变量包含当前函数的名称。它对于诊断或调试消息很有用。 |
-| CMAKE_CURRENT_FUNCTION_LIST_DIR  | 此变量包含定义当前函数的CMakeLists文件的完整目录       |
-| CMAKE_CURRENT_FUNCTION_LIST_FILE | 此变量包含定义当前函数的CMakeLists文件的完整路径       |
-| CMAKE_CURRENT_FUNCTION_LIST_LINE | 此变量包含定义当前函数的列表文件中的行号。             |
-
-## 文件操作
-
-文件操作命令`file`，这个命令专用于需要访问文件系统的文件和路径操作。  对于其他仅处理语法方面的路径操作，请查看cmake_path()命令。
-
-### 读文件
-
-+ 读取二进制/文本文件
-
-```cmake
-file(READ <filename> <variable> [OFFSET <offset>] [LIMIT <max-in>] [HEX])
-```
-
-从名为<filename>的文件中读取内容，并将其存储在<variable>中。 可选地从给定的<offset>(文件位置指针从0开始)开始，最多读取<max-in>字节。 HEX选项将数据转换为十六进制表示(对二进制数据很有用)。 如果指定了HEX选项，输出中的字母(a到f)都是小写的。  
-
-+ 读取文本文件
-
-```cmake
-file(STRINGS <filename> <variable> [<options> ...])
-```
-
-解析来自<filename>的ASCII字符串列表，并将其存储在<variable>中。 忽略文件中的二进制数据。 忽略回车(\r, \n)字符。 选项有:  [选项列表](#2 file命令选项表)
-
-#### 其他
-
-+ 对文件内容进行哈希
-
-  ```cmake
-  file(<HASH> <filename> <variable>)
-  ```
-
-+ 获取文件修改的时间
-
-  ```cmake
-  file(TIMESTAMP <<filename> <variable>)
-  ```
-
-  计算<filename>的修改时间的字符串表示，并将其存储在<变量>中。如果该命令无法获取时间戳变量，则将其设置为空字符串("")。
-
-+ 递归地获得给定文件所依赖的库列表。
-
-  + 未测试
-
-
-
-### 写文件
-
-```cmake	
-file(WRITE <filename> <content>...)
-file(APPEND <filename> <content>...)
-```
-
-将<content>写入名为<filename>的文件。 如果该文件不存在，则创建该文件。 如果文件已经存在，WRITE模式将覆盖它，APPEND模式将追加到文件的末尾。 <filename>指定的路径中不存在的任何目录将被创建。  
-
-如果该文件是一个构建输入，则仅在其内容更改时使用configure_file()命令更新该文件。
-
-+ 触摸文件
-
-  ```cmake
-  file(TOUCH [<files>...])
-  file(TOUCH_NOCREATE [<files>...])
-  ```
-
-  **TOUCH：**如果文件不存在，则创建。如果文件已经存在，它的访问和/或修改将被更新到函数调用执行时。
-
-  **TOUCH_NOCREATE：**触摸一个文件，如果它存在，它的访问和/或修改将被更新到函数调用执行时。如果文件不存在，它将被无声地忽略(啥也不做)。
-
-  > 使用TOUCH和TOUCH_NOCREATE，现有文件的内容将不会被修改。
-
-
-
-## 定义宏
-
-我们可以再cmake中定义宏，以便再C/C++代码中使用。
-
-+ 添加宏定义
-
-```cmake
-add_compile_definitions(<definition> ...)
-```
-
-+ 给目标添加宏定义：名称`<target>`必须是由命令创建的，例如 `add_executable()`或者`add_library()`并且不能是 ALIAS 目标。
-
-```cmake
-target_compile_definitions(<target>）
-```
-
-## 生成库和使用库
-
-## 安装
-
-所谓安装，起就是把我们需要的文件复制到指定位置，方便使用。
-
-### 安装目标
-
-```cmake
-install(TARGETS targets... [DESTINATION <dir>])
-```
-
-
-
-
-
-
-
-## 模块
-
-[find_package()函数](https://blog.csdn.net/fb_941219/article/details/88526157)
-
-[如何将CMAKE_MODULE_PATH设置为在CMake中进行常规构建和源代码外构建？](https://cloud.tencent.com/developer/ask/sof/193478)
 
 ## 列表(list)
 
@@ -795,9 +551,349 @@ list(TRANSFORM <list> <ACTION> REGEX <regular_expression> ...)
 
   + **DESCENDING：**按降序排序。
 
+## 循环
+
+[list](https://cmake.org/cmake/help/latest/command/list.html?highlight=list)
+
+CMake中有两种循环(`foreach`和`while`)可以使用，支持`break`和`continue`流程控制语句。
+
+### foreach循环
+
+```cmake
+foreach(<loop_var> <items>)
+  	<commands>
+endforeach()
+```
+
+<items>是由分号或空格分隔的item列表；在每次迭代开始时，变量<loop_var>将被设置为当前项的值。  
+
++ 遍历列表
+
+```cmake
+foreach(num 1 2 3 4)
+    message(STATUS ${num})
+endforeach()
+#或
+set(num_list 1 2 3 4)
+foreach(num ${num_list})
+    message(STATUS ${num})
+endforeach()
+```
+
++ `foreach(<loop_var> RANGE <stop>)`，从0遍历到stop(包含stop)
+
+```cmake
+foreach(num RANGE 10)
+    message(STATUS ${num})
+endforeach()
+```
+
++ `foreach(<loop_var> RANGE <start> <stop> [<step>])`，从start遍历到stop，步长为step，如果不指定step则为1
+
+```cmake
+foreach(num RANGE 0 100 10)
+    message(STATUS ${num})
+endforeach()
+```
+
++ `foreach(<loop_var> IN [LISTS [<lists>]] [ITEMS [<items>]])`
+
+```CMAKE
+#遍历lists列表中的项
+set(my_list "hello" "world" "maye")
+foreach(num IN LISTS my_list)
+    message(STATUS ${num})
+endforeach()
+#直接指定项items
+foreach(num IN ITEMS "顽石" "九夏" "莫影")
+    message(STATUS ${num})
+endforeach()
+```
+
++ `foreach(<loop_var> ... IN ZIP_LISTS <lists>)`，3.17版本引入，组合多个列表一起遍历，如果指定的2多个列表项目数量不相等，项数少的，在loop_var中的值为空值。
+
+```cmake
+set(A 1 2 3 4)
+set(B 'hello' 'world')
+#方式一
+foreach(a b IN ZIP_LISTS A B)
+    message(STATUS "${a}   ${b}")
+endforeach()
+#方式二
+foreach(pair IN ZIP_LISTS A B)
+     message(STATUS "${pair_0}  ${pair_1}")
+     if(pair_1)	#判断是不是空值
+     	message(STATUS "paie_1 is NULL");
+     endif()
+endforeach()
+```
+
+### while循环
+
+```cmake
+while(<condition>)
+	<commands>
+endwhile()
+```
+
+<condition>为true时，就执行命令列表<commands>
+
+```cmake
+set(i 0)
+while(i LESS 10)
+	message(STATUS "i is ${i}")
+	math(EXPR i "${i} + 1")
+endwhile()
+```
+
+## 宏
+
+CMake 中的宏（Macro）是一种用于定义可重用代码块的工具，能够在构建脚本中简化重复性任务。
+
+### 宏的定义与调用
+
+宏通过 `macro` 和 `endmacro` 命令定义，语法如下：
+
+```cmake
+macro(<name> [<arg1> ...])
+	<commands>
+endmacro()
+```
+
+定义后，宏可以通过名称调用，并支持传递参数。例如：
+
+```cmake
+macro(print_message msg)
+	message(${msg})
+endmacro()
+
+print_message("Hello, CMake!")
+```
+
+调用时，宏的名称不区分大小写，但建议保持一致的命名风格（通常使用小写）。
+
+### 特性
+
+1. **文本替换**：宏在调用处直接展开（类似 C/C++ 中的宏），相当于将宏体内的代码插入到调用位置。
+2. **作用域**：
+   - 宏内部创建的变量在外部可见（会污染外部作用域）。
+   - 宏支持通过 *${arg1}* 等形式引用参数，同时提供以下特殊变量：
+     - `${ARGC}`：传递给宏的参数数量。
+     - `${ARGV}`：包含所有传递的参数。
+     - `${ARGN}`：从最后一个预期参数之后的所有参数。
+     - `${ARGV0}, ${ARGV1}, ...`：分别表示每个具体参数。
+3. **控制流**：在宏内部使用 `return()` 会直接跳出整个 CMakeLists.txt 文件（或包含它的文件），而不仅仅是宏本身。
+
+### 示例
+
+可变参数示例：
+
+```cmake
+macro(foo)
+    # 输出参数个数和参数
+    message("argument count:${ARGC}") 
+    message("arguments:${ARGV}") 
+
+    #遍历参数
+    foreach(arg IN ITEMS ${ARGV})
+        message(${arg}) 
+    endforeach()
+
+    #获取每一个参数
+    message("arg1:${ARGV0}")
+    message("arg1:${ARGV1}")
+    message("arg1:${ARGV2}")
+    message("arg1:${ARGV3}")
+endmacro()
+
+foo(1 2 3 "hello")
+```
+
+### 注意事项
+
+在使用宏时，应避免以下问题：
+
+- 不要在宏中使用 *return()*，以免影响调用者的作用域。
+- 避免与调用作用域中的变量重名，否则可能导致意外行为。
+- 如果需要更好的作用域控制或真正的变量处理，建议使用函数代替宏。
+
+通过合理使用 CMake 的宏功能，可以显著提高构建脚本的可读性和复用性，同时减少重复代码的维护成本
+
+
+
+## 函数
+
+CMake 中的函数（Function）是一种用于定义可重用代码块的工具，能够在构建脚本中简化重复性任务。与宏（Macro）存在一些关键区别。
+
+### 函数的定义与调用
+
+宏通过 `macro` 和 `endmacro` 命令定义，语法如下：
+
+```cmake
+function(<函数名称> [参数1] [参数2] ...)
+    # 函数体
+endfunction()
+```
+
+定义后，宏可以通过名称调用，并支持传递参数。例如：
+
+```cmake
+function(show msg)
+    message("I'm show! ${msg}")
+endfunction(show)
+
+show("hello")
+```
+
+调用时，函数名称不区分大小写，但建议保持一致的命名风格（通常使用小写）。
+
+### 特性
+
+1. **独立作用域**：函数内部有独立的作用域，默认不会影响外部变量。
+2. **参数传递**：
+   - 参数是值传递，修改参数不会影响外部。
+   - 若需要向外传递变量，需使用 `PARENT_SCOPE`。
+3. **控制流**：使用 `return()` 仅退出函数，不会影响调用者。
+
+### 示例
+
++ 将变量的值设置到父目录、调用的函数或涵盖的范围内
+
+```cmake
+function(fn1)
+    message("fn1...") 
+    set(FN1_VAR "HELLO fn1" PARENT_SCOPE)   #将变量设置到父目录、调用者所在的作用域
+endfunction()
+
+fn1()
+
+message("FN1_VAR IS ${FN1_VAR}")
+```
+
+### 相关变量
+
+| 变量                             | 描述                                                   |
+| -------------------------------- | ------------------------------------------------------ |
+| CMAKE_CURRENT _FUNCTION          | 此变量包含当前函数的名称。它对于诊断或调试消息很有用。 |
+| CMAKE_CURRENT_FUNCTION_LIST_DIR  | 此变量包含定义当前函数的CMakeLists文件的完整目录       |
+| CMAKE_CURRENT_FUNCTION_LIST_FILE | 此变量包含定义当前函数的CMakeLists文件的完整路径       |
+| CMAKE_CURRENT_FUNCTION_LIST_LINE | 此变量包含定义当前函数的列表文件中的行号。             |
+
+
+
+## 文件操作
+
+文件操作命令`file`，这个命令专用于需要访问文件系统的文件和路径操作。  对于其他仅处理语法方面的路径操作，请查看cmake_path()命令。
+
+### 读文件
+
++ 读取二进制/文本文件
+
+```cmake
+file(READ <filename> <variable> [OFFSET <offset>] [LIMIT <max-in>] [HEX])
+```
+
+从名为<filename>的文件中读取内容，并将其存储在<variable>中。 可选地从给定的<offset>(文件位置指针从0开始)开始，最多读取<max-in>字节。 HEX选项将数据转换为十六进制表示(对二进制数据很有用)。 如果指定了HEX选项，输出中的字母(a到f)都是小写的。  
+
++ 读取文本文件
+
+```cmake
+file(STRINGS <filename> <variable> [<options> ...])
+```
+
+解析来自<filename>的ASCII字符串列表，并将其存储在<variable>中。 忽略文件中的二进制数据。 忽略回车(\r, \n)字符。 选项有:  [选项列表](#2 file命令选项表)
+
+#### 其他
+
++ 对文件内容进行哈希
+
+  ```cmake
+  file(<HASH> <filename> <variable>)
+  ```
+
++ 获取文件修改的时间
+
+  ```cmake
+  file(TIMESTAMP <<filename> <variable>)
+  ```
+
+  计算<filename>的修改时间的字符串表示，并将其存储在<变量>中。如果该命令无法获取时间戳变量，则将其设置为空字符串("")。
+
++ 递归地获得给定文件所依赖的库列表。
+
+  + 未测试
+
+
+
+### 写文件
+
+```cmake	
+file(WRITE <filename> <content>...)
+file(APPEND <filename> <content>...)
+```
+
+将<content>写入名为<filename>的文件。 如果该文件不存在，则创建该文件。 如果文件已经存在，WRITE模式将覆盖它，APPEND模式将追加到文件的末尾。 <filename>指定的路径中不存在的任何目录将被创建。  
+
+如果该文件是一个构建输入，则仅在其内容更改时使用configure_file()命令更新该文件。
+
++ 触摸文件
+
+  ```cmake
+  file(TOUCH [<files>...])
+  file(TOUCH_NOCREATE [<files>...])
+  ```
+
+  **TOUCH：**如果文件不存在，则创建。如果文件已经存在，它的访问和/或修改将被更新到函数调用执行时。
+
+  **TOUCH_NOCREATE：**触摸一个文件，如果它存在，它的访问和/或修改将被更新到函数调用执行时。如果文件不存在，它将被无声地忽略(啥也不做)。
+
+  > 使用TOUCH和TOUCH_NOCREATE，现有文件的内容将不会被修改。
+
 ## 生成器表达式
 
 https://blog.csdn.net/u012156872/article/details/121605642
+
+## 定义宏
+
+我们可以再cmake中定义宏，以便再C/C++代码中使用。
+
++ 添加宏定义
+
+```cmake
+add_compile_definitions(<definition> ...)
+```
+
++ 给目标添加宏定义：名称`<target>`必须是由命令创建的，例如 `add_executable()`或者`add_library()`并且不能是 ALIAS 目标。
+
+```cmake
+target_compile_definitions(<target>）
+```
+
+## 生成库和使用库
+
+## 安装
+
+所谓安装，起就是把我们需要的文件复制到指定位置，方便使用。
+
+### 安装目标
+
+```cmake
+install(TARGETS targets... [DESTINATION <dir>])
+```
+
+
+
+
+
+
+
+## 模块
+
+[find_package()函数](https://blog.csdn.net/fb_941219/article/details/88526157)
+
+[如何将CMAKE_MODULE_PATH设置为在CMake中进行常规构建和源代码外构建？](https://cloud.tencent.com/developer/ask/sof/193478)
+
+
 
 # 附录
 

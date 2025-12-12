@@ -499,18 +499,1266 @@ void test()
 }
 ```
 
+## 字典结构(AVDictionary)
+
+AVDictionary是一个健值对存储工具，类似于c++中的map，ffmpeg中有很多 API 通过它来传递参数。
+
+关键结构体如下：
+
+```c
+typedef struct AVDictionaryEntry {
+    char *key;
+    char *value;
+} AVDictionaryEntry;
+
+typedef struct AVDictionary AVDictionary;
+```
+
+### 基本使用
+
++ 首先，定义AVDictionary指针：
+
+```c
+AVDictionary* dict = NULL;
+```
+
++ 然后，直接使用`	av_dict_set`函数设置键值对：
+
+```c
+av_dict_set(&dict, "name", "maye", 0);
+```
+
+"name"是键，”maye"是值，0是标志，暂时先写0。
+
++ 接下来使用`av_dict_get`函数获取值，函数原型如下：
+
+```c
+		av_dict_get(dict,"name",NULL,0);
+		av_log(NULL, AV_LOG_INFO, "key=%s, value=%s\n", entry->key, entry->value);
+```
+
++ 最后不要忘记释放字典哟
+
+```c
+av_dict_free(&dict);
+```
+
+### av_dict_get
+
+av_dict_get用于根据key从字典中获取值。
+
++ 函数原型如下：
+
+```c
+AVDictionaryEntry *av_dict_get(const AVDictionary *m, const char *key,
+                               const AVDictionaryEntry *prev, int flags);
+```
+
++ **参数：**
+
+  + **m**：是字典
+
+  + **key**：是要获取的键
+
+  + **prev**：是检索提示，用于加快查找速度，可以写NULL，如果不为空，则从prev之后的条目开始检索，`prev - m->elems + 1`为prev的下一个条目的索引。
+
+  + **flags**：为查找键时对键进行比较的标志，支持如下两种值：
+
+    - AV_DICT_MATCH_CASE：如果flags包含此标志，则key的比较区分大小写，否则不区分。
+
+    - AV_DICT_IGNORE_SUFFIX：如果flags包含此标志，则传入的key如果是字典某个key的前面一部分，则直接返回。
+
++ **案例：**
+
+  + 最简单的获取项的方式
+
+    ```c
+    	AVDictionaryEntry* entry;
+    	entry = av_dict_get(dict, "name", NULL, 0);
+    	entry = av_dict_get(dict, "NaMe", NULL, 0);	//默认忽略大小写
+    ```
+
+  + 如果想要区分大小写，的加上AV_DICT_MATCH_CASE标志
+
+    ```c
+    	entry = av_dict_get(dict, "NaMe", NULL, AV_DICT_MATCH_CASE);
+    ```
+
+    这样，就查找不到key为`NaMe`的项了。
+
+  + 如果只想写key的前面一部分，可以加上AV_DICT_IGNORE_SUFFIX表示，来忽略字典中key多余的后缀
+
+    ```c
+    	entry = av_dict_get(dict, "Na", NULL, AV_DICT_IGNORE_SUFFIX);
+    ```
+
+    只写`Na`也能查找到键为`name`的项。
+
+  + 当然，两个标志组合在一起也是可以的：
+
+    ```c
+    	entry = av_dict_get(dict, "Na", NULL, AV_DICT_MATCH_CASE | AV_DICT_IGNORE_SUFFIX);
+    ```
+
+    但是因为区分大小写，所以查找不到项了。
+
+### av_dict_set
+
+av_dict_set用于向字典中设置键值对，功能很简单，但是选项有很多。
+
++ 函数原型如下：
+
+  ```c
+  int av_dict_set(AVDictionary **pm, const char *key, const char *value, int flags);
+  ```
+
++ **参数：**
+  + **pm：**传出参数，传入时(*pm)必须为NULL
+  + **key：**要设置的键
+  + **value：**要设置的值
+  + **flags：**标志，可以是如下值之一：
+    + AV_DICT_MULTIKEY：此标志能让key可以重复。
+    + AV_DICT_DONT_STRDUP_KEY
+    + AV_DICT_DONT_STRDUP_VAL
+    + AV_DICT_DONT_OVERWRITE
+    + AV_DICT_APPEND
+
+#### AV_DICT_MULTIKEY(重复KEY)
+
+设置此标志，当key重复时，可以新增一个，也就是说允许重复key。
+
+```c
+	av_dict_set(&dict, "name", "maye", 0);
+	av_dict_set(&dict, "name", "zc", AV_DICT_MULTIKEY);
+
+	//查找所有key为name的项
+	AVDictionaryEntry* entry = NULL;
+	while (entry = av_dict_get(dict, "name", entry, 0)) {
+		av_log(NULL, AV_LOG_INFO, "key=%s, value=%s\n", entry->key, entry->value);
+    }
+```
+
+输出：
+
+```c
+key=name, value=maye
+key=name, value=zc
+```
+
+#### AV_DICT_DONT_OVERWRITE(不覆盖)
+
+设置此标志，当key存在时，不做任何操作；否则当key存在，则会覆盖掉值。
+
+> 注意：设置了AV_DICT_MULTIKEY再设置这个标志将无效。
+
+```c
+av_dict_set(&dict, "age", "12", 0);	
+av_dict_set(&dict, "age", "28", 0);	//会覆盖前面的12	
+
+av_dict_set(&dict, "age", "66", AV_DICT_DONT_OVERWRITE);	//设置标志后，就不会覆盖了
+```
+
+#### AV_DICT_DONT_STRDUP_KEY|VALUE
+
+AV_DICT_DONT_STRDUP_KEY标志控制是否拷贝key字符串。
+
+AV_DICT_DONT_STRDUP_VAL标志控制是否拷贝value字符串。
+
+什么意思呢？其实字典中存储的键值对都是存储在堆内存中的，也就是会动态内存分配！默认情况下，字典是会自动分配内存，拷贝我们传递的键值对参数的！在释放字典时，会自动释放掉。
+
+那么我们也可以自己分配内存之后，传递进去，这样就可以不让字典自动拷贝了！
+
+```c
+	const char* key = av_strdup("height");
+	const char* value = av_strdup("173");
+	av_dict_set(&dict, key, value, AV_DICT_DONT_STRDUP_KEY | AV_DICT_DONT_STRDUP_VAL);
+
+	//遍历所有项
+	AVDictionaryEntry* entry = NULL;
+	while (entry = av_dict_iterate(dict, entry)) {
+		av_log(NULL, AV_LOG_INFO, "key=%s, value=%s\n", entry->key, entry->value);
+	}
+```
+
+#### AV_DICT_APPEND
+
+设置此标志时，如果key已经存在，则会将value追加到现有value的后面。如果不存在则设置。
+
+```c
+	const char* key = av_strdup("height");
+	const char* value = av_strdup("173");
+	av_dict_set(&dict, key, value, AV_DICT_DONT_STRDUP_KEY | AV_DICT_DONT_STRDUP_VAL);
+
+	av_dict_set(&dict, "height", "cm", AV_DICT_APPEND);
+```
+
+设置之后，height的值变成了`173cm`。
+
+### av_dict_set_int
+
+此函数专门用来设置值为int累的键值对。
+
+```c
+	av_dict_set_int(&dict, "weight", 62, 0);
+```
+
+### av_dict_copy
+
+此函数用于拷贝字典。
+
+```c
+		AVDictionary* dict2 = NULL;
+		av_dict_copy(&dict2, dict, AV_DICT_MULTIKEY);
+
+		AVDictionaryEntry* entry = NULL;
+		while (entry = av_dict_iterate(dict2, entry)) {
+			av_log(NULL, AV_LOG_INFO, "key=%s, value=%s\n", entry->key, entry->value);
+		}
+```
+
+### av_dict_count
+
+此函数用于获取字典中的键值对数量。
+
+```c
+		av_log(NULL,AV_LOG_INFO,"dict count is %d" ,av_dict_count(dict2));
+```
+
+### av_dict_parse_string
+
+**字符串 → 字典**。将格式化的字符串解析为键值对，并添加到字典中。
+
+```c
+void test_dict2()
+{
+	AVDictionary* dict = NULL;
+
+	//将字符串解析为字典
+	//假设字符串格式为 key=value;key=value,键值对分隔符为;键值分隔符为=
+	av_dict_parse_string(&dict, "name=maye;age=18;name=zc", "=", ";", AV_DICT_MULTIKEY);
+
+	AVDictionaryEntry* entry = NULL;
+	while (entry = av_dict_iterate(dict, entry)) {
+		av_log(NULL, AV_LOG_INFO, "key=%s, value=%s\n", entry->key, entry->value);
+	}
+
+	av_dict_free(&dict);
+}
+```
+
+### av_dict_get_string
+
+**字典 → 字符串**。将字典中的条目序列化为一个格式化的字符串，返回的字符串使用动态分配，必须由调用者手动释放！
+
+```c
+	char* serialized_str = NULL;
+	int len = av_dict_get_string(dict, &serialized_str, '=', ';');
+	av_free(serialized_str);
+```
+
+[FFmpeg接口-AVDictionary的使用介绍和源码分析 - 简书](https://www.jianshu.com/p/89f2da631e16)
+
+## ParseUtils
+
+> #include "libavutil/parseutils.h"
+
+### av_parse_video_size
+
+此函数用于从字符串解析视频尺寸（宽度和高度）的函数。函数原型原型如下：
+
+```c
+int av_parse_video_size(int *width_ptr, int *height_ptr, const char *str);
+```
+
+**参数：**
+
+- `width_ptr`：指向存储宽度值的整型指针
+- `height_ptr`：指向存储高度值的整型指针
+- `str`：**包含尺寸信息的字符串**
+
+支持的字符串格式有很多：
+
++ 标准格式：宽度x高度`，如 `1920x1080`、`1280x720
+
+```c
+	int w, h;
+	if (av_parse_video_size(&w, &h, "1920*1080") < 0) {
+		av_log(NULL, AV_LOG_ERROR, "parse video size failed\n");
+	}
+	av_log(NULL, AV_LOG_INFO, "video size (%d, %d)\n",w,h);
+```
+
++ 预定义名称：
+
+```c
+void test_parse_video_size()
+{
+
+	const char* video_size_names[] = {
+		// 标准电视格式
+		"ntsc",         // 720x480
+		"pal",          // 720x576
+		"qntsc",        // 352x240
+		"qpal",         // 352x288
+		"sntsc",        // 640x480
+		"spal",         // 768x576
+		"film",         // 352x240
+		"ntsc-film",    // 352x240
+
+		// CIF系列
+		"sqcif",        // 128x96
+		"qcif",         // 176x144
+		"cif",          // 352x288
+		"4cif",         // 704x576
+		"16cif",        // 1408x1152
+
+		// VGA系列
+		"qqvga",        // 160x120
+		"qvga",         // 320x240
+		"vga",          // 640x480
+		"svga",         // 800x600
+		"xga",          // 1024x768
+		"uxga",         // 1600x1200
+		"qxga",         // 2048x1536
+		"sxga",         // 1280x1024
+		"qsxga",        // 2560x2048
+		"hsxga",        // 5120x4096
+		"wvga",         // 852x480
+		"wxga",         // 1366x768
+		"wsxga",        // 1600x1024
+		"wuxga",        // 1920x1200
+		"woxga",        // 2560x1600
+		"wqsxga",       // 3200x2048
+		"wquxga",       // 3840x2400
+		"whsxga",       // 6400x4096
+		"whuxga",       // 7680x4800
+
+		// 传统显示标准
+		"cga",          // 320x200
+		"ega",          // 640x350
+
+		// HD高清系列
+		"hd480",        // 852x480
+		"hd720",        // 1280x720
+		"hd1080",       // 1920x1080
+
+		// 2K系列
+		"2k",           // 2048x1080
+		"2kflat",       // 1998x1080
+		"2kscope",      // 2048x858
+		"2kdci",        // 2048x1080
+
+		// 4K/超高清系列
+		"4k",           // 4096x2160
+		"4kflat",       // 3996x2160
+		"4kscope",      // 4096x1716
+		"4kdci",        // 4096x2160
+		"uhd2160",      // 3840x2160
+		"uhd4320",      // 7680x4320
+
+		// 其他格式
+		"nhd",          // 640x360
+		"hqvga",        // 240x160
+		"wqvga",        // 400x240
+		"fwqvga",       // 432x240
+		"hvga",         // 480x320
+		"qhd",          // 960x540
+
+		// 宽屏变体
+		"wqvga",        // 400x240
+		"wvga",         // 852x480
+		NULL  // 结束标记
+	};
+
+	int width, height;
+
+	// 遍历所有分辨率名称并解析
+	for (int i = 0; video_size_names[i] != NULL; i++) {
+		if (av_parse_video_size(&width, &height, video_size_names[i]) >= 0) {
+			printf("%-15s -> %4dx%-4d\n",
+				video_size_names[i], width, height);
+		}
+		else {
+			printf("%-15s -> FAILED\n", video_size_names[i]);
+		}
+	}
+}
+```
+
+### av_parse_video_rate
+
+此函数用于从字符串解析视频帧率的函数。函数原型如下：
+
+```c
+int av_parse_video_rate(AVRational *rate, const char *str);
+```
+
+**参数：**
+
+- **`rate`**：指向 `AVRational` 结构体的指针，用于存储解析后的帧率（分子/分母形式）
+- **`str`**：**包含帧率信息的字符串**
+
+**字符串格式：**
+
+1. 标准分数格式
+
+```c
+	AVRational rate;
+	if (av_parse_video_rate(&rate, "30/1") < 0) {
+		av_log(NULL, AV_LOG_ERROR, "Failed to parse video rate\n");
+	}
+	else {
+		av_log(NULL, AV_LOG_INFO, "Parsed rate: %d/%d\n", rate.num, rate.den);
+	}
+```
+
+2. 小数格式
+
+```c
+	AVRational rate;
+	if (av_parse_video_rate(&rate, "29.97") < 0) {
+		av_log(NULL, AV_LOG_ERROR, "Failed to parse video rate\n");
+	}
+	else {
+		av_log(NULL, AV_LOG_INFO, "Parsed rate: %d/%d\n", rate.num, rate.den);
+	}
+```
+
+3. 预定义帧率名称
+
+```c
+	const char* frame_rate_names[] = {
+		// NTSC相关帧率
+		"ntsc",         // 30000/1001 ≈ 29.97 fps
+		"ntsc-film",    // 24000/1001 ≈ 23.976 fps
+
+		// PAL相关帧率  
+		"pal",          // 25 fps
+		"qpal",         // 25 fps (PAL四分之一)
+		"spal",         // 25 fps (PAL方形像素)
+
+		// 电影帧率
+		"film",         // 24 fps
+		"24",           // 24 fps
+
+		// 常用帧率
+		"25",           // 25 fps
+		"30",           // 30 fps
+		"50",           // 50 fps
+		"60",           // 60 fps
+
+		// 分数表示
+		"24000/1001",   // ≈23.976 fps
+		"30000/1001",   // ≈29.97 fps
+		"60000/1001",   // ≈59.94 fps
+
+		// 高帧率
+		"48",           // 48 fps
+		"72",           // 72 fps
+		"96",           // 96 fps
+		"100",          // 100 fps
+		"120",          // 120 fps
+		"240",          // 240 fps
+
+		NULL  // 结束标记
+	};
+
+
+	AVRational frame_rate;
+	for (int i = 0; frame_rate_names[i]; i++) {
+		if (av_parse_video_rate(&frame_rate, frame_rate_names[i]) >= 0) {
+			printf("%-12s -> %d/%d (≈%.3f fps)\n",
+				frame_rate_names[i],
+				frame_rate.num,
+				frame_rate.den,
+				(double)frame_rate.num / frame_rate.den);
+		}
+		else {
+			printf("%-12s -> Failed to parse\n", frame_rate_names[i]);
+		}
+	}
+```
+
+### av_parse_time
+
+此函数用于将时间字符串解析为微秒时间戳的函数。函数原型如下：
+
+```c
+int av_parse_time(int64_t *timeval, const char *timestr, int duration);
+```
+
+**参数：**
+
++ **timeval：**输出参数，存储解析后的时间(微妙)
++ **timestr：**要解析的时间字符串
++ **duration：**标志位：1 表示解析持续时间，0 表示解析绝对时间
+
+**时间字符串格式：**
+
+1. 标准时间格式：
+
+```c
+void print_parsed_time(const char *timestr, int duration) {
+    int64_t microseconds;
+    int ret = av_parse_time(&microseconds, timestr, duration);
+    
+    if (ret >= 0) {
+        double seconds = microseconds / 1000000.0;
+        printf("%-20s -> %12lld us = %8.3f s", 
+               timestr, microseconds, seconds);
+        
+        if (duration) {
+            printf(" (duration)");
+        } else {
+            printf(" (absolute)");
+        }
+        printf("\n");
+    } else {
+        printf("%-20s -> 解析失败 (错误码: %d,%s)\n", timestr, ret,av_err2str(ret));
+    }
+}
+
+    print_parsed_time("01:30:00", 1);      // 1.5小时
+    print_parsed_time("45.5s", 1);         // 45.5秒
+```
+
+2. 特殊格式，貌似只支持now
+
+```c
+    print_parsed_time("now", 0);
+```
+
+
+
 ## I/O操作（AVIO*）
 
 > #include "libavformat/avformat.h"
 
+avio是FFmpeg中的一个模块，用于实现多种输入输出方式的封装。
+
 ### 文件I/O
 
-### 目录I/O
+#### 打开与关闭
 
-### 网络I/O
+使用`AVIOContext*`保存打开文件的上下文，后续通过上下文进行文件操作。
 
-## 词典（AVDictionary）
+首先，打开文件：
 
-## 选项（AVOption）
+```c
+	AVIOContext* ctx = NULL;
+	//打开文件
+	if (0 > avio_open(&ctx, "hdy.txt", AVIO_FLAG_WRITE | AVIO_FLAG_READ)) {
+		av_log(ctx, AV_LOG_ERROR, "avio_open failed!\n");
+		return;
+	}
+```
 
-> #include "libavutil/opt.h"
+`avio_open`第三个参数是打开标志，对于文件操作来说有如下几种：
+
++ AVIO_FLAG_READ：只读打开
++ AVIO_FLAG_WRITE：只写打开
+
++ AVIO_FLAG_READ_WRITE：读写打开
+
+文件操作完毕后，需要关闭上下文：
+
+```c
+	avio_close(ctx);
+```
+
++ 获取文件大小
+
+```c
+	av_log(NULL, AV_LOG_INFO, "avio_size=%lld\n", avio_size(ctx));
+```
+
++ 获取文件位置指针
+
+```c
+	av_log(NULL, AV_LOG_INFO, "avio_tell=%lld\n", avio_tell(ctx));
+```
+
++ 移动文件位置指针
+
+```c
+	av_log(NULL, AV_LOG_INFO, "avio_seek=%lld\n", avio_seek(ctx, 5, SEEK_CUR));
+	av_log(NULL, AV_LOG_INFO, "avio_skip=%lld\n", avio_skip(ctx, -5));
+```
+
+#### 写文件
+
++ 使用`avio_printf`，能像printf一样，格式化写内容到文件中。
+
+  ```c
+  avio_printf(ctx, "Hello, World! %s\n", "hdy");
+  ```
+
++ 使用`avio_print_string_array`，能将以`NULL`结尾的字符串数组批量写入文件中：
+
+  ```c
+  	const char* strs[] = { "锄禾日当午\n","汗滴禾下土\n","谁知盘中餐\n","粒粒皆辛苦\n",NULL};
+  	avio_print_string_array(ctx,strs);
+  ```
+
+  为了方便使用，还提供了包装宏：
+
+  ```c
+  	avio_print(ctx, "锄禾日当午\n","汗滴禾下土\n","谁知盘中餐\n","粒粒皆辛苦\n");
+  ```
+
++ 对于简单字符串可以直接使用`avio_put_str`写入：
+
+  ```c
+  	avio_put_str(ctx, "宏定义信息科技\n");
+  ```
+
++ 对于二进制数据或者想写入指定长度的字符串，则可以使用`	avio_write`：
+
+  ```c
+  	//写入指定长度的字符串
+  	avio_write(ctx, "Hello, World!", 5);
+  	//写入二进制数据
+  	int tel = 5280620;
+  	avio_write(ctx, (const unsigned char*)&tel, sizeof(tel));
+  ```
+
++ 因为整数类型有大小端，所以还专门为写入整数类型提供了函数：
+
+  + 一个字节的整数没有大小端之分
+
+  ```c
+  	avio_w8(ctx, 'A');
+  ```
+
+  + 大端(big end)写入整数
+
+  ```c
+  	avio_wb16(ctx, 0x1234);
+  	avio_wb24(ctx, 0x123456);
+  	avio_wb32(ctx, 0x12345678);
+  	avio_wb64(ctx, 0x12345678AABBCCDD);
+  ```
+
+  + 小端写入整数
+
+  ```c
+  	avio_wl16(ctx, 0x1234);
+  	avio_wl24(ctx, 0x123456);
+  	avio_wl32(ctx, 0x12345678);
+  	avio_wl64(ctx, 0x12345678AABBCCDD);
+  ```
+
+  
+
+#### 读文件
+
++ 读取字符串，在遇到空格或者最大长度或者无法读取更多数据后，自动停止：
+
+  函数原型如下：
+
+  ```c
+  int avio_get_str(AVIOContext *pb, int maxlen, char *buf, int buflen);
+  ```
+
+  示例：
+
+  ```c
+  	char buf[BUFSIZ] = {0};
+  	avio_get_str(ctx, BUFSIZ, buf,BUFSIZ);
+  ```
+
++ 读取指定长度的数据：下面这两个函数对于文件操作来说，是一样的。
+
+  ```c
+  	int len;
+  	//1,读取指定长度
+  	//len = avio_read(ctx, buf, BUFSIZ);
+  	//av_log(ctx, AV_LOG_INFO, "len:%d buf=%s\n",len, buf);
+  
+  	//2,读取指定长度
+  	len = avio_read_partial(ctx, buf, BUFSIZ);
+  	av_log(ctx, AV_LOG_INFO, "len:%d buf=%s\n", len, buf);
+  ```
+
++ 按照大小端读取整数
+
+  ```c
+  	av_log(NULL, AV_LOG_INFO, "%#x\n", avio_r8(ctx));
+  	av_log(NULL, AV_LOG_INFO, "%#x\n", avio_rb16(ctx));
+  	av_log(NULL, AV_LOG_INFO, "%#x\n", avio_rb24(ctx));
+  	av_log(NULL, AV_LOG_INFO, "%#x\n", avio_rb32(ctx));
+  	av_log(NULL, AV_LOG_INFO, "%#x\n", avio_rb64(ctx));
+  
+  	av_log(NULL, AV_LOG_INFO, "%#x\n", avio_rl16(ctx));
+  	av_log(NULL, AV_LOG_INFO, "%#x\n", avio_rl24(ctx));
+  	av_log(NULL, AV_LOG_INFO, "%#x\n", avio_rl32(ctx));
+  	av_log(NULL, AV_LOG_INFO, "%#x\n", avio_rl64(ctx));
+  ```
+
+  
+
+## 多媒体文件处理
+
+### 提取音频(extract audio)
+
+要使用FFmpeg C API从视频中提取音频，核心流程是读取多媒体文件，从中筛选出音频数据包，然后将其写入新的音频文件。
+
+1. 为了方便输入参数，我们使用命令行参数
+
+   ```c
+   int main(int argc, char** argv)
+   {
+   	//检查参数
+   	if (argc < 3) {
+   		printf("usage:%s <input file> <output file>\n", argv[0]);
+   		return 0;
+   	}
+   	//获取输入输出文件名
+   	const char* src = argv[1];
+   	const char* dst = argv[2];
+   ```
+
+2. 然后，打开输入文件
+
+   ```c
+   	AVFormatContext* iFmtCtx = NULL;
+   	AVFormatContext* oFmtCtx = NULL;
+   
+   	int ret,idx;
+   	do
+   	{	
+   		//打开输入文件
+   		if ((ret = avformat_open_input(&fmt_ctx, src, NULL, NULL)) < 0) {
+   			av_log(NULL, AV_LOG_ERROR, "avformat_open_input failed!%s\n", av_err2str(ret));
+   			break;
+   		}
+   ```
+
+   **AVFormatContext** 是 FFmpeg 中的一个核心结构体，它包含了媒体文件的格式上下文信息，涵盖了音频、视频、字幕等流的相关信息和元数据。
+
+3. 查找音频流索引
+
+   ```c
+   		//查找音频流索引
+   		idx = av_find_best_stream(iFmtCtx, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
+   		if (idx < 0) {
+   			if (idx == AVERROR_STREAM_NOT_FOUND)
+   				av_log(NULL, AV_LOG_ERROR, "av_find_best_stream failed! AVERROR_STREAM_NOT_FOUND\n");
+   			else if (idx == AVERROR_DECODER_NOT_FOUND)
+   				av_log(NULL, AV_LOG_ERROR, "av_find_best_stream failed! AVERROR_DECODER_NOT_FOUND\n");
+   			break;
+   		}
+   		//根据索引拿到音频流
+   		AVStream* iStream = iFmtCtx->streams[idx];
+   ```
+
+   
+
+4. 创建输出文件格式上下文
+
+   ```c
+   		//分配输出文件格式上下文
+   		oFmtCtx = avformat_alloc_context();
+   		if (!oFmtCtx) {
+   			av_log(NULL, AV_LOG_ERROR, "avformat_alloc_context failed!\n");
+   			break;
+   		}
+   		//设置输出文件格式
+   		oFmtCtx->oformat = av_guess_format(NULL, src, NULL);
+   ```
+
+5. 创建输出音频流，并拷贝编码参数
+
+   ```c
+   		//创建新的音频流
+   		AVStream* oStream = avformat_new_stream(oFmtCtx, NULL);
+   		if (!oStream) {
+   			av_log(NULL, AV_LOG_ERROR, "avformat_new_stream failed!\n");
+   			break;
+   		}
+   
+   		//设置音频编码参数
+   		if(avcodec_parameters_copy(oStream->codecpar, iStream->codecpar) < 0) {
+   			av_log(NULL, AV_LOG_ERROR, "avcodec_parameters_copy failed!\n");
+   			break;
+   		}
+   		//oStream->codecpar->codec_tag = 0;
+   ```
+
+6. 打开输出文件，写入数据
+
+   ```c
+   		//打开输出文件，打开后由oFmtCtx接管，无需手动关闭
+   		if ((ret = avio_open2(&oFmtCtx->pb, dst, AVIO_FLAG_WRITE, NULL, NULL)) < 0) {
+   			av_log(NULL, AV_LOG_ERROR, "avio_open2 failed!%s\n",av_err2str(ret));
+   			break;
+   		}
+   
+   		//写文件头
+   		if ((ret = avformat_write_header(oFmtCtx, NULL)) < 0) {
+   			av_log(NULL, AV_LOG_ERROR, "avformat_write_header failed!%s\n", av_err2str(ret));
+   			break;
+   		}
+   
+   		//从输入文件读取数据包
+   		AVPacket pkt;
+   		while (av_read_frame(iFmtCtx, &pkt) == 0) {
+   			//不是音频流，跳过
+   			if (pkt.stream_index != idx) {
+   				av_packet_unref(&pkt);
+   				continue;
+   			}
+   			//是音频流，写入到输出文件
+   			else {
+   				pkt.pts = av_rescale_q_rnd(pkt.pts, iStream->time_base, 
+   					oStream->time_base, (enum AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+   				pkt.dts = pkt.pts;
+   				pkt.duration = av_rescale_q(pkt.duration, iStream->time_base, oStream->time_base);
+   				pkt.stream_index = 0;
+   				pkt.pos = -1;
+   				//将pkt写入输出文件
+   				av_interleaved_write_frame(oFmtCtx, &pkt);
+   				av_packet_unref(&pkt);
+   			}
+   		}
+   
+   		//写文件尾
+   		av_write_trailer(oFmtCtx);
+   		
+   	} while (0);
+   ```
+
+7. 释放资源
+
+   ```c
+   	//关闭输出文件
+   	avformat_close_input(&oFmtCtx);
+   	//关闭输入文件
+   	avformat_close_input(&iFmtCtx);
+   }
+   ```
+
+### 提取视频(extract video)
+
+提取视频与音频类似，只需要修改几个地方即可！
+
+1. 将查找音频流修改为查找视频流
+
+   ```c
+   	idx = av_find_best_stream(iFmtCtx, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
+   ```
+
+2. 因为视频可能存在B帧，所以dts不能等于pts了，需要进行计算
+
+   ```c
+   	pkt.dts = av_rescale_q_rnd(pkt.dts, iStream->time_base,
+   			oStream->time_base, (enum AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+   ```
+
+
+### 转封装（remux）
+
+转封装就是把一种封装格式变为另一种封装格式，比如把MP4转成flv格式。
+
+![image-20251211152604192](./assets/image-20251211152604192.png)
+
+转封装，可以说就是把提取音频和视频的代码结合在一起：
+
+1. 把第3、4、5步改成如下代码
+
+```c
+		//打开输出文件
+		if((ret = avformat_alloc_output_context2(&oFmtCtx, NULL, NULL, dst)) < 0) {
+			av_log(NULL, AV_LOG_ERROR, "avformat_alloc_output_context2 failed!%s\n",av_err2str(ret));
+			break;
+		}
+		//遍历输入文件的流，找到音视频流
+		for (size_t i = 0; i < iFmtCtx->nb_streams; i++) {
+			AVStream* stream = iFmtCtx->streams[i];
+			AVCodecParameters* codecpar = stream->codecpar;
+
+			//创建新的音频流
+			AVStream* oStream = avformat_new_stream(oFmtCtx, NULL);
+			if (!oStream) {
+				av_log(NULL, AV_LOG_ERROR, "avformat_new_stream failed!\n");
+				break;
+			}
+
+			//设置音频编码参数
+			if (avcodec_parameters_copy(oStream->codecpar, stream->codecpar) < 0) {
+				av_log(NULL, AV_LOG_ERROR, "avcodec_parameters_copy failed!\n");
+				break;
+			}
+			oStream->codecpar->codec_tag = 0;
+		}
+```
+
+2. 把读取数据包，写入数据包部分稍微修改一下：
+
+```c
+while (av_read_frame(iFmtCtx, &pkt) == 0) {
+			//不是流，跳过
+			if (pkt.stream_index < 0) {
+				av_packet_unref(&pkt);
+				continue;
+			}
+			//是流，写入到输出文件
+			else {
+				AVStream* iStream = iFmtCtx->streams[pkt.stream_index];
+				AVStream* oStream = oFmtCtx->streams[pkt.stream_index];
+
+				//将数据包中的所有时间基转换为输出流的时间基
+				if (0) {
+					pkt.pts = av_rescale_q_rnd(pkt.pts, iStream->time_base,
+						oStream->time_base, (enum AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+					pkt.dts = av_rescale_q_rnd(pkt.dts, iStream->time_base,
+						oStream->time_base, (enum AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+					pkt.duration = av_rescale_q(pkt.duration, iStream->time_base, oStream->time_base);
+					//pkt.pos = -1;
+				}
+				else {
+					av_packet_rescale_ts(&pkt, iStream->time_base, oStream->time_base);
+				}
+
+				//将pkt写入输出文件
+				av_interleaved_write_frame(oFmtCtx, &pkt);
+				av_packet_unref(&pkt);
+			}
+		}
+```
+
+完成代码如下：
+
+```c
+int test4(int argc, char** argv)
+{
+	//检查参数
+	if (argc < 3) {
+		printf("usage:%s <input file> <output file>\n", argv[0]);
+		return 0;
+	}
+	//获取输入输出文件名
+	const char* src = argv[1];
+	const char* dst = argv[2];
+
+	AVFormatContext* iFmtCtx = NULL;
+	AVFormatContext* oFmtCtx = NULL;
+
+	int ret;
+	do
+	{
+		//打开输入文件
+		if ((ret = avformat_open_input(&iFmtCtx, src, NULL, NULL)) < 0) {
+			av_log(NULL, AV_LOG_ERROR, "avformat_open_input failed!%s\n", av_err2str(ret));
+			break;
+		}
+
+		//打开输出文件
+		if((ret = avformat_alloc_output_context2(&oFmtCtx, NULL, NULL, dst)) < 0) {
+			av_log(NULL, AV_LOG_ERROR, "avformat_alloc_output_context2 failed!%s\n",av_err2str(ret));
+			break;
+		}
+		//遍历输入文件的流，找到音视频流
+		for (size_t i = 0; i < iFmtCtx->nb_streams; i++) {
+			AVStream* stream = iFmtCtx->streams[i];
+			AVCodecParameters* codecpar = stream->codecpar;
+
+			//创建新的音频流
+			AVStream* oStream = avformat_new_stream(oFmtCtx, NULL);
+			if (!oStream) {
+				av_log(NULL, AV_LOG_ERROR, "avformat_new_stream failed!\n");
+				break;
+			}
+
+			//设置音频编码参数
+			if (avcodec_parameters_copy(oStream->codecpar, stream->codecpar) < 0) {
+				av_log(NULL, AV_LOG_ERROR, "avcodec_parameters_copy failed!\n");
+				break;
+			}
+			oStream->codecpar->codec_tag = 0;
+		}
+
+		if ((ret = avio_open2(&oFmtCtx->pb, dst, AVIO_FLAG_WRITE, NULL, NULL)) < 0) {
+			av_log(NULL, AV_LOG_ERROR, "avio_open2 failed!%s\n", av_err2str(ret));
+			break;
+		}
+
+		//写文件头
+		if ((ret = avformat_write_header(oFmtCtx, NULL)) < 0) {
+			av_log(NULL, AV_LOG_ERROR, "avformat_write_header failed!%s\n", av_err2str(ret));
+			break;
+		}
+
+		//从输入文件读取数据包
+		AVPacket pkt;
+		while (av_read_frame(iFmtCtx, &pkt) == 0) {
+			//不是流，跳过
+			if (pkt.stream_index < 0) {
+				av_packet_unref(&pkt);
+				continue;
+			}
+			//是流，写入到输出文件
+			else {
+				AVStream* iStream = iFmtCtx->streams[pkt.stream_index];
+				AVStream* oStream = oFmtCtx->streams[pkt.stream_index];
+
+				//将数据包中的所有时间基转换为输出流的时间基
+				if (0) {
+					pkt.pts = av_rescale_q_rnd(pkt.pts, iStream->time_base,
+						oStream->time_base, (enum AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+					pkt.dts = av_rescale_q_rnd(pkt.dts, iStream->time_base,
+						oStream->time_base, (enum AVRounding)(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
+					pkt.duration = av_rescale_q(pkt.duration, iStream->time_base, oStream->time_base);
+					//pkt.pos = -1;
+				}
+				else {
+					av_packet_rescale_ts(&pkt, iStream->time_base, oStream->time_base);
+				}
+
+				//将pkt写入输出文件
+				av_interleaved_write_frame(oFmtCtx, &pkt);
+				av_packet_unref(&pkt);
+			}
+		}
+
+		//写文件尾
+		av_write_trailer(oFmtCtx);
+
+	} while (0);
+
+	//if (oFmtCtx && oFmtCtx->pb) {
+	//	avio_close(oFmtCtx->pb);
+	//	oFmtCtx->pb = NULL;
+	//}
+	//关闭输出文件
+	avformat_close_input(&oFmtCtx);
+	//关闭输入文件
+	avformat_close_input(&iFmtCtx);
+}
+```
+
+### 视频裁剪
+
+可以将视频指定时间段的内容裁剪出来。
+
+1. 主要是在循环读取数据包之前，将帧定位到指定时间
+
+```c
+		//定位到开始时间
+		if ((ret = av_seek_frame(iFmtCtx, -1, startTime * AV_TIME_BASE, AVSEEK_FLAG_BACKWARD)) < 0) {
+			av_log(NULL, AV_LOG_ERROR, "av_seek_frame failed!%s\n", av_err2str(ret));
+			break;
+		}
+
+		//保存每个流的起始时间戳
+		typedef struct Ts {
+			int64_t pts;
+			int64_t dts;
+		}Ts;
+		Ts* ts = av_malloc(iFmtCtx->nb_streams * sizeof(Ts));
+		for (size_t i = 0; i < iFmtCtx->nb_streams; i++) {
+			ts[i].pts = AV_NOPTS_VALUE;
+			ts[i].dts = AV_NOPTS_VALUE;
+		}
+```
+
+2. 然后在循环中，计算裁剪之后的数据包的pts和dts
+
+```c
+		//从输入文件读取数据包
+		AVPacket pkt;
+		while (av_read_frame(iFmtCtx, &pkt) == 0) {
+
+			if (ts[pkt.stream_index].dts == AV_NOPTS_VALUE && pkt.dts != AV_NOPTS_VALUE) {
+				ts[pkt.stream_index].dts = pkt.dts;
+			}
+			if (ts[pkt.stream_index].pts == AV_NOPTS_VALUE && pkt.pts != AV_NOPTS_VALUE) {
+				ts[pkt.stream_index].pts = pkt.pts;
+			}
+
+            //到达结束时间，跳出循环
+			if (endTime > 0 && av_q2d(iFmtCtx->streams[pkt.stream_index]->time_base) * pkt.pts >= endTime) {
+				av_packet_unref(&pkt);
+				av_log(NULL, AV_LOG_ERROR, "endtime\n");
+				break;
+			}
+
+			//不是流，跳过
+			if (pkt.stream_index < 0) {
+				av_packet_unref(&pkt);
+				continue;
+			}
+			//是流，写入到输出文件
+			else {
+				AVStream* iStream = iFmtCtx->streams[pkt.stream_index];
+				AVStream* oStream = oFmtCtx->streams[pkt.stream_index];
+
+				//将数据包中的所有时间基转换为输出流的时间基
+				pkt.pts = pkt.pts - ts[pkt.stream_index].pts;
+				pkt.dts = pkt.dts - ts[pkt.stream_index].dts;
+
+				//如果显示时间戳小于解码时间戳，则将显示时间戳设置为解码时间戳
+				if (pkt.pts < pkt.dts) {
+					pkt.pts = pkt.dts;
+				}
+
+				av_packet_rescale_ts(&pkt, iStream->time_base, oStream->time_base);
+
+				//将pkt写入输出文件
+				pkt.pos = -1;
+				av_interleaved_write_frame(oFmtCtx, &pkt);
+				av_packet_unref(&pkt);
+			}
+		}
+		av_free(ts);
+
+		//写文件尾
+		av_write_trailer(oFmtCtx);
+
+	} while (0);
+```
+
+完整代码如下：
+
+```c
+int test4(int argc, char** argv)
+{
+	//检查参数
+	if (argc < 3) {
+		printf("usage:%s <input file> <output file> [start end]\n", argv[0]);
+		return 0;
+	}
+	//获取输入输出文件名
+	const char* src = argv[1];
+	const char* dst = argv[2];
+	int startTime = 60;
+	int endTime = 80;
+
+	AVFormatContext* iFmtCtx = NULL;
+	AVFormatContext* oFmtCtx = NULL;
+
+	int ret;
+	do
+	{
+		//打开输入文件
+		if ((ret = avformat_open_input(&iFmtCtx, src, NULL, NULL)) < 0) {
+			av_log(NULL, AV_LOG_ERROR, "avformat_open_input failed!%s\n", av_err2str(ret));
+			break;
+		}
+
+		//打开输出文件
+		if((ret = avformat_alloc_output_context2(&oFmtCtx, NULL, NULL, dst)) < 0) {
+			av_log(NULL, AV_LOG_ERROR, "avformat_alloc_output_context2 failed!%s\n",av_err2str(ret));
+			break;
+		}
+		//遍历输入文件的流，找到音视频流
+		for (size_t i = 0; i < iFmtCtx->nb_streams; i++) {
+			AVStream* stream = iFmtCtx->streams[i];
+			AVCodecParameters* codecpar = stream->codecpar;
+			//if (codecpar->codec_type != AVMEDIA_TYPE_AUDIO &&
+			//	codecpar->codec_type != AVMEDIA_TYPE_VIDEO ) {
+			//	idx = i;
+			//	break;
+			//}
+
+			//创建新的音频流
+			AVStream* oStream = avformat_new_stream(oFmtCtx, NULL);
+			if (!oStream) {
+				av_log(NULL, AV_LOG_ERROR, "avformat_new_stream failed!\n");
+				break;
+			}
+
+			//设置音频编码参数
+			if (avcodec_parameters_copy(oStream->codecpar, stream->codecpar) < 0) {
+				av_log(NULL, AV_LOG_ERROR, "avcodec_parameters_copy failed!\n");
+				break;
+			}
+			oStream->codecpar->codec_tag = 0;
+		}
+
+		if ((ret = avio_open2(&oFmtCtx->pb, dst, AVIO_FLAG_WRITE, NULL, NULL)) < 0) {
+			av_log(NULL, AV_LOG_ERROR, "avio_open2 failed!%s\n", av_err2str(ret));
+			break;
+		}
+
+		//写文件头
+		if ((ret = avformat_write_header(oFmtCtx, NULL)) < 0) {
+			av_log(NULL, AV_LOG_ERROR, "avformat_write_header failed!%s\n", av_err2str(ret));
+			break;
+		}
+
+		//定位到开始时间
+		if ((ret = av_seek_frame(iFmtCtx, -1, startTime * AV_TIME_BASE, AVSEEK_FLAG_BACKWARD)) < 0) {
+			av_log(NULL, AV_LOG_ERROR, "av_seek_frame failed!%s\n", av_err2str(ret));
+			break;
+		}
+
+		//保存每个流的起始时间戳
+		typedef struct Ts {
+			int64_t pts;
+			int64_t dts;
+		}Ts;
+		Ts* ts = av_malloc(iFmtCtx->nb_streams * sizeof(Ts));
+		for (size_t i = 0; i < iFmtCtx->nb_streams; i++) {
+			ts[i].pts = AV_NOPTS_VALUE;
+			ts[i].dts = AV_NOPTS_VALUE;
+		}
+
+		//从输入文件读取数据包
+		AVPacket pkt;
+		while (av_read_frame(iFmtCtx, &pkt) == 0) {
+
+			if (ts[pkt.stream_index].dts == AV_NOPTS_VALUE && pkt.dts != AV_NOPTS_VALUE) {
+				ts[pkt.stream_index].dts = pkt.dts;
+			}
+			if (ts[pkt.stream_index].pts == AV_NOPTS_VALUE && pkt.pts != AV_NOPTS_VALUE) {
+				ts[pkt.stream_index].pts = pkt.pts;
+			}
+
+			if (endTime > 0 && av_q2d(iFmtCtx->streams[pkt.stream_index]->time_base) * pkt.pts >= endTime) {
+				av_packet_unref(&pkt);
+				av_log(NULL, AV_LOG_ERROR, "endtime\n");
+				break;
+			}
+
+			//不是流，跳过
+			if (pkt.stream_index < 0) {
+				av_packet_unref(&pkt);
+				continue;
+			}
+			//是流，写入到输出文件
+			else {
+				AVStream* iStream = iFmtCtx->streams[pkt.stream_index];
+				AVStream* oStream = oFmtCtx->streams[pkt.stream_index];
+
+				//将数据包中的所有时间基转换为输出流的时间基
+				pkt.pts = pkt.pts - ts[pkt.stream_index].pts;
+				pkt.dts = pkt.dts - ts[pkt.stream_index].dts;
+
+				//如果显示时间戳小于解码时间戳，则将显示时间戳设置为解码时间戳
+				if (pkt.pts < pkt.dts) {
+					pkt.pts = pkt.dts;
+				}
+
+				av_packet_rescale_ts(&pkt, iStream->time_base, oStream->time_base);
+
+				//将pkt写入输出文件
+				pkt.pos = -1;
+				av_interleaved_write_frame(oFmtCtx, &pkt);
+				av_packet_unref(&pkt);
+			}
+		}
+		av_free(ts);
+
+		//写文件尾
+		av_write_trailer(oFmtCtx);
+
+	} while (0);
+
+	//关闭输出文件
+	avformat_close_input(&oFmtCtx);
+	//关闭输入文件
+	avformat_close_input(&iFmtCtx);
+}
+```
+

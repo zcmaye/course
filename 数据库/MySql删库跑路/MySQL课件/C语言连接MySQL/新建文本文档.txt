@@ -1,1 +1,2 @@
 ssl连接maysql https://github.com/Lingchen218/MysqlConnectSSLTest
+代码库mysql课件 https://www.echo.cool/docs/database/mysql/mysql-advanced-query/mysql-self-connect

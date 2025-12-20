@@ -1425,17 +1425,251 @@ int main()
 
 在 C++ 中，*std::string* 是对 C 风格字符串的封装，提供了丰富且安全的字符串处理方法，包括初始化、拼接、查找、替换等。
 
-1. **string**
+#### 构造字符串
+
+`std::string` 可以通过多种方式初始化：
+
+```cpp
+void test_string()
+{
+	//构造字符串
+	std::string str;					//空字符串
+	std::string str1 = "hello hdy";		//初始化
+	std::string str2("hello hdy");		//圆括号初始化
+	std::string str3{ "hello hdy" };	//花括号初始化
+	std::string str4(15, 'A');			//初始化为15个'A'
+	auto str5 = std::string("hello hdy");	//拷贝初始化
+	std::cout << str1 << "\n" << str2 << "\n" << str3 << "\n" << str4<<"\n"<<str5 << std::endl;
+
+	//拷贝
+	std::string str6 = str1;			//拷贝构造
+	//移动
+	std::string str7 = std::move(str6);	//移动构造
+	std::cout << "str6:" << str6 << "str7:" << str7 << std::endl;
+}
+```
+
+#### 获取数据
+
+```cpp
+void f()
+{
+    std::string str = "hello hdy";
+	//获取数据
+	// -- 1.获取字符串长度
+	std::cout << "str size:" << str.size() << " | " << str.length() << std::endl;
+	// -- 2.获取C风格字符串
+	std::cout << "str c str:" << str.c_str() << " | " << str.data() << std::endl;
+	// -- 3.获取指定位置的字符
+	std::cout << "str[0]:" << str[0] << " | " << str.at(0) << std::endl;
+	// -- 4.获取子串
+	std::cout << "substr:" << str.substr() << " | " << str.substr(6, 3) << std::endl;
+}
+```
+
+#### 清空/判空/判断开始和结尾
+
+```cpp
+void f()
+{
+    // -- 5.清空字符串
+	str.clear();
+	// -- 6.判断字符串是否为空
+	if(str.empty())
+		std::cout << "str is empty" << std::endl;
+	else
+		std::cout << "str is not empty" << std::endl;
+	// -- 7.判断字符串是否以指定字符串开头或结尾
+	str = "hello hdy";
+	if(str.starts_with("hello"))
+		std::cout << "str starts with hello" << std::endl;
+	if(str.ends_with("hdy"))
+		std::cout << "str ends with hdy" << std::endl;
+}
+```
+
+#### 字符串操作
+
+##### 比较
+
+```cpp
+void f(){
+	std::string str1 = "maye";
+	std::string str2 = "maye";
+	//使用运算符直接比较，支持(==, !=, >, <, >=, <=)
+	if(str1 == str2)
+		std::cout << "str1 == str2" << std::endl;
+	else if(str1 > str2)
+		std::cout << "str1 > str2" << std::endl;
+	else if(str1 < str2)
+		std::cout << "str1 < str2" << std::endl;
+    
+	//使用函数进行比较
+	auto ret = str1.compare(str2);	
+	if(ret == 0)
+		std::cout << "str1 == str2" << std::endl;
+	else if(ret > 0)
+		std::cout << "str1 > str2" << std::endl;
+	else
+		std::cout << "str1 < str2" << std::endl;
+    
+	//使用三路比较运算符 <=> 返回值：0，1，-1
+	if (auto ret = (str1 <=> str2); ret == 0) {
+		std::cout << "str1 == str2" << std::endl;
+	}
+	else if (ret  < 0) {
+		std::cout << "str1 < str2" << std::endl;
+	}
+	else if (ret > 0) {
+		std::cout << "str1 > str2" << std::endl;
+	}
+}
+```
+
+##### 查找
+
+```cpp
+{
+	std::string str = "I'm maye,and you?";
+	//-- 1.查找指定字符,find正向查找,rfind反向查找
+	if (auto idx = str.find(' '); idx != std::string::npos) {		//查找第一个空格
+		std::cout << "find first space at " << idx << std::endl;
+		//str[idx] = '_';	//可以通过idx修改指定位置的字符
+	}
+	else {
+		std::cout << "not find space" << std::endl;
+	}
+    
+	//-- 2.查找
+	if (auto idx = str.find_first_of("aeiou");idx != std::string::npos) {		//查找第一个元音字母
+		std::cout << "find first vowel at " << idx << std::endl;
+	}
+	else {
+		std::cout << "not find vowel" << std::endl;
+	}
+	if (auto idx = str.find_first_not_of("aeiou");idx != std::string::npos){	//查找第一个非元音字母
+		std::cout << "find first non-vowel at " << idx << std::endl;
+	}
+	else {
+		std::cout << "not find non-vowel" << std::endl;
+	}
+}
+```
+
+##### 替换
+
+```cpp
+{
+	std::string str = "I'm maye,and you?";
+    
+	str.replace(1, 2, " am");				//替换前两个字符
+	std::cout << "str:" << str << std::endl;//I am maye,and you?
+    
+	str.replace(str.find("you"), 3, "you are");	//替换you
+	std::cout << "str:" << str << std::endl;//I am maye,and you are?
+    
+	str.replace(5, 4, 2, 'A');					//将maye替换为AA
+	std::cout << "str:" << str << std::endl;//I am AA,and you are?
+}
+```
+
+##### 插入
+
+```cpp
+{
+	std::string str = "I'm maye,and you?";
+	str.insert(4, "hdy ");					//在指定位置插入字符串
+	std::cout<< "str:" << str << std::endl;	//I'm hdy maye,and you?
+    
+	str.insert(str.find("and"), 1, ' ');	//在指定位置插入字符
+	std::cout<< "str:" << str << std::endl;	//I'm hdy maye, and you?
+    
+	str.insert(0, "hi!I'm jerry!", 0, 3);		//在指定位置插入字符串的子串
+	std::cout<< "str:" << str << std::endl;	//hiI'm hdy maye, and you?
+}
+```
+
+##### 删除
+
+```cpp
+{
+	std::string str = "I'm hdy maye,and you?";
+    
+	str.erase(4, 4);				//删除指定位置的字符串
+	std::cout<< "str:" << str << std::endl;	//I'm maye,and you?
+    
+	str.erase(str.find("and"), 3);	//删除指定位置的字符串
+	std::cout<< "str:" << str << std::endl;	//I'm maye, you?
+    
+	str.erase();					//清空字符串
+	std::cout << "str:" << str << std::endl;	//(null) 
+}
+```
+
+##### 字符串连接
+
+```cpp
+{
+	std::string str;
+    
+	str.push_back('h');						//在字符串末尾插入字符
+	str.append("ello");						//在字符串末尾插入字符串
+	str.append(" hdy is my company", 4);	//在字符串末尾插入字符串的子串
+	std::cout<< "str:" << str << std::endl;	//hello hdy
+	str += "! good!";						//使用运算符字符串连接
+	std::cout<< "str:" << str << std::endl;	//str:hello hdy! good!
+    
+	str.assign("nice!");					//赋值字符串,会清空原字符串
+	std::cout<< "str:" << str << std::endl;	//nice!
+    
+	str.pop_back();							//删除字符串末尾的字符
+	std::cout << str.front() << std::endl;	//字符串第一个字符
+	std::cout << str.back() << std::endl;   //字符串最后一个字符
+	std::cout<< "str:" << str << std::endl;	//nice
+    
+	char buf[16];
+	auto len = str.copy(buf, 2, 1);			//将字符串的子串复制到buf中，不会自动添加\0，返回复制的字符个数
+	buf[len] = '\0';
+}
+```
+
+##### 容量/大小/交换
+
+```cpp
+	{
+		std::string str(100, 'A');
+		// -- 1,字符串容量
+		std::cout << "capacity:" << str.capacity() << " size:" << str.size() << std::endl;
+		str.clear();
+		std::cout << "capacity:" << str.capacity() << " size:" << str.size() << std::endl;
+		str.reserve();			//将容量调整为合适大小
+		std::cout << "capacity:" << str.capacity() << " size:" << str.size() << std::endl;
+		str.reserve(128);		//将容量调整为128，如果容量小于128，则调整为128，否则不变
+		std::cout << "capacity:" << str.capacity() << " size:" << str.size() << std::endl;
+
+		// -- 2，字符串大小
+		std::string buf("hello wrold,who is you?");
+		buf.resize(10);		//将字符串大小调整为10，如果字符串长度小于10，则多余部分填充'\0'，否则截断字符串
+		std::cout << "str:" << str << std::endl;	
+
+		// -- 3,字符串交换
+		std::string str1 = "hello";
+		std::string str2 = "world";
+		str1.swap(str2);		//成员函数
+		std::swap(str1, str2);	//标准库函数
+		std::cout << "str1:" << str1 << " str2:" << str2 << std::endl;
+	}
+```
 
 ### std::string转换
 
-2. **other to string**
+#### other to string
 
 ```cpp
 string to_string(int _Val);
-string to_string(unsigned int _Val) ;
+string to_string(unsigned int _Val);
 string to_string(long _Val);
-string to_string(unsigned long _Val) ;
+string to_string(unsigned long _Val);
 string to_string(long long _Val) ;
 string to_string(unsigned long long _Val);
 string to_string(double _Val);
@@ -1443,7 +1677,7 @@ string to_string(float _Val);
 string to_string(long double _Val);
 ```
 
-3. **string to other**
+#### string to other
 
 ```cpp
 int stoi(const string& _Str, size_t* _Idx = nullptr, int _Base = 10);
@@ -1455,6 +1689,201 @@ float stof(const string& _Str, size_t* _Idx = nullptr);
 double stod(const string& _Str, size_t* _Idx = nullptr); 
 long double stold(const string& _Str, size_t* _Idx = nullptr);
 ```
+
++ `size_t* _Idx = nullptr`此参数返回从字符串中解析数据结束的位置，比如：`stoi("123hdy",&idx)`，idx的值将是3。
++ `int _Base = 10`：此参数表示要解析的字符串中包含的整数的进制数，比如`std::stoi("0x12345678", &idx, 16)`，stoi函数将以16进制格式解析字符串。
+
+### format(C++20)
+
+>  `std::format` 是 C++20 中引入的一个新特性，它提供了一种类型安全且易于使用的方式来格式化字符串。这个函数在 `<format>` 头文件中定义。
+
+#### 基础用法
+
++ **占位符**：使用花括号占位符进行占位，后面的值会依次对占位符进行替换。
+
+```cpp
+auto str = std::format("I'm {}, {} years old", "maye", 12);
+```
+
+> output：I'm maye, 12 years old
+
+注意：
+
+1. 如果占位符{}数量比值的数量多，则会抛出`std::format_error`异常！
+
+2. 如果占位符{}数量比值的数量少，则多出的值会忽略！
+
++ **占位索引**：如果想要用一个值替换多个占位符，则必须使用占位索引(索引从0开始)。
+
+```cpp
+auto str = std::format("I'm {0},{0} is good {1}", "maye","teacher");
+```
+
+> output：I'm maye,maye is good teacher
+>
+> 注意：一旦使用了占位索引，每个占位符都必须使用占位索引，否则会抛出`std::format_error`异常
+
+#### 类型规格与格式选项
+
+`std::format`支持各种类型规格与格式选项，以便对输出进行详细的控制。以下是一些常见的类型规格与格式选项：
+
+1. **整数**
+
+- `d`：十进制整数。
+- `x`：小写十六进制整数。
+- `X`：大写十六进制整数。
+- `o`：八进制整数。
+- `b`：二进制整数。
+
+示例：
+
+```cpp
+std::cout << std::format("{0:d} {0:x} {0:X} {0:o} {0:b}", 42) << std::endl;
+```
+
+2. **浮点数**
+
+- `f`：固定点表示法。
+- `e`：小写科学计数法。
+- `E`：大写科学计数法。
+- `g`：根据值选择最简表示法（`f`或`e`）。
+- `G`：根据值选择最简表示法（`f`或`E`）。
+
+示例：
+
+```cpp
+std::cout << std::format("{0:f} {0:e} {0:E} {0:g} {0:G}", 3.1415926535)<<std::endl;
+```
+
+3. **字符串**
+
+- `s`：字符串。
+
+示例：
+
+```cpp
+std::cout << std::format("{:s}", "Hello, World!") << std::endl;
+```
+
+4. **宽度、对齐和填充**
+
+- `<`：左对齐。
+- `>`：右对齐。
+- `^`：居中对齐。
+- `数字`：指定输出宽度。
+- `字符`：指定填充字符。
+  示例：
+
+```cpp
+std::cout << std::format("{:<10} | {:>10} | {:^10}", "left", "right", "center") << std::endl;
+std::cout << std::format("{:*<10} | {:#>10} | {:_^10}", "left", "right", "center") << std::endl;;
+```
+
+5. **精度**
+
+对于浮点数，精度用于指定小数点后的位数；对于字符串，精度用于指定最大输出长度。
+示例：
+
+```cpp
+std::cout << std::format("{:.2f} | {:.3e} | {:.4s}", 3.1415926, 12345.6789, "abcdefgh") << std::endl;
+```
+
+6. **整数和浮点数的进位**
+
+整数和浮点数的进位可以使用`#`选项，它会在八进制和十六进制数字前添加`0`或`0x`（`0X`）前缀，或在浮点数上强制输出小数点。
+示例：
+
+```cpp
+std::cout << std::format("{:#x} | {:#o} | {:#f}", 42, 42, 3.14)<<std::endl;
+```
+
+7. **正负号**
+
+使用`+`选项可以强制输出正数的正号。
+示例：
+
+```cpp
+std::cout << std::format("{:+d} | {:+f}", 42, 3.14)<<std::endl;
+```
+
+8. **自定义类型**
+
+要格式化自定义类型，需要为类型特化`std::formatter`模板，并提供`parse`和`format`成员函数。这使得`std::format`可以以一种统一的方式处理内置类型和自定义类型。
+示例：
+
+```cpp
+struct Point {
+    int x, y;
+};
+
+// 为 Point 定义格式化器
+template <>
+struct std::formatter<Point> : std::formatter<std::string> {
+    auto format(const Point& p, format_context& ctx) const {
+        return std::formatter<std::string>::format(
+            std::format("({}, {})", p.x, p.y), ctx);
+    }
+};
+
+std::cout << std::format("{}", Point{3, 4})<<std::endl;
+```
+
+**std::format_to**
+
+`std::format`格式化后返回`std::string`，如果想要格式化到指定的位置，则需要使用`std::format_to`。
+
+```cpp
+//将格式化结果写入迭代器指向的位置，返回最终位置的迭代器。
+char buffer[123];
+std::format_to(buffer, "{}", 123);
+
+//最多写入 n 个字符（不包含终止符），返回包含写入信息的结构体（写入数和新位置）。
+std::string buf;
+std::format_to_n(std::back_inserter(buf),1, "{}", 123);
+```
+
+[C++ format函数](https://www.yisu.com/jc/902923.html)
+
+[【C++ 格式化输出 】C++20 现代C++格式化：拥抱std--format简化你的代码-阿里云开发者社区](https://developer.aliyun.com/article/1463275)
+
+### print(C++23)
+
+> #include<print>
+
+C++标准流输出std::cout一直以来为人们所诟病：不灵活，格式化支持差，冗长等等。人们有此想法源于C库的printf()函数虽然不提供类型安全保障和线程安全保障，但它非常灵活，格式化支持非常好。
+
+为此，C++23版本引入了std::print()/std::println()函数，完全解决了流输出std::cout为人们所诟病的问题。下面我们就来看看它们。
+
+#### 格式化打印到标准输出
+
+```cpp
+	std::print("hello world\n");		//格式化输出，不自带换行，需要手动添加
+	std::println("hello world");		//格式化输出，自带换行
+
+	std::print("I'm {},{} years old!", "maye", 18);		//格式化输出，{}占位符
+	std::println();										//换行
+	std::println("I'm {1} years old! {0}", "maye", 18);	//格式化输出，{}占位符，可以指定顺序
+```
+
+#### 格式化打印到流
+
+```cpp
+	//-- 1.格式化输出到文件
+	FILE* fp = fopen("log.txt", "a");
+	if (!fp) {
+		std::cerr << "open log.txt failed!" << std::endl;
+		return;
+	}
+	std::println(fp, "hello world");		//格式化输出到文件
+	std::println(fp);						//换行
+
+	fclose(fp);
+
+	//-- 2.格式化输出到流
+	std::print(std::cout, "--hello world");		//格式化输出到字符串
+```
+
+
 
 
 

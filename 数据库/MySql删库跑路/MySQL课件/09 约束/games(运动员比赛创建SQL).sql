@@ -40,9 +40,9 @@ CREATE TABLE grade
 
 
 --  添加测试数据
-INSERT INTO sporter(sporterno,name,gender,deptname) VALUES(1001,'九夏','男','计算机系');
+INSERT INTO sporter(sporterno,name,gender,deptname) VALUES(1001,'微笑','男','计算机系');
 INSERT INTO sporter(sporterno,name,gender,deptname) VALUES(1002,'莫影','男','数学系');
-INSERT INTO sporter(sporterno,name,gender,deptname) VALUES(1003,'里奇','男','计算机系');
+INSERT INTO sporter(sporterno,name,gender,deptname) VALUES(1003,'修语','男','计算机系');
 INSERT INTO sporter(sporterno,name,gender,deptname) VALUES(1004,'顽石','男','物理系');
 INSERT INTO sporter(sporterno,name,gender,deptname) VALUES(1005,'空弦','女','心理系');
 INSERT INTO sporter(sporterno,name,gender,deptname) VALUES(1006,'苏苏','女','数学系');
@@ -69,5 +69,3 @@ INSERT INTO grade(sporterno,itemno,mark) VALUES(1003,2,6);
 INSERT INTO grade(sporterno,itemno,mark) VALUES(1005,2,4);
 INSERT INTO grade(sporterno,itemno,mark) VALUES(1006,2,2);
 INSERT INTO grade(sporterno,itemno,mark) VALUES(1001,2,0);
-
-

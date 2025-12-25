@@ -635,7 +635,8 @@ int main()
 #include <sys/un.h>
 #include <ctype.h>
 
-#define UNIX_PATH "/tmp/udp_sock.str"
+#define UNIX_SER_PATH "/tmp/udp_sock.str"
+#define UNIX_CLI_PATH "/tmp/udp_client_tmp.str"
 
 int main()
 {
@@ -646,20 +647,25 @@ int main()
                 return -1;
         }
 
-        //绑定socket文件
-        struct sockaddr_un addr;
-        addr.sun_family = AF_LOCAL;
-        unlink(UNIX_PATH);
-        strcpy(addr.sun_path,UNIX_PATH);
+       //绑定socket文件
+        struct sockaddr_un cli_addr;
+        cli_addr.sun_family = AF_LOCAL;
+        unlink(UNIX_CLI_PATH);
+        strcpy(cli_addr.sun_path,UNIX_CLI_PATH);
 
         //绑定
-        if(bind(fd,(struct sockaddr*)&addr,sizeof(addr))<0) {
+        if(bind(fd,(struct sockaddr*)&cli_addr,sizeof(cli_addr))<0) {
                 perror("bind error");
                 return -1;
         }
 
+        //绑定socket文件
+        struct sockaddr_un ser_addr;
+        ser_addr.sun_family = AF_LOCAL;
+        strcpy(ser_addr.sun_path,UNIX_SER_PATH);
+
         //连接
-        if(connect(fd,(struct sockaddr*)&addr,sizeof(addr))<0) {
+        if(connect(fd,(struct sockaddr*)&ser_addr,sizeof(ser_addr))<0) {
                 perror("connect error");
                 return -1;
         }

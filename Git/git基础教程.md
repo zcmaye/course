@@ -151,6 +151,8 @@ git version 2.37.1 (Apple Git-137.1)
 
 ### 配置Git
 
+#### 配置用户名和邮箱
+
 安装好Git后，还需要最后一步设置，在命令行输入：
 
 ```bash
@@ -163,6 +165,38 @@ $ git config --global user.email "email@example.com"
 注意`git config`命令的`--global`参数，用了这个参数，表示你这台机器上所有的Git仓库都会使用这个配置，当然也可以对某个仓库指定不同的用户名和Email地址。
 
 可以使用`git config --list`查看所有配置，也可以使用`git config user.name`查看指定的配置项。
+
+#### 配置字符集
+
+在使用 Git 时，如果文件名或提交信息包含中文，可能会出现乱码，尤其是在 Windows 的 Git Bash 或 Linux 终端中。这通常是由于编码设置不一致导致的。
+
+**示例：**
+
+```bash
+$ git status
+?? \345\255\246\344\270\255.txt
+```
+
+上面显示的是八进制编码而非正常中文。
+
+要解决此问题，可以从 Git 配置和终端编码两方面入手。
+
+首先，关闭 Git 对路径的引用处理，让其直接显示中文：
+
+```bash
+git config --global core.quotepath false
+```
+
+这样 `git status` 等命令就不会将中文路径转为八进制。
+
+其次，确保提交信息和日志使用 UTF-8 编码：
+
+```bash
+git config --global i18n.commitencoding utf-8
+git config --global i18n.logoutputencoding utf-
+```
+
+这能避免提交记录中的中文注释出现乱码。
 
 ## Git四个工作区
 

@@ -16,6 +16,7 @@
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
+set global log_bin_trust_function_creators=1;	
 
 DROP DATABASE IF EXISTS db_hdy;
 CREATE DATABASE db_hdy; 
@@ -58,7 +59,7 @@ BEGIN
 	SET autocommit = 0;	#设置手动提交事务
 	REPEAT #循环
 	SET i = i + 1; #赋值
-	INSERT INTO course (course_id, course_name ) VALUES (rand_num(10000,10100),rand_string(6));
+	INSERT INTO course (course_id, course_name ) VALUES (1000+i,rand_string(6));
 	UNTIL i = max_num
 	END REPEAT;
 	COMMIT; #提交事务
@@ -75,11 +76,17 @@ CREATE PROCEDURE `insert_stu`(max_num INT)
   COMMENT '随机插入学生信息表存储过程'
 BEGIN
 	DECLARE i INT DEFAULT 0;
+  DECLARE course_count INT DEFAULT 0;
+  -- 查询课程表记录数
+  SELECT COUNT(*) INTO course_count FROM course;
+  -- 循环插入数据
 	SET autocommit = 0;	#设置手动提交事务
 	REPEAT #循环
-	SET i = i + 1; #赋值
-	INSERT INTO student_info (course_id, class_id ,student_id ,NAME ) VALUES (rand_num(10000,10100),rand_num(10000,10200),rand_num(1,200000),rand_string(6));
-	UNTIL i = max_num END REPEAT;
+    SET i = i + 1; #赋值
+    INSERT INTO student_info (course_id, class_id ,student_id ,NAME ) 
+    VALUES (rand_num(1000,1000 + course_count),rand_num(10000,10200),1000000+i,rand_string(6));
+	UNTIL i = max_num 
+  END REPEAT;
 	COMMIT; #提交事务
 END
 ;;
@@ -95,7 +102,7 @@ CREATE FUNCTION `rand_num`(from_num INT ,to_num INT)
   COMMENT '随机生成数字串数函数'
 BEGIN
 	DECLARE i INT DEFAULT 0;
-	SET i = FLOOR(from_num +RAND()*(to_num - from_num+1))	; 
+	SET i = FLOOR(from_num + RAND()*(to_num - from_num + 1))	; 
 	RETURN i;
 END
 ;;
@@ -108,7 +115,6 @@ DROP FUNCTION IF EXISTS `rand_string`;
 delimiter ;;
 CREATE FUNCTION `rand_string`(n INT)
  RETURNS varchar(255) CHARSET utf8mb4
-  READS SQL DATA 
   COMMENT '随机生成字符串数函数'
 BEGIN
 	DECLARE chars_str VARCHAR(100) DEFAULT'abcdefghijklmnopqrstuvwxyzABCDEFJHIJKLMNOPQRSTUVWXYZ'; 
@@ -124,3 +130,4 @@ END
 delimiter ;
 
 SET FOREIGN_KEY_CHECKS = 1;
+set global log_bin_trust_function_creators=0;	

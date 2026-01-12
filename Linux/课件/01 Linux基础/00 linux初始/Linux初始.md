@@ -504,9 +504,15 @@ put - upload a file from your local machine to the server
 Usage: put [file1] [file2] [file3] ...
 ```
 
+### scp
+
+### rz和sz
+
 ## Tabby终端
 
  Tabby 是一个高度可定制化的跨平台的终端工具，支持 Windows、macOS 和 Linux，自带 SFTP 功能，能与 Linux 服务器轻松传输文件，支持多种主题，界面炫酷。
+
+
 
 ### 下载与安装
 

@@ -78,7 +78,7 @@ root@maye-vm-pc:~# sudo systemctl status mysql
 + 首先，直接登录服务器：
 
   ```bash
-  mysql -uroot
+  sudo mysql -uroot
   ```
 
 + 然后，设置密码
@@ -90,6 +90,8 @@ root@maye-vm-pc:~# sudo systemctl status mysql
 ### 启用远程登录
 
 要实现所有IP都能登录MySQL服务器；必须通过直接修改配置文件才能实现。
+
+#### root
 
 MySQL8.0版本把配置文件 `my.cnf` 拆分成`mysql.cnf `和`mysqld.cnf`，我们需要修改的是`mysqld.cnf`文件：
 
@@ -141,6 +143,24 @@ mysql> SELECT user,host FROM mysql.user;
 ```
 
 修改成功后，即可登录成功！
+
+#### 其他用户
+
+如果root用户总是无法登录，则需要创建新用户：
+
++ 创建`maye`用户：
+
+  ```sql
+  CREATE USER 'maye'@'%' IDENTIFIED BY 'hdy@mysql123';
+  ```
+
++ 授予权限：
+
+  ```sql
+  GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;
+  ```
+
+  接着就可以登录了！
 
 ### 卸载
 
@@ -202,7 +222,7 @@ wget https://dev.mysql.com/get/Downloads/MySQL-8.4/mysql-server_8.4.7-1ubuntu24.
 也可以在`windows`上下载完毕之后，通过`rz`命令上传：
 
 ```bash
-root@maye-vm-pc:/opt/mysql# rz
+root@maye-vm-pc:/opt/mysql# sudo rz
  ZMODEM  Session started            
 ------------------------            
   48% mysql-server_8.4.7-1ubuntu24.04_amd64.deb-bundle.tar 
@@ -361,4 +381,3 @@ sudo docker run -d \
   mysql:8.4
 ```
 
-# 

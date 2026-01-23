@@ -1,1 +1,0 @@
-[dbdiagram.io - 数据库关系图设计工具](https://dbdiagram.io/home)

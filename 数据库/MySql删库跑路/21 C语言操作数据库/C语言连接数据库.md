@@ -1,19 +1,52 @@
-## C API
+## MySQL C API
 
-当你安装好MySQL数据库后，就已经安装好了C语言开发库，找到MySQL安装目录；发现存在`inclue`和`lib`目录即可直接使用！
+MySQL C API 是一个为 C 语言开发者提供的接口，用于实现对 MySQL 数据库的操作。通过这个 API，开发者可以在 C 或 C++ 程序中执行 SQL 语句，管理数据库连接，处理事务和结果集等。
+
+C API 代码随 MySQL 一起分发，并在 `libmysqlclient` 库中实现。
+
+当我们安装好MySQL发行版之后，就包含了CAPI。
+
+用于链接 C API 客户端应用程序的库文件名称取决于发行版构建的库类型和平台。
+
+- 在 Unix（和类 Unix）系统上，静态库为 `libmysqlclient.a`；动态库在大多数 Unix 系统上为 `libmysqlclient.so`。
+- 在 Windows 上，静态库为 `mysqlclient.lib`，动态库为 `libmysql.dll`。Windows 发行版还包括 `libmysql.lib`，这是一个静态导入库，用于使用动态库。
+
+### 配置
+
+#### 找到库位置
+
+找到MySQL安装目录；发现存在`inclue`和`lib`目录即可直接使用！
 
 ![image-20250308164903175](./assets/image-20250308164903175.png)
 
-### 配置
+#### Vs中配置库
 
 + 将头文件目录`F:\Tools\MySQL\MySQLServer8.4\include`配置到包含目录
 + 将库文件目录`F:\Tools\MySQL\MySQLServer8.4\lib`配置到库目录
 
 ![image-20250308165039416](./assets/image-20250308165039416.png)
 
-+ 将库`libmysql.lib`配置到，链接器/输入/附加依赖项。
++ 将库`libmysql.lib`配置到，链接器/输入/附加依赖项中。
 
 ![image-20250308165202426](./assets/image-20250308165202426.png)
+
+> 注意，运行时还需要加载`libmysql.dll`动态库，所以还需要将库目录配置到环境变量PATH中！！！
+
+#### 测试配置
+
+输入如下代码，编译运行，如果能打印客户端版本，即表示配置成功！
+
+```c
+#include <stdio.h>
+#include "mysql.h"
+
+int main()
+{
+	printf("%s %ld\n", mysql_get_client_info(), mysql_get_client_version());
+
+	return 0;
+}
+```
 
 ### 使用
 
@@ -54,11 +87,9 @@
 int main()
 {
     //初始化MYSQL
-    MYSQL* mycon = NULL;
-    mycon = mysql_init(NULL);
-    if(mycon == NULL)
-    {
-		printf("[error:%d]%s\n",mysql_errno(mycon),mysql_error(mycon));
+	MYSQL* mycon = mysql_init(NULL);
+    if(mycon == NULL) {
+		printf("mysql init failed\n");
         return -1;
     }
 ```
@@ -66,63 +97,89 @@ int main()
 mycon是一个MySQL的连接指针，先初始化为NULL；接下来通过mysql_init分配或初始化一个适用于 mysql_real_connect() 的 MYSQL 对象。 如果参数是一个 NULL 指针，该函数分配、初始化并返回一个新对象。 否则，初始化对象并返回对象的地址。 如果 mysql_init() 分配了一个新对象，则在调用 mysql_close() 以关闭连接时将其释放。
 
 ```c
-	mycon = mysql_real_connect(mycon,		//连接对象
-                      "localhost",	//主机名或ip地址
-                      "root",		//用户名
-                      "123456",		//密码
-                      "test",		//数据库名
-                      3306,			//端口号
-                      NULL,			//一般为NULL
-                      0);			//通常为0
-    if(mycon == NULL)
-    {
-		printf("[error:%d]%s\n",mysql_errno(mycon),mysql_error(mycon));
-        return -1;
-    }
+	if(!mysql_real_connect(mycon,		//连接对象
+		"localhost",	//主机名或ip地址
+		"root",			//用户名
+		"123456",		//密码
+		"hdy",			//数据库名
+		3306,			//端口号
+		NULL,			//一般为NULL
+		0))				//通常为0
+	{
+		printf("Error %d (%s): %s\n", mysql_errno(mycon), mysql_sqlstate(mycon), mysql_error(mycon));
+		goto done;
+	}
 ```
 
 mysql_real_connect() 尝试建立与在主机上运行的 MySQL 服务器的连接。 在执行任何其他需要有效 MYSQL 连接处理程序结构的 API 函数之前，客户端程序必须成功连接到服务器。
 
 ```c
-	char query[]="SELECT * FROM emp";
-	if(0 != mysql_query(mycon,query))
-    {
-        printf("[error:%d]%s\n",mysql_errno(mycon),mysql_error(mycon));
-    }
+	done:
+	if (mycon)
+		mysql_close(mycon);
+	return 0;
+}
+```
+
+goto done;用于在最后对mysql连接进行关闭。
+
+```c
+	char query[] = "SELECT * FROM emp";
+	if (0 != mysql_query(mycon, query)) {
+		printf("Error %d (%s): %s\n", mysql_errno(mycon), mysql_sqlstate(mycon), mysql_error(mycon));
+		goto done;
+	}
 ```
 
 连接成功之后，使用myql_query或mysql_real_query执行 SQL 语句。执行成功返回0，失败返回非零值。
 
 通常，字符串必须由单个 SQL 语句组成，不带终止分号 ( `;`) 或`\g`. 如果启用了多语句执行，则字符串可以包含多个用分号分隔的语句。
 
-+ [`mysql_query()`](https://dev.mysql.com/doc/c-api/8.0/en/mysql-query.html)执行以 \0  结尾的 SQL 语句字符串，不能用于包含二进制数据的语句；
-+ [`mysql_real_query()`](https://dev.mysql.com/doc/c-api/8.0/en/mysql-real-query.html)可以执行以非\0结尾的字符串（二进制数据可能包含`\0`字符）
++ [`mysql_query()`](https://dev.mysql.com/doc/c-api/8.0/en/mysql-query.html)执行以` \0`  结尾的 SQL 语句字符串，不能用于包含二进制数据的语句；
++ [`mysql_real_query()`](https://dev.mysql.com/doc/c-api/8.0/en/mysql-real-query.html)可以执行以非`\0`结尾的字符串（二进制数据可能包含`\0`字符）
 
 ```c
- 	MYSQL_RES* result = mysql_store_result(mycon);	//存储结果到客户端
-	int row_num = mysql_num_rows(result);			//获取查询到的行数(只对SELECT语句有效)
-	int col_num = mysql_field_count(mycon);			//返回最近查询的列数(结果集中的列数)
-	//unsigned int mysql_num_fields(MYSQL_RES *result) //从结果集中获取查询到的字段数量
+	MYSQL_RES* result = mysql_store_result(mycon);
+	if (!result) {
+		if (mysql_errno(mycon) != 0) {
+			printf("Error %d (%s): %s\n", mysql_errno(mycon), mysql_sqlstate(mycon), mysql_error(mycon));
+			goto done;
+		}
+		else {
+			printf("No result returned");
+		}
+	}
 ```
 
 调用 mysql_real_query() 或 mysql_query() 后，必须为每个成功生成结果集的语句（SELECT、SHOW、DESCRIBE、EXPLAIN、CHECK TABLE 等）调用 mysql_store_result() 。 完成结果集后，还必须调用 mysql_free_result()。
 
-+ mysql_num_rows获取查询到的数据行数(只对SELECT语句有效)，如果是非查询语句可以使用`mysql_affected_rows`获取受影响的行数
+```c
+	else {
+		//获取查询到的行数
+		uint64_t rowsCount = mysql_num_rows(result);
+		printf("rowsCount: %llu\n", rowsCount);
+		//获取查询到的列数
+		//uint32_t fieldsCount = mysql_field_count(mycon);		//从从连接对象获取查询到的列数
+		uint32_t fieldsCount = mysql_num_fields(result);		//从结果集中获取查询到的列数（推荐）
+		printf("fieldsCount: %u\n", fieldsCount);
+
+```
+
++ `mysql_num_rows`获取查询到的数据行数(只对SELECT语句有效)，如果是非查询语句可以使用`mysql_affected_rows`获取受影响的行数
 + `mysql_field_count`和`mysql_num_fields`都可以获取查询到的列数，但是参数不一样
 
 ```c
-	if(row_num>0)
-    {
-        MYSQL_ROW row;
-        while(row = mysql_fetch_row(result))
-        {
-            for(int i =0;i<col_num;i++)
-            {
-                printf("%s ",row[i]);
-            }
-            printf("\n");
-        }
-    }
+		MYSQL_ROW row = NULL;
+		while (row = mysql_fetch_row(result)) {
+			for (uint32_t i = 0; i < fieldsCount; i++) {
+				printf("%-12s", row[i] ? row[i] : "NULL");
+			}
+			printf("\n");
+		}
+
+		mysql_free_result(result);
+	}
+
 ```
 
 `mysql_fetch_row()`检索结果集的下一行，如果没有更多行要检索(抓完了)则返回NULL;
@@ -130,13 +187,46 @@ mysql_real_connect() 尝试建立与在主机上运行的 MySQL 服务器的连�
 通过字段数量可以遍历到每一个字段值。
 
 ```c
-	mysql_free_result(result);
-	mysql_close(mycon);
+	done:
+	if (mycon)
+		mysql_close(mycon);
 	return 0;
 }
 ```
 
-最后必须释放结果集，并管理mysql连接。
+最后必须关闭mysql连接。
+
+如果查询结果中，**中文乱码**，则需要设置客户端字符集：
+
+```c
+	if (0 != mysql_query(mycon, "SET NAMES gbk")) {
+		printf("Error %d (%s): %s\n", mysql_errno(mycon), mysql_sqlstate(mycon), mysql_error(mycon));
+		goto done;
+	}
+```
+
+#### 获取多个结果集
+
+我们可以给`mysql_real_connect`最后一个参数传递`CLIENT_MULTI_STATEMENTS`，以支持同时写多个查询语句，并批量获取结果集！
+
+```c
+	char query[] = "SELECT * FROM emp;SELECT * FROM dept";
+	if (0 != mysql_query(mycon, query)) {
+		printf("Error %d (%s): %s\n", mysql_errno(mycon), mysql_sqlstate(mycon), mysql_error(mycon));
+		goto done;
+	}
+```
+
+在上面代码中，我们在一个query中写了两个查询语句，并执行，接下来我们得循环获取结果集：
+
+```c
+	//循环获取多个结果集
+	do {
+		//就是前面获取结果集的代码
+	} while (mysql_next_result(mycon) == 0);
+```
+
+`mysql_next_result`函数用来判断是否有下一个结果集，返回0表示成功，有更多结果集；返回-1表示成功，没有更多结果集；返回大于0的数，表示发生错误！
 
 #### 获取字段信息
 
@@ -221,6 +311,75 @@ while (row = mysql_fetch_row(result))
     printf("\n");
 }
 ```
+
+#### 选项设置
+
+`mysql_options()` 是 MySQL C API 中用于设置连接选项的重要函数。它在建立连接之前调用，用于配置连接的各种参数。
+
+函数原型如下：
+
+```c
+int mysql_options(MYSQL *mysql, enum mysql_option option, const void *arg);
+```
+
+**参数：**
+
+- `mysql`: MYSQL 结构指针
+- `option`: 要设置的选项
+- `arg`: 选项值（类型取决于具体选项）
+
+**返回值：**
+
+- 成功：0
+- 失败：非0
+
+##### 连接和超时选项
+
+```c
+MYSQL mysql;
+mysql_init(&mysql);
+
+// 设置连接超时（秒）
+unsigned int timeout = 5;
+mysql_options(&mysql, MYSQL_OPT_CONNECT_TIMEOUT, &timeout);
+
+// 设置读超时（秒）
+unsigned int read_timeout = 10;
+mysql_options(&mysql, MYSQL_OPT_READ_TIMEOUT, &read_timeout);
+
+// 设置写超时（秒）
+unsigned int write_timeout = 10;
+mysql_options(&mysql, MYSQL_OPT_WRITE_TIMEOUT, &write_timeout);
+
+// 启用自动重连
+my_bool reconnect = 1;
+mysql_options(&mysql, MYSQL_OPT_RECONNECT, &reconnect);
+```
+
+#####  字符集和编码选项
+
+```c
+mysql_options(mycon, MYSQL_SET_CHARSET_NAME, "gbk");
+//或
+mysql_options(mycon,MYSQL_INIT_COMMAND, "SET NAMES gbk");
+```
+
+##### 本地化和时区设置
+
+```c
+// 设置时区
+mysql_options(&mysql, MYSQL_INIT_COMMAND, "SET time_zone = '+08:00'");
+
+// 设置 SQL 模式
+mysql_options(&mysql, MYSQL_INIT_COMMAND, 
+              "SET SESSION sql_mode='STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'");
+
+// 设置隔离级别
+mysql_options(&mysql, MYSQL_INIT_COMMAND, 
+              "SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED");
+```
+
+
 
 #### 准备语句
 

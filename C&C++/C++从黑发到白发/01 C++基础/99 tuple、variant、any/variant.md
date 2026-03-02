@@ -1026,13 +1026,84 @@ if (auto [pos, ok] = coll.insert({ "new",42 }); !ok) {
 
 # std::string_view(C++17)
 
+`std::string_view` 是 C++17 引入的一种轻量级字符串视图，它提供了对字符串的只读访问，而无需复制或拥有字符串数据。其本质是一个由指针和长度组成的结构，能够高效地处理字符串操作。
 
+## 基本特性
+
+`std::string_view` 的主要特点是非拥有性和高效性。它只存储指向原始字符串的指针和长度，因此构造和传递的开销极低。适用于需要频繁读取字符串但不修改字符串的场景。
+
+```cpp
+#include <print>
+#include <string_view>
+
+void printString(std::string_view text) {
+	std::println("string: {}", text);
+}
+
+int main() {
+	printString("hello");
+
+	printString(std::string("Hello, this is a sample string"));
+
+	char name[] = "John";
+	printString(name);
+}
+```
+
+## 使用场景
+
+*std::string_view* 适用于以下场景：
+
+- **只读访问**：当函数只需要读取字符串内容时，*std::string_view* 是理想选择。
+- **高效处理子字符串**：可以直接创建指向原始字符串特定部分的视图，而无需创建新的字符串副本。
+- **处理多种字符序列**：支持 *std::string*、C 风格字符串和字符数组等多种数据源。
+
+例如：
+
+```cpp
+#include <print>
+#include <string_view>
+int main() {
+   const char* cstr = "example";
+   std::string_view view(cstr, 4); // 创建一个视图，指向前4个字符
+   std::println("View: {}",view); // 输出: exam
+}
+```
+
+## 注意事项
+
+使用 *std::string_view* 时需注意以下问题：
+
+- **生命周期问题**：*std::string_view* 不拥有字符串数据。如果原始字符串在视图的生命周期内被销毁或修改，会导致未定义行为。
+- **非空字符终止**：*std::string_view* 不保证字符串以 `\0` 结尾，因此不能直接传递给需要 C 风格字符串的函数。
+- **只读限制**：*std::string_view* 仅支持只读操作，不能用于修改字符串内容。
+
+例如，以下代码会导致未定义行为：
+
+```cpp
+#include <print>
+#include <string_view>
+std::string_view getStringView() {
+   std::string temp = "temporary";
+   return std::string_view(temp); // temp 离开作用域后被销毁
+}
+int main() {
+   std::string_view view = getStringView();
+   std::println("{}",view); 	// 未定义行为
+}
+```
+
+## 性能优势
+
+与 *std::string* 相比，*std::string_view* 避免了内存分配和字符串复制，因此在处理大量字符串时性能更高。但需要确保原始字符串的生命周期足够长。
+
+总结来说，*std::string_view* 是一种高效、灵活的字符串处理工具，适合只读场景，但使用时需注意生命周期和只读限制。
 
 # std::span(C++20)
 
 std::span是一个模板类，在头文件`<span>`中定义。
 
-`std::span` 是一个提供对象的相接序列的非拥有视图，简单来说就是一个不拥有所有权的包装器，通过它可以操作顺序容器(数组、array、vector、deque、string)。
+`std::span` 是一个提供对象的相接序列的非拥有视图，简单来说就是一个不拥有所有权的包装器，通过它可以操作**顺序容器**(数组、array、vector、deque、string)。
 
 ```cpp
 template<

@@ -114,6 +114,8 @@ sudo apt-get install ca-certificates curl
 sudo install -m 0755 -d /etc/apt/keyrings
 # 使用curl下载docker官方GPG秘钥
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+# 若果上面的报错，下载阿里云 Docker 密钥（替代官方）
+sudo curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
 # 给秘钥添加所有用户可读权限
 sudo chmod a+r /etc/apt/keyrings/docker.asc
 

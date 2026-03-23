@@ -77,7 +77,9 @@ NoSQL 不是为了替代 MySQL，而是为了互补和搭配使用。
 
 # Redis安装
 
-## 安装
+## ubuntu安装
+
+### 下载
 
 将存储库添加到APT索引，更新它，并安装Redis Open Source：
 
@@ -103,7 +105,7 @@ sudo systemctl enable redis-server
 sudo systemctl start redis-server
 ```
 
-## 配置
+### 配置
 
 Redis配置文件在`/etc/redis`目录中，配置文件名为`/redis.conf`。
 
@@ -144,6 +146,69 @@ logfile /var/log/redis/redis-server.log
 ```shell
 sudo systemctl restart redis
 ```
+
+## Docker安装
+
+首先，确保docker已经启动。然后使用如下命令拉取Redis镜像：
+
+```bash
+sudo docker pull redis
+```
+
+拉取完成之后，查看一下镜像：
+
+```bash
+sudo docker images
+```
+
+然后，创建Redis配置文件：
+
+1. 启动前需要先创建Redis外部挂载的配置文件 （ /home/redis/conf/redis.conf ）
+2. 之所以要先创建 , 是因为Redis本身容器只存在 `/etc/redis` 目录 , 本身就不创建 `redis.conf` 文件
+3. 当服务器和容器都不存在 `redis.conf` 文件时, 执行启动命令的时候 docker 会将 `redis.conf` 作为目录创建 , 这并不是我们想要的结果 。
+
+```bash
+## 创建目录
+sudo mkdir -p /opt/redis/conf
+sudo mkdir -p /opt/redis/data
+
+## 创建文件
+sudo touch /opt/redis/conf/redis.conf
+```
+
+最后，创建Redis容器并启动（docker版本默认开启了绑定任意IP，可以不用修改配置文件）。
+
+```bash
+# Docker 创建 Redis 容器命令
+sudo docker run \
+--restart=always \
+--log-opt max-size=100m \
+--log-opt max-file=2 \
+-p 6379:6379 \
+--name redis \
+-v /opt/redis/conf/redis.conf:/etc/redis/redis.conf  \
+-v /opt/redis/data:/data \
+-d redis:latest redis-server /etc/redis/redis.conf \
+--appendonly yes \
+--requirepass 123456 
+```
+
+命令解释：
+
+| 命令                                                         | 功能                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| docker run                                                   | 这是 Docker 用来创建并运行一个新的容器的命令                 |
+| --restart=always                                             | 如果容器退出，这个选项会使得它自动重启                       |
+| --log-opt max-size=100m                                      | 这是对容器日志的设置，最大大小为 100MB                       |
+| --log-opt max-file=2                                         | 这是对容器日志文件的设置，最多可以有2个日志文件              |
+| -p 6379:6379                                                 | 这是端口映射的设置，将宿主机的6379端口映射到容器的6379端口   |
+| --name redis                                                 | 这是给新创建的容器命名的选项，名字是 "redis"                 |
+| -v /opt/myredis/redis.conf:/etc/redis/redis.conf             | 这是对容器内的文件系统的挂载设置，将宿主机上的 /opt/myredis/redis.conf 文件挂载到容器内的 /etc/redis/redis.conf 位置 |
+| -v /opt/myredis/data:/data                                   | 这是另一个文件系统的挂载选项，将宿主机上的 /opt/myredis/data 目录挂载到容器内的 /data目录 |
+| -d                                                           | 这是 Docker 的分离模式，新创建的进程将会在后台运行           |
+| redis redis-server /etc/redis/redis.conf --appendonly yes --requirepass 123456 | 这是容器内要运行的命令，启动 Redis 服务，使用 /etc/redis/redis.conf 配置文件，设置追加写入(appendonly)为 yes，设置密码为 "123456" |
+
+启动之后，直接用可视化工具连接即可！
 
 # Redis客户端
 

@@ -382,6 +382,19 @@ void test_set()
 
 Redis 是基于内存的高性能数据库，但频繁地创建和销毁连接会带来不必要的开销。连接池的作用是预先创建并维护一定数量的连接，供多个线程复用，从而减少连接的创建和销毁次数，提高应用性能。此外，连接池还可以限制最大连接数，防止因过多的并发连接导致 Redis 服务器过载。
 
+### 头文件
+
+```cpp
+#include "hiredis/hiredis.h"
+
+#include <string>
+#include <functional>
+#include <queue>
+#include <thread>
+#include <mutex>
+#include <atomic>
+```
+
 ### 池连接
 
 池连接能再销毁时，自动把连接放入连接池。
@@ -470,190 +483,196 @@ private:
 ### 连接池实现
 
 ```c
-class ConnectionPool
-{
-public:
-	ConnectionPool(const std::string& host, uint16_t port, const std::string& pwd, int poolSize)
-		:_host(host)
-		, _port(port)
-		, _pwd(pwd)
-		, _poolSize(poolSize)
-		, _counter(0)
+	/**
+	 * 连接池.
+	 */
+	class ConnectionPool
 	{
-		for (int i = 0; i < poolSize; i++) {
-			auto* context = CreateConnection();
-			if (!context) {
-				continue;
+	public:
+		ConnectionPool(const std::string& host, uint16_t port, const std::string& pwd, int poolSize = 5)
+			:_host(host)
+			, _port(port)
+			, _pwd(pwd)
+			, _poolSize(poolSize)
+			, _counter(0)
+		{
+			for (int i = 0; i < poolSize; i++) {
+				auto* context = CreateConnection();
+				if (!context) {
+					continue;
+				}
+				_connections.push(context);
+			}
+
+			_check_thr = std::thread([this]() {
+				while (!_b_stop) {
+					_counter++;
+					if (_counter >= 10) {
+						checkThreadPro();
+						_counter = 0;
+					}
+
+					std::this_thread::sleep_for(std::chrono::seconds(1)); // 每隔 30 秒发送一次 PING 命令
+				}
+				});
+
+		}
+
+		~ConnectionPool() {
+			close();
+			clearConnections();
+		}
+
+		void clearConnections() {
+			std::lock_guard<std::mutex> lock(_mutex);
+			while (!_connections.empty()) {
+				auto* context = _connections.front();
+				redisFree(context);
+				_connections.pop();
+			}
+		}
+
+		PooledConnection getConnection() {
+			std::unique_lock<std::mutex> lock(_mutex);
+			_cond.wait(lock, [this] {
+				if (_b_stop) {
+					return true;
+				}
+				return !_connections.empty();
+				});
+			//如果停止则直接返回空指针
+			if (_b_stop) {
+				return nullptr;
+			}
+			auto* context = _connections.front();
+			_connections.pop();
+			return PooledConnection(context, [this](redisContext* con_to_return) {
+				std::printf("Return Connection~\n");
+				this->returnConnection(con_to_return);
+				});
+		}
+
+		PooledConnection getConNonBlock() {
+			std::lock_guard<std::mutex> lock(_mutex);
+			if (_b_stop) {
+				return nullptr;
+			}
+
+			if (_connections.empty()) {
+				return nullptr;
+			}
+
+			auto* context = _connections.front();
+			_connections.pop();
+			return context;
+		}
+
+		void returnConnection(redisContext* context) {
+			std::lock_guard<std::mutex> lock(_mutex);
+			if (_b_stop) {
+				return;
 			}
 			_connections.push(context);
+			_cond.notify_one();
 		}
 
-		_check_thr = std::thread([this]() {
-			while (!_b_stop) {
-				_counter++;
-				if (_counter >= 10) {
-					checkThreadPro();
-					_counter = 0;
+		void close() {
+			_b_stop = true;
+			_cond.notify_all();
+			_check_thr.join();
+		}
+	private:
+		/** 创建新连接.  */
+		redisContext* CreateConnection() {
+			auto* context = redisConnect(_host.data(), _port);
+			if (context == nullptr || context->err != 0) {
+				if (context != nullptr) {
+					std::printf("Connectin fail: %s (%s:%d)\n", context->errstr,context->tcp.host, context->tcp.port);
+					redisFree(context);
+				}
+				return nullptr;
+			}
+
+			auto reply = (redisReply*)redisCommand(context, "AUTH %s", _pwd.data());
+			if (reply->type == REDIS_REPLY_ERROR) {
+				std::printf("auth fail: %s\n", reply->str);
+				//执行释放操作
+				freeReplyObject(reply);
+				redisFree(context);
+				return nullptr;
+			}
+			//std::printf("auth success~\n");
+			freeReplyObject(reply);
+			return context;
+		}
+		void checkThreadPro() {
+			size_t pool_size;
+			{
+				//先拿到当前的连接数
+				std::lock_guard<std::mutex> lock(_mutex);
+				pool_size = _connections.size();
+				if (pool_size == 0) {
+					_fail_count = _poolSize;
+				}
+			}
+
+			//获取连接失效的数量
+			for (int i = 0; i < pool_size && !_b_stop; i++) {
+				redisContext* context = nullptr;
+				//1 取出一个连接(持有锁)
+				context = getConNonBlock();
+				if (context == nullptr) {
+					break;
 				}
 
-				std::this_thread::sleep_for(std::chrono::seconds(1)); // 每隔 30 秒发送一次 PING 命令
-			}
-			});
+				//2,验证连接是否有效
+				if (!PooledConnection::validate(context)) {
+					redisFree(context);
+					_fail_count++;
+					continue;
+				}
 
-	}
-
-	~ConnectionPool() {
-		close();
-		clearConnections();
-	}
-
-	void clearConnections() {
-		std::lock_guard<std::mutex> lock(_mutex);
-		while (!_connections.empty()) {
-			auto* context = _connections.front();
-			redisFree(context);
-			_connections.pop();
-		}
-	}
-
-	PooledConnection getConnection() {
-		std::unique_lock<std::mutex> lock(_mutex);
-		_cond.wait(lock, [this] {
-			if (_b_stop) {
-				return true;
-			}
-			return !_connections.empty();
-			});
-		//如果停止则直接返回空指针
-		if (_b_stop) {
-			return nullptr;
-		}
-		auto* context = _connections.front();
-		_connections.pop();
-		return PooledConnection(context, [this](redisContext* con_to_return) {
-			std::printf("Return Connection~\n");
-			this->returnConnection(con_to_return);
-			});
-	}
-
-	PooledConnection getConNonBlock() {
-		std::lock_guard<std::mutex> lock(_mutex);
-		if (_b_stop) {
-			return nullptr;
-		}
-
-		if (_connections.empty()) {
-			return nullptr;
-		}
-
-		auto* context = _connections.front();
-		_connections.pop();
-		return context;
-	}
-
-	void returnConnection(redisContext* context) {
-		std::lock_guard<std::mutex> lock(_mutex);
-		if (_b_stop) {
-			return;
-		}
-		_connections.push(context);
-		_cond.notify_one();
-	}
-
-	void close() {
-		_b_stop = true;
-		_cond.notify_all();
-		_check_thr.join();
-	}
-private:
-	/** 创建新连接.  */
-	redisContext* CreateConnection() {
-		auto* context = redisConnect(_host.data(), _port);
-		if (context == nullptr || context->err != 0) {
-			if (context != nullptr) {
-				redisFree(context);
-			}
-			return nullptr;
-		}
-
-		auto reply = (redisReply*)redisCommand(context, "AUTH %s", _pwd.data());
-		if (reply->type == REDIS_REPLY_ERROR) {
-			std::printf("认证失败：%s\n", reply->str);
-			//执行释放操作
-			freeReplyObject(reply);
-			redisFree(context);
-			return nullptr;
-		}
-		std::printf("认证成功\n");
-		freeReplyObject(reply);
-		return context;
-	}
-	void checkThreadPro() {
-		size_t pool_size;
-		{
-			//先拿到当前的连接数
-			std::lock_guard<std::mutex> lock(_mutex);
-			pool_size = _connections.size();
-		}
-
-		//获取连接失效的数量
-		for (int i = 0; i < pool_size && !_b_stop; i++) {
-			redisContext* context = nullptr;
-			//1 取出一个连接(持有锁)
-			context = getConNonBlock();
-			if (context == nullptr) {
-				break;
+				//3.如果都没有问题，则把连接返回连接池
+				std::printf("connection alive\n");
+				returnConnection(context);
 			}
 
-			//2,验证连接是否有效
-			if (!PooledConnection::validate(context)) {
-				redisFree(context);
-				_fail_count++;
-				continue;
+			//执行重连操作
+			while (_fail_count > 0) {
+				auto res = reconnect();
+				if (res) {
+					_fail_count--;
+				}
+				else {
+					//留给一次再尝试
+					break;
+				}
 			}
-		
-			//3.如果都没有问题，则把连接返回连接池
-			std::printf("connection alive\n");
+		}
+
+		bool reconnect() {
+			auto* context = CreateConnection();
+			if (!context) {
+				return false;
+			}
 			returnConnection(context);
+			return true;
 		}
+	private:
+		std::string _host;
+		uint16_t _port;
+		std::string _pwd;
 
-		//执行重连操作
-		while (_fail_count > 0) {
-			auto res = reconnect();
-			if (res) {
-				_fail_count--;
-			}
-			else {
-				//留给一次再尝试
-				break;
-			}
-		}
-	}
+		std::queue<redisContext*> _connections;
+		size_t _poolSize;
 
-	bool reconnect() {
-		auto* context = CreateConnection();
-		if (!context) {
-			return false;
-		}
-		returnConnection(context);
-		return true;
-	}
-private:
-	std::string _host;
-	uint16_t _port;
-	std::string _pwd;
-
-	std::queue<redisContext*> _connections;
-	size_t _poolSize;
-
-	std::atomic<bool> _b_stop;
-	std::mutex _mutex;
-	std::condition_variable _cond;
-	std::thread  _check_thr;
-	int _counter;
-	std::atomic<int> _fail_count;
-};
-
+		std::atomic<bool> _b_stop;
+		std::mutex _mutex;
+		std::condition_variable _cond;
+		std::thread  _check_thr;
+		int _counter;
+		std::atomic<int> _fail_count;
+	};
 ```
 
 

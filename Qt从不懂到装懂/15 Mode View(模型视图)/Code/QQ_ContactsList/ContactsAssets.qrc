@@ -1,9 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>ContactsAssets/images/defaultProfile.png</file>
-        <file>ContactsAssets/images/quit.png</file>
-        <file>ContactsAssets/images/quit-hover.png</file>
-        <file>ContactsAssets/images/svip.png</file>
-        <file>ContactsAssets/images/vip.png</file>
-    </qresource>
-</RCC>

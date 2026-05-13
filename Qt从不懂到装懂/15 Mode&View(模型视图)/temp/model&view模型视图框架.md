@@ -637,6 +637,202 @@ QTableView有两个表头，分别是水平表头和垂直表头。
 
 ![image-20260511190047444](./assets/image-20260511190047444.png)
 
+也可以单独设置某一列的宽度，但是需要去掉上面的所有列的自动拉伸。
+
+```cpp
+        m_tableView->setColumnWidth(0, 100);
+```
+
+可以让最后一列，自动拉伸，其他列自己控制宽度：
+
+```cpp
+	m_tableView->setColumnWidth(0, 100);
+	...
+	m_tableView->horizontalHeader()->setSectionResizeMode(m_tableModel->columnCount()-1, QHeaderView::Stretch);
+```
+
+也可以设置所有列宽度一致：
+
+```cpp
+    m_tableView->horizontalHeader()->setDefaultSectionSize(200);
+```
+
+行高的宽度也是一样的处理。。。
+
+###### 行列隐藏
+
+如果不需要某行或者某列显示，则可以设置隐藏！！！
+
+```cpp
+        m_tableView->setRowHidden(0, true);
+        m_tableView->setColumnHidden(0, true);
+```
+
 ##### 网格线
 
+表格的网格线是可以隐藏掉的：
+
+```cpp
+        m_tableView->setShowGrid(false);
+```
+
+还可以设置网格线的样式：
+
+```cpp
+        m_tableView->setGridStyle(Qt::DotLine);
+```
+
+
+
 ##### 选择模式和行为
+
+默认情况下，只能选中表格的某一个item，要想选中一行，可以设置选择行为来选择一行：
+
+```cpp
+        m_tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
+```
+
+通过设置选择模式来控制同时能否选中多行：
+
+```cpp
+        m_tableView->setSelectionMode(QAbstractItemView::SingleSelection);
+```
+
+##### 启用排序
+
+```cpp
+        m_tableView->setSortingEnabled(true);
+        m_tableView->sortByColumn(0, Qt::DescendingOrder);
+```
+
+#### 样式设置
+
+QTableView的样式分为整体样式以及item单独样式设置。
+
+##### QTableView整体样式
+
+###### 基本样式
+
+基本样式就是对这个控件背景、颜色、字体等进行设置。
+
+```css
+QTableView{
+    background-color: #E6E7E8;
+    color:black;
+    border:none;
+    font-size:12pt;
+}
+```
+
+###### item交替背景颜色
+
+先通过代码设置启用交替颜色：
+
+```cpp
+m_tableView->setAlternatingRowColors(true);
+```
+
+然后在css中设置交替变换的颜色即可：
+
+```css
+QListView{
+    background-color: #E6E7E8;
+    alternate-background-color: #878787;	/*交替颜色*/
+    color:black;
+    border:none;
+    font-size:12pt;
+}
+```
+
+效果如下：
+
+![image-20260513163148111](./assets/image-20260513163148111.png)
+
+###### 去除焦点框
+
+在 Qt 中去除 QTableView 选中时的焦点框（通常指选中项周围的虚线矩形），可以通过**样式表**或**设置焦点策略**两种方式实现。
+
+```css
+    QTableView {
+       outline: none;           /*去除焦点虚线框*/
+    }
+```
+
+##### Item样式
+
+大体上与QListView相同，不再赘述。
+
+##### 表头样式设置
+
+可以同时设置水平头和垂直头的样式：
+
+```cpp
+QTableView QHeaderView::section{
+    border: none;
+    border-bottom: 1px solid rgb(223, 230, 236);
+    background-color: rgb(248, 248, 249);
+    font: bold 10pt "微软雅黑";
+    height: 50px;
+}
+```
+
+也可以单独分开设置：
+
+```cpp
+QTableView QHeaderView::section:horizontal {
+    border: none;
+    border-bottom: 1px solid rgb(223, 230, 236);
+    background-color: rgb(248, 248, 249);
+    font: bold 10pt "微软雅黑";
+    height: 50px;
+}
+QTableView QHeaderView::section:vertical{
+    border: none;
+    background-color: rgb(248, 248, 249);
+    font: bold 10pt "微软雅黑";
+    height: 50px;
+}
+```
+
+### QTreeView
+
+QTreeView是Qt框架中非常重要的一个控件，专门用于展示和编辑树状结构数据。 
+
+#### 创建QTreeView和Model
+
+```cpp
+		m_treeView = new QTreeView(this);
+		m_treeModel = new QStandardItemModel(this);
+
+		m_treeView->setModel(m_treeModel);
+		m_treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+```
+
+#### 添加数据
+
+```cpp
+		//添加十条记录
+		for (int i = 0; i < 10; i++) {
+			QList<QStandardItem*> items;
+			items.append(new QStandardItem(QString("100%1").arg(i)));
+			items.append(new QStandardItem(QString("maye_%1").arg(QChar('A' + QRandomGenerator::global()->bounded(0, 26)))));
+			items.append(new QStandardItem(QString::number(QRandomGenerator::global()->bounded(10, 30))));
+			items.append(new QStandardItem(i % 2 == 0 ? "女" : "男"));
+
+			//每条记录随机添加几条孩子
+			auto item = items.front();
+			auto count = QRandomGenerator::global()->bounded(1, 5);
+			for (int i = 0; i < count; i++) {
+				QList<QStandardItem*> subItems;
+				for (int n = 0; n < 10; n++) {
+					subItems.append(new QStandardItem(QString("100%1_%2").arg(i).arg(n)));
+				}
+				item->appendRow(subItems);
+			}
+			m_treeModel->appendRow(items);
+		}
+```
+
+#### 其他设置
+
+其他设置和前面两个View也差不多！！！

@@ -19,7 +19,7 @@ QSqlDatabase getConnection()
 	db.setPort(3306);				 // 数据库服务器的端口，MySQL默认为3306
 	db.setDatabaseName("qt_course");		 // 你想要连接的数据库名
 	db.setUserName("root");          // 数据库登录用户名
-	db.setPassword("mysql1228.");		// 数据库登录密码
+	db.setPassword("123456");		// 数据库登录密码
 
 	if (db.open()) {
 		qDebug() << "MySQL 数据库连接成功！";
@@ -31,7 +31,7 @@ QSqlDatabase getConnection()
 }
 
 void test_user_dao() {
-    // 创建助手类
+    // 创建助手类 dao database access object
     UserDao userDao(getConnection());
     
     // 创建表

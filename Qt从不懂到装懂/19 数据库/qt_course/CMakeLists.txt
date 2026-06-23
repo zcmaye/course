@@ -15,7 +15,6 @@ find_package(Qt${QT_VERSION_MAJOR}
 qt_standard_project_setup()
 
 set(PROJECT_SOURCES
-    main.cpp
     User.h
     UserDao.h
     UserDao.cpp
